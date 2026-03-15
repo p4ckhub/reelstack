@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Countdown</title>
+<!--
+  Countdown card.
+  Params: ?brand=BRAND&days=3&label=DNI&heading=TEXT&date=DATE&speaker=NAME
+          &price1=X&price2=Y&deadline=TEXT&logo=/path
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .glow {
+    position: absolute;
+    width: 50vw;
+    height: 50vw;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, var(--brand-accent-dim) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height)) var(--safe-left);
+    text-align: center;
+  }
+
+  .countdown-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5vw;
+    margin-bottom: 2vh;
+  }
+
+  .countdown-num {
+    font-family: var(--brand-font-heading);
+    font-size: 16vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-accent);
+    line-height: 1;
+  }
+
+  .countdown-label {
+    font-family: var(--brand-font-heading);
+    font-size: 4vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-secondary);
+    text-transform: uppercase;
+  }
+
+  .divider {
+    width: 8vw;
+    height: 2px;
+    background: linear-gradient(90deg, var(--brand-accent), var(--brand-cta));
+    margin: 3vh 0;
+    border-radius: 1px;
+  }
+
+  .heading {
+    font-family: var(--brand-font-mono);
+    font-size: 2vw;
+    color: var(--brand-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2vh;
+  }
+
+  .date {
+    font-family: var(--brand-font-heading);
+    font-size: 4vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-text-primary);
+    margin-bottom: 1.5vh;
+  }
+
+  .speaker {
+    font-family: var(--brand-font-body);
+    font-size: 2vw;
+    color: var(--brand-text-secondary);
+    margin-bottom: 4vh;
+  }
+
+  .pricing {
+    display: flex;
+    gap: 2vw;
+    margin-bottom: 2vh;
+  }
+
+  .price-pill {
+    font-family: var(--brand-font-body);
+    font-size: 1.8vw;
+    font-weight: 700;
+    padding: 1.2vh 3vw;
+    border-radius: 100px;
+  }
+
+  .price-pill.outline {
+    border: 2px solid var(--brand-border);
+    color: var(--brand-text-primary);
+    background: transparent;
+  }
+
+  .price-pill.filled {
+    background: var(--brand-cta);
+    border: 2px solid var(--brand-cta);
+    color: var(--brand-cta-text);
+  }
+
+  .deadline {
+    font-family: var(--brand-font-mono);
+    font-size: 1.5vw;
+    color: var(--brand-text-muted);
+    margin-top: 2vh;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0; right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-accent);
+    z-index: 2;
+  }
+
+  .footer-logo {
+    height: 4vh;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .countdown-num { font-size: 20vw; }
+    .countdown-label { font-size: 5vw; }
+    .heading { font-size: 2.8vw; }
+    .date { font-size: 5vw; }
+    .speaker { font-size: 2.8vw; }
+    .price-pill { font-size: 2.4vw; }
+    .deadline { font-size: 2vw; }
+    .footer-name { font-size: 2.6vw; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="card">
+  <div class="countdown-wrap">
+    <span class="countdown-num" id="countdownNum">X</span>
+    <span class="countdown-label" id="countdownLabel">DNI</span>
+  </div>
+  <div class="divider"></div>
+  <div class="heading" id="heading">Heading</div>
+  <div class="date" id="date">Date</div>
+  <div class="speaker" id="speaker">Speaker</div>
+  <div class="pricing">
+    <span class="price-pill outline" id="price1">Wariant A</span>
+    <span class="price-pill filled" id="price2">Wariant B</span>
+  </div>
+  <div class="deadline" id="deadline">Deadline</div>
+</div>
+<div class="footer">
+  <img id="logo" class="footer-logo" style="display:none">
+  <span class="footer-name" id="footerName"></span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-countdown.js"></script>
+</body>
+</html>

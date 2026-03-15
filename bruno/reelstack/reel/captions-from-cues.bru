@@ -1,0 +1,58 @@
+meta {
+  name: Captions - From Pre-computed Cues
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/captions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "videoUrl": "https://example.com/raw-video.mp4",
+    "cues": [
+      {
+        "id": "1",
+        "text": "To jest gotowy tekst napisów",
+        "startTime": 0,
+        "endTime": 2.5,
+        "words": [
+          { "text": "To", "startTime": 0, "endTime": 0.3 },
+          { "text": "jest", "startTime": 0.3, "endTime": 0.6 },
+          { "text": "gotowy", "startTime": 0.6, "endTime": 1.1 },
+          { "text": "tekst", "startTime": 1.1, "endTime": 1.6 },
+          { "text": "napisów", "startTime": 1.6, "endTime": 2.5 }
+        ]
+      },
+      {
+        "id": "2",
+        "text": "Bez TTS, bez transkrypcji",
+        "startTime": 2.8,
+        "endTime": 5.0
+      }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("captionsMode is cues", function() {
+    expect(res.body.data.captionsMode).to.equal("cues");
+  });
+}

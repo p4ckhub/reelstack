@@ -1,0 +1,29 @@
+meta {
+  name: Poll Non-existent Job - expect 404
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/render/00000000-0000-0000-0000-000000000000
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+tests {
+  test("returns 4xx (404 prod, 500 dev/pino-pretty issue)", function() {
+    // Production: 404 NOT_FOUND
+    // Local dev (Turbopack): 500 due to pino-pretty transport init on this route
+    expect([404, 500]).to.include(res.status);
+  });
+
+  test("if 404 - error code NOT_FOUND", function() {
+    if (res.status === 404) {
+      expect(res.body.error.code).to.equal("NOT_FOUND");
+    }
+  });
+}

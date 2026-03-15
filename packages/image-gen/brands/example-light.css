@@ -1,0 +1,63 @@
+/*
+ * Example Light Brand — light theme demo configuration
+ * Use this to test with a light background. Replace with your own brand.
+ * Light theme with blue accent and indigo CTA.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    /* Identity */
+    --brand-name: "your.brand";
+    --brand-tagline: "// your.brand";
+
+    /* Backgrounds */
+    --brand-bg-primary: #F8FAFC;
+    --brand-bg-secondary: #F1F5F9;
+    --brand-bg-surface: #E2E8F0;
+    --brand-bg-card: #FFFFFF;
+
+    /* Accent (Blue) */
+    --brand-accent: #3B82F6;
+    --brand-accent-hover: #2563EB;
+    --brand-accent-dim: rgba(59, 130, 246, 0.08);
+
+    /* CTA (Indigo) */
+    --brand-cta: #6366F1;
+    --brand-cta-hover: #4F46E5;
+    --brand-cta-text: #FFFFFF;
+
+    /* Text */
+    --brand-text-primary: #1E293B;
+    --brand-text-secondary: #475569;
+    --brand-text-muted: #94A3B8;
+
+    /* Borders & Shadows */
+    --brand-border: rgba(0, 0, 0, 0.06);
+    --brand-border-accent: rgba(59, 130, 246, 0.15);
+    --brand-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --brand-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    /* Semantic */
+    --brand-success: #22C55E;
+    --brand-error: #EF4444;
+
+    /* Typography */
+    --brand-font-heading: 'Space Grotesk', system-ui, sans-serif;
+    --brand-font-body: 'Inter', system-ui, sans-serif;
+    --brand-font-mono: 'JetBrains Mono', monospace;
+    --brand-heading-weight: 700;
+    --brand-heading-weight-heavy: 700;
+
+    /* Radius */
+    --brand-radius-sm: 6px;
+    --brand-radius-md: 10px;
+    --brand-radius-lg: 16px;
+
+    /* Theme */
+    --brand-theme: light;
+
+    /* Badge backgrounds */
+    --brand-badge-accent-bg: #EFF6FF;
+    --brand-badge-cta-bg: #EEF2FF;
+    --brand-badge-success-bg: #F0FDF4;
+}

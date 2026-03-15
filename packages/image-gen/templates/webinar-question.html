@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Question</title>
+<!--
+  Engagement poll card.
+  Params: ?brand=BRAND&question=Q&optA=A&optB=B&optC=C&optD=D&footer=TEXT
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  body { background: var(--brand-bg-secondary); }
+
+  .bubble-icon {
+    width: 10vw;
+    height: 10vw;
+    margin-bottom: 4vh;
+    position: relative;
+  }
+
+  .bubble-icon::before, .bubble-icon::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+  }
+
+  .bubble-icon::before {
+    width: 8vw;
+    height: 8vw;
+    top: 0; left: 0;
+    border: 3px solid var(--brand-accent);
+    background: var(--brand-accent-dim);
+  }
+
+  .bubble-icon::after {
+    width: 4vw;
+    height: 4vw;
+    bottom: 0; right: 0;
+    border: 3px solid var(--brand-accent);
+    background: var(--brand-accent-dim);
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height)) var(--safe-left);
+    text-align: center;
+  }
+
+  .question {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 85vw;
+    margin-bottom: 5vh;
+    text-transform: uppercase;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8vh;
+    width: 65vw;
+  }
+
+  .option {
+    font-family: var(--brand-font-body);
+    font-size: 2vw;
+    font-weight: 600;
+    padding: 1.8vh 3vw;
+    border-radius: 100px;
+    text-align: center;
+  }
+
+  .opt-a { background: var(--brand-accent); color: var(--brand-bg-primary); }
+  .opt-b { background: var(--brand-text-primary); color: var(--brand-bg-primary); }
+  .opt-c { background: var(--brand-success); color: var(--brand-bg-primary); }
+  .opt-d { background: var(--brand-text-muted); color: var(--brand-bg-primary); }
+
+  .footer-info {
+    position: absolute;
+    bottom: 2vh;
+    font-family: var(--brand-font-mono);
+    font-size: 1.6vw;
+    color: var(--brand-text-muted);
+    z-index: 2;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .bubble-icon { width: 12vw; height: 12vw; }
+    .bubble-icon::before { width: 10vw; height: 10vw; }
+    .bubble-icon::after { width: 5vw; height: 5vw; }
+    .option { font-size: 2.8vw; }
+    .footer-info { font-size: 2.2vw; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="bubble-icon"></div>
+  <div class="question" id="question">Question placeholder</div>
+  <div class="options">
+    <div class="option opt-a" id="optA">Option A</div>
+    <div class="option opt-b" id="optB">Option B</div>
+    <div class="option opt-c" id="optC">Option C</div>
+    <div class="option opt-d" id="optD">Option D</div>
+  </div>
+</div>
+<div class="footer-info" id="footerInfo">Event | @BrandName</div>
+<script src="_base.js"></script>
+<script src="webinar-question.js"></script>
+</body>
+</html>

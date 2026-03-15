@@ -1,0 +1,32 @@
+{
+  "name": "TechSkills Academy",
+  "captionTemplate": {
+    "fontFamily": "Outfit, sans-serif",
+    "fontSize": 64,
+    "fontColor": "#F5F5F0",
+    "backgroundColor": "#0E0E12"
+  },
+  "highlightColor": "#F59E0B",
+  "backgroundColor": "#0E0E12",
+  "defaultTransition": "crossfade",
+  "captionPresets": {
+    "default": {
+      "highlightMode": "text",
+      "textTransform": "none"
+    },
+    "pill": {
+      "highlightMode": "pill",
+      "textTransform": "uppercase",
+      "pillColor": "#F59E0B",
+      "pillBorderRadius": 10,
+      "pillPadding": 12
+    },
+    "pill-blue": {
+      "highlightMode": "pill",
+      "textTransform": "uppercase",
+      "pillColor": "#3B82F6",
+      "pillBorderRadius": 10,
+      "pillPadding": 12
+    }
+  }
+}

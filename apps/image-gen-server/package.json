@@ -1,0 +1,19 @@
+{
+  "name": "image-gen-server",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@reelstack/image-gen": "workspace:*",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Myth</title>
+<!--
+  Myth vs reality slide.
+  Params: ?brand=BRAND&number=1&myth=TEXT&reality=TEXT
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .header-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10vh;
+    background: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+
+  .header-text {
+    font-family: var(--brand-font-heading);
+    font-size: 2.6vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 14vh 10vw calc(var(--safe-bottom) + var(--footer-height)) 10vw;
+    text-align: center;
+  }
+
+  .myth-section {
+    margin-bottom: 5vh;
+    width: 100%;
+  }
+
+  .myth-icon {
+    font-size: 5vw;
+    margin-bottom: 2vh;
+  }
+
+  .myth-text {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-muted);
+    line-height: 1.25;
+    text-decoration: line-through;
+    text-decoration-color: var(--brand-error);
+    text-decoration-thickness: 3px;
+    max-width: 75vw;
+    margin: 0 auto;
+  }
+
+  .divider {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--brand-accent), transparent);
+    margin-bottom: 5vh;
+  }
+
+  .reality-section {
+    width: 100%;
+  }
+
+  .reality-label {
+    font-family: var(--brand-font-mono);
+    font-size: 1.6vw;
+    font-weight: 700;
+    color: var(--brand-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2vh;
+  }
+
+  .reality-icon {
+    font-size: 5vw;
+    margin-bottom: 2vh;
+  }
+
+  .reality-text {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-primary);
+    line-height: 1.25;
+    max-width: 75vw;
+    margin: 0 auto;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0; right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-accent);
+    z-index: 2;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .header-text { font-size: 3.2vw; }
+    .reality-label { font-size: 2.2vw; }
+    .footer-name { font-size: 2.6vw; }
+  }
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <span class="header-text" id="headerText">PRZEKONANIE #1</span>
+</div>
+<div class="card">
+  <div class="myth-section">
+    <div class="myth-icon">&#10060;</div>
+    <div class="myth-text" id="mythText">Myth text here</div>
+  </div>
+  <div class="divider"></div>
+  <div class="reality-section">
+    <div class="reality-label">RZECZYWISTOŚĆ:</div>
+    <div class="reality-icon">&#9989;</div>
+    <div class="reality-text" id="realityText">Reality text here</div>
+  </div>
+</div>
+<div class="footer">
+  <span class="footer-name" id="footerName"></span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-myth.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+meta {
+  name: Generate - Slideshow
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "slideshow",
+    "topic": "TypeScript Tips",
+    "language": "en",
+    "brand": "example",
+    "template": "tip-card",
+    "tts": {
+      "provider": "edge-tts",
+      "voice": "en-US-GuyNeural"
+    },
+    "slides": [
+      {"title": "Use Strict Mode", "text": "Enable strict in tsconfig for better type safety.", "badge": "Tip 1"},
+      {"title": "Prefer const", "text": "Use const assertions for literal types.", "badge": "Tip 2"},
+      {"title": "Avoid any", "text": "Use unknown instead of any for type-safe code.", "badge": "Tip 3"}
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+    console.log("Slideshow job:", res.body.data.jobId);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("mode is slideshow", function() {
+    expect(res.body.data.mode).to.equal("slideshow");
+  });
+
+  test("returns jobId", function() {
+    expect(res.body.data.jobId).to.be.a("string");
+  });
+}

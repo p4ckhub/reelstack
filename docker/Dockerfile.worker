@@ -1,0 +1,70 @@
+FROM oven/bun:1.3 AS base
+WORKDIR /app
+
+# Install ffmpeg + Chrome headless shell dependencies (libnspr4, libnss3, etc.)
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+    libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
+    libasound2 libpango-1.0-0 libpangocairo-1.0-0 libx11-xcb1 \
+    libxcb-dri3-0 libdrm2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+FROM base AS deps
+COPY package.json bun.lock bunfig.toml ./
+COPY apps/web/package.json apps/web/
+COPY packages/types/package.json packages/types/
+COPY packages/ffmpeg/package.json packages/ffmpeg/
+COPY packages/database/package.json packages/database/
+COPY packages/queue/package.json packages/queue/
+COPY packages/core/package.json packages/core/
+COPY packages/storage/package.json packages/storage/
+COPY packages/transcription/package.json packages/transcription/
+COPY packages/remotion/package.json packages/remotion/
+COPY packages/tts/package.json packages/tts/
+COPY packages/publisher/package.json packages/publisher/
+COPY packages/logger/package.json packages/logger/
+COPY packages/agent/package.json packages/agent/
+COPY packages/modules/package.json packages/modules/
+COPY packages/image-gen/package.json packages/image-gen/
+RUN bun install
+
+# Build
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
+
+# Production
+FROM base AS runner
+ENV NODE_ENV=production
+RUN groupadd --system --gid 1001 worker && useradd --system --uid 1001 --gid 1001 worker
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/apps/web/src/lib/worker ./apps/web/src/lib/worker
+COPY --from=builder /app/apps/web/src/lib/metrics.ts ./apps/web/src/lib/
+COPY --from=builder /app/apps/web/worker ./apps/web/worker
+COPY --from=builder /app/apps/web/tsconfig.json ./apps/web/
+COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/bun.lock ./
+COPY --from=builder /app/bunfig.toml ./
+# Worker runs as 'worker' (uid 1001). Pre-create dirs that Remotion writes to at runtime.
+# cwd at runtime = /app/apps/web (bun run --cwd apps/web worker)
+# Chrome downloads to {cwd}/node_modules/.remotion
+# Voiceover copied to packages/remotion/public/
+RUN mkdir -p /app/apps/web/node_modules/.remotion /app/packages/remotion/public && \
+    chown -R worker:worker /app/apps/web/node_modules/.remotion && \
+    chown worker:worker /app/packages/remotion/public
+# Install Playwright Chromium for n8n screenshot capture
+# Use shared path accessible to worker user (default goes to /root/.cache which worker can't read)
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright
+RUN mkdir -p /opt/playwright && \
+    bunx playwright install chromium && \
+    chown -R worker:worker /opt/playwright
+
+USER worker
+CMD ["bun", "run", "--cwd", "apps/web", "worker"]

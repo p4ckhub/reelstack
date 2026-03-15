@@ -1,0 +1,52 @@
+meta {
+  name: Generate - Slideshow (Single Word)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "slideshow",
+    "topic": "Science Facts",
+    "language": "en",
+    "brand": "example-light",
+    "template": "quote-card",
+    "highlightMode": "single-word",
+    "tts": {
+      "provider": "edge-tts",
+      "voice": "en-US-JennyNeural"
+    },
+    "slides": [
+      {"title": "", "text": "Your brain uses 20 percent of your total energy.", "badge": "BRAIN"},
+      {"title": "", "text": "Honey never spoils. Still edible after 3000 years.", "badge": "FOOD"},
+      {"title": "", "text": "More chess games than atoms in the universe.", "badge": "MATH"}
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+    console.log("Single-word slideshow job:", res.body.data.jobId);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("mode is slideshow", function() {
+    expect(res.body.data.mode).to.equal("slideshow");
+  });
+}

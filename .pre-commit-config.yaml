@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.93.7
+    hooks:
+      - id: trufflehog
+        name: TruffleHog secret scan
+        entry: trufflehog git file://. --since-commit HEAD --no-verification --fail
+        language: golang
+        pass_filenames: false
+        stages: [pre-commit]
+
+  - repo: local
+    hooks:
+      - id: lint-staged
+        name: lint-staged (ESLint + Prettier on changed files)
+        entry: bunx lint-staged
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: typecheck
+        name: TypeScript type check
+        entry: bash -c 'bun run lint'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: tests
+        name: Run tests
+        entry: bash -c 'bun run test'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

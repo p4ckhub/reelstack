@@ -1,0 +1,6 @@
+.remotion-bundle/
+
+# Mock/test assets for dry-run (generated, not source)
+public/mock-board-*
+public/board-*.png
+public/presenter-loop.mp4

@@ -1,0 +1,25 @@
+meta {
+  name: List Templates
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/image/templates
+  auth: none
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns templates array", function() {
+    expect(res.body.data.templates).to.be.an("array");
+    expect(res.body.data.templates.length).to.be.greaterThan(0);
+  });
+
+  test("includes tip-card", function() {
+    expect(res.body.data.templates).to.include("tip-card");
+  });
+}

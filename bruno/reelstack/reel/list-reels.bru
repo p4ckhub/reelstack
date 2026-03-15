@@ -1,0 +1,25 @@
+meta {
+  name: List Reels
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/list
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns array", function() {
+    expect(res.body.data).to.be.an("array");
+  });
+}

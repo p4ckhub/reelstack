@@ -1,0 +1,56 @@
+meta {
+  name: Generate - Full Auto
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "script": "Cześć! Dzisiaj pokażę Ci jak w 60 sekund zautomatyzować swój content na social media. Zacznijmy od najważniejszej rzeczy — planowania.",
+    "style": "dynamic",
+    "layout": "fullscreen",
+    "tts": {
+      "provider": "edge-tts",
+      "language": "pl-PL"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+    console.log("Job created:", res.body.data.jobId, "mode:", res.body.data.mode);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("mode is generate", function() {
+    expect(res.body.data.mode).to.equal("generate");
+  });
+
+  test("returns jobId", function() {
+    expect(res.body.data.jobId).to.be.a("string");
+  });
+
+  test("returns pollUrl", function() {
+    expect(res.body.data.pollUrl).to.match(/\/api\/v1\/reel\/render\//);
+  });
+
+  test("status is queued", function() {
+    expect(res.body.data.status).to.equal("queued");
+  });
+}

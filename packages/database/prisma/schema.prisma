@@ -1,0 +1,209 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  FREE
+  SOLO
+  PRO
+  AGENCY
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id               String             @id @default(uuid())
+  email            String             @unique
+  emailVerified    DateTime?
+  name             String?
+  image            String?
+  password         String?
+  tier             Tier               @default(FREE)
+  tokenBalance     Int                @default(0)
+  preferences      Json?
+  sellfCustomerId  String?            @unique
+  accounts         Account[]
+  sessions         Session[]
+  reelJobs         ReelJob[]
+  templates        Template[]
+  apiKeys          ApiKey[]
+  tokenTransactions TokenTransaction[]
+  auditLogs        AuditLog[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Template {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  style       Json
+  category    String   @default("custom")
+  isPublic    Boolean  @default(false)
+  thumbnail   String?
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isPublic])
+  @@index([isPublic, usageCount])
+  @@index([category])
+}
+
+model ApiKey {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String
+  keyPrefix          String    @unique
+  keyHash            String    @unique
+  scopes             Json      @default("[\"*\"]")
+  rateLimitPerMinute Int       @default(60)
+  isActive           Boolean   @default(true)
+  expiresAt          DateTime?
+  lastUsedAt         DateTime?
+  lastUsedIp         String?
+  usageCount         BigInt    @default(0)
+  revokedAt          DateTime?
+  revokedReason      String?
+  createdAt          DateTime  @default(now())
+
+  @@index([userId])
+  @@index([userId, revokedAt])
+  @@index([keyHash])
+}
+
+model TokenTransaction {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount       Int
+  reason       String
+  sellfOrderId String?  @unique
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // e.g., "tier.upgrade", "apikey.create", "apikey.revoke", "apikey.rotate", "webhook.purchase", "user.login"
+  target    String?  // e.g., the API key ID, tier name, job ID
+  metadata  Json?    // Additional context (old tier, new tier, IP address, etc.)
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model TierConfig {
+  tier            String
+  productSlug     String   @default("reelstack")
+  creditsPerMonth Int
+  maxFileSizeMb   Int
+  maxDurationSec  Int      // -1 = unlimited
+  active          Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+
+  @@id([tier, productSlug])
+  @@index([productSlug])
+}
+
+model CreditPricing {
+  productSlug String
+  action      String   // e.g. "video", "video_multilang", "image"
+  creditCost  Int      @default(1)
+  active      Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@id([productSlug, action])
+}
+
+model ReelJob {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status        JobStatus @default(QUEUED)
+  progress      Int       @default(0)
+  script        String?
+  reelConfig    Json?
+  outputUrl     String?
+  error         String?
+  apiKeyId      String?
+  publishStatus Json?
+  creditCost    Int       @default(10) // Credits consumed by this job
+  callbackUrl   String?   // Webhook URL - POST result when job completes/fails
+  callbackSent  Boolean   @default(false)
+  parentJobId   String?   // For batch jobs - links back to the original batch request
+  language      String?   // ISO language code (e.g., "en", "pl") - for multi-language reels
+  productionMeta Json?    // AI production metadata: plan, prompts, models, generated assets
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, createdAt])
+  @@index([parentJobId])
+}

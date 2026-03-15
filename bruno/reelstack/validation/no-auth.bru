@@ -1,0 +1,27 @@
+meta {
+  name: No Auth - expect 401
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "script": "Test bez autoryzacji"
+  }
+}
+
+tests {
+  test("returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+
+  test("error code UNAUTHORIZED", function() {
+    expect(res.body.error.code).to.equal("UNAUTHORIZED");
+  });
+}

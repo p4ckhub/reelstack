@@ -1,0 +1,37 @@
+meta {
+  name: Captions - No Script or Cues - expect 400
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/captions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "videoUrl": "https://example.com/video.mp4"
+  }
+}
+
+tests {
+  test("returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("error code VALIDATION_ERROR", function() {
+    expect(res.body.error.code).to.equal("VALIDATION_ERROR");
+  });
+
+  test("error mentions script or cues", function() {
+    expect(res.body.error.message.toLowerCase()).to.satisfy(function(msg) {
+      return msg.includes("script") || msg.includes("cues");
+    });
+  });
+}

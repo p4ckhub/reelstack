@@ -1,0 +1,18 @@
+services:
+  image-gen:
+    image: ghcr.io/jurczykpawel/reelstack-image-gen:latest
+    # Or build locally:
+    # build:
+    #   context: ../..
+    #   dockerfile: apps/image-gen-server/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      API_KEY: ${API_KEY:?API_KEY is required}
+      PORT: 8000
+    volumes:
+      - brands:/data/brands
+    restart: unless-stopped
+
+volumes:
+  brands:

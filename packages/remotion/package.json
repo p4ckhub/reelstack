@@ -1,0 +1,62 @@
+{
+  "name": "@reelstack/remotion",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./pipeline": "./src/pipeline/index.ts",
+    "./director": "./src/director/index.ts",
+    "./render": "./src/render/index.ts",
+    "./catalog": "./src/schemas/catalog.ts",
+    "./schemas/caption-cue": "./src/schemas/caption-cue.ts",
+    "./schemas/video-clip-props": "./src/schemas/video-clip-props.ts",
+    "./compositions/VideoClipComposition": "./src/compositions/VideoClipComposition.tsx",
+    "./compositions/registry": "./src/compositions/registry.ts",
+    "./compositions/Root": "./src/compositions/Root.tsx",
+    "./components/CaptionOverlay": "./src/components/CaptionOverlay.tsx",
+    "./components/highlight-modes": "./src/components/highlight-modes.ts",
+    "./components/ScrollStopper": "./src/components/ScrollStopper.tsx",
+    "./effects/registry": "./src/effects/registry.ts",
+    "./effects/schemas": "./src/effects/schemas.ts",
+    "./effects/components/*": "./src/effects/components/*.tsx",
+    "./utils/resolve-media-url": "./src/utils/resolve-media-url.ts",
+    "./utils/compute-entrance": "./src/utils/compute-entrance.ts"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render Reel out/reel.mp4",
+    "render:preview": "remotion render Reel out/reel.mp4 --scale=0.5",
+    "still": "remotion still Reel --frame=0 out/thumbnail.png",
+    "render:test": "tsx scripts/render-test.ts",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@reelstack/core": "workspace:*",
+    "@reelstack/logger": "workspace:*",
+    "@reelstack/transcription": "workspace:*",
+    "@reelstack/tts": "workspace:*",
+    "@reelstack/types": "workspace:*",
+    "@remotion/bundler": "4.0.431",
+    "@remotion/cli": "4.0.431",
+    "@remotion/google-fonts": "4.0.301",
+    "@remotion/lambda": "4.0.431",
+    "@remotion/player": "4.0.431",
+    "@remotion/renderer": "4.0.431",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "4.0.431",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Last Call</title>
+<!--
+  Urgency / last-call card.
+  Params: ?brand=BRAND&banner=TEXT&date=DATE&time=TIME&features=A|B|C
+          &price1=X&price2=Y&cta=CTA_TEXT&logo=/path
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .top-banner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 9vh;
+    background: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+
+  .banner-text {
+    font-family: var(--brand-font-heading);
+    font-size: 2.2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .logo-banner {
+    position: absolute;
+    right: 3vw;
+    height: 4vh;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 12vh var(--safe-right) calc(var(--safe-bottom) + 10vh) var(--safe-left);
+    text-align: center;
+  }
+
+  .date-circle {
+    width: 28vw;
+    height: 28vw;
+    border-radius: 50%;
+    border: 3px solid var(--brand-accent);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 4vh;
+  }
+
+  .date-main {
+    font-family: var(--brand-font-heading);
+    font-size: 5vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-text-primary);
+    line-height: 1.1;
+  }
+
+  .date-time {
+    font-family: var(--brand-font-mono);
+    font-size: 2vw;
+    color: var(--brand-text-secondary);
+    margin-top: 0.5vh;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+    margin-bottom: 4vh;
+  }
+
+  .feature {
+    font-family: var(--brand-font-body);
+    font-size: 2vw;
+    color: var(--brand-text-secondary);
+  }
+
+  .pricing {
+    display: flex;
+    gap: 2vw;
+    margin-bottom: 2vh;
+  }
+
+  .price-pill {
+    font-family: var(--brand-font-body);
+    font-size: 1.8vw;
+    font-weight: 700;
+    padding: 1.5vh 3.5vw;
+    border-radius: 100px;
+  }
+
+  .price-pill.outline {
+    border: 2px solid var(--brand-border);
+    color: var(--brand-text-primary);
+    background: transparent;
+  }
+
+  .price-pill.filled {
+    background: var(--brand-cta);
+    border: 2px solid var(--brand-cta);
+    color: var(--brand-cta-text);
+  }
+
+  .cta-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 9vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-cta);
+    z-index: 2;
+  }
+
+  .cta-text {
+    font-family: var(--brand-font-heading);
+    font-size: 2.4vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-cta-text);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .banner-text { font-size: 2.8vw; }
+    .date-circle { width: 34vw; height: 34vw; }
+    .date-main { font-size: 6vw; }
+    .date-time { font-size: 2.8vw; }
+    .feature { font-size: 2.8vw; }
+    .price-pill { font-size: 2.4vw; }
+    .cta-text { font-size: 3vw; }
+  }
+</style>
+</head>
+<body>
+<div class="top-banner">
+  <span class="banner-text" id="bannerText">Banner text</span>
+  <img id="logoBanner" class="logo-banner" style="display:none">
+</div>
+<div class="card">
+  <div class="date-circle">
+    <div class="date-main" id="dateMain">DATA</div>
+    <div class="date-time" id="dateTime">godz. HH:MM</div>
+  </div>
+  <div class="features" id="features">
+    <div class="feature">Feature 1</div>
+    <div class="feature">Feature 2</div>
+    <div class="feature">Feature 3</div>
+  </div>
+  <div class="pricing">
+    <span class="price-pill outline" id="price1">Wariant A</span>
+    <span class="price-pill filled" id="price2">Wariant B</span>
+  </div>
+</div>
+<div class="cta-bar">
+  <span class="cta-text" id="ctaText">CTA TEXT</span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-lastcall.js"></script>
+</body>
+</html>

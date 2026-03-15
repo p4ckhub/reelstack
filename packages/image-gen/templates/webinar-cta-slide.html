@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar CTA Slide</title>
+<!--
+  Call-to-action slide for carousels.
+  Params: ?brand=BRAND&title=TITLE&subtitle=SUB&price=PRICE&cta=CTA_TEXT&logo=/path
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + 10vh) var(--safe-left);
+    text-align: center;
+  }
+
+  .logo {
+    height: 10vh;
+    object-fit: contain;
+    margin-bottom: 5vh;
+  }
+
+  .title {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    max-width: 80vw;
+    margin-bottom: 2.5vh;
+  }
+
+  .subtitle {
+    font-family: var(--brand-font-body);
+    font-size: 2.2vw;
+    color: var(--brand-text-secondary);
+    margin-bottom: 1.5vh;
+  }
+
+  .price {
+    font-family: var(--brand-font-mono);
+    font-size: 1.8vw;
+    color: var(--brand-accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 3vh;
+  }
+
+  .cta-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 9vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-cta);
+    z-index: 2;
+  }
+
+  .cta-text {
+    font-family: var(--brand-font-heading);
+    font-size: 2.4vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-cta-text);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .logo { height: 8vh; }
+    .subtitle { font-size: 3vw; }
+    .price { font-size: 2.6vw; }
+    .cta-text { font-size: 3vw; }
+  }
+  @media (min-aspect-ratio: 4/3) {
+    .subtitle { font-size: 1.8vw; }
+    .price { font-size: 1.5vw; }
+    .cta-text { font-size: 1.8vw; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <img id="logo" class="logo" style="display:none">
+  <div class="title" id="title">Title</div>
+  <div class="subtitle" id="subtitle"></div>
+  <div class="price" id="price"></div>
+</div>
+<div class="cta-bar">
+  <span class="cta-text" id="ctaText">CTA TEXT</span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-cta-slide.js"></script>
+</body>
+</html>

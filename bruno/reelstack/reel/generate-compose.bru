@@ -1,0 +1,65 @@
+meta {
+  name: Generate - Compose (user assets)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "script": "Pokażę Ci dashboard analityczny który zbudowałem. Tutaj widać sprzedaż z ostatnich 30 dni. Konwersja wynosi 3.2% co jest świetnym wynikiem.",
+    "style": "educational",
+    "layout": "fullscreen",
+    "assets": [
+      {
+        "id": "talking-head",
+        "url": "https://example.com/recording.mp4",
+        "type": "video",
+        "description": "Talking head - mówię do kamery",
+        "durationSeconds": 30,
+        "isPrimary": true
+      },
+      {
+        "id": "dashboard-screenshot",
+        "url": "https://example.com/dashboard.png",
+        "type": "image",
+        "description": "Screenshot dashboardu analitycznego z wykresem sprzedaży"
+      }
+    ],
+    "directorNotes": "Pokaż screenshot dashboardu gdy mówię o analityce i konwersji",
+    "tts": {
+      "provider": "edge-tts",
+      "language": "pl-PL"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+    console.log("Compose job:", res.body.data.jobId);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("mode is compose", function() {
+    expect(res.body.data.mode).to.equal("compose");
+  });
+
+  test("returns jobId", function() {
+    expect(res.body.data.jobId).to.be.a("string");
+  });
+}

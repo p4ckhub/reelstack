@@ -1,0 +1,47 @@
+meta {
+  name: Captions - From Script (TTS)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/captions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "videoUrl": "https://example.com/raw-video.mp4",
+    "script": "To jest mój gotowy film. Teraz tylko nakładam napisy i efekty.",
+    "style": "calm",
+    "tts": {
+      "provider": "edge-tts",
+      "language": "pl-PL"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("jobId", res.body.data.jobId);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("mode is captions", function() {
+    expect(res.body.data.mode).to.equal("captions");
+  });
+
+  test("captionsMode is script", function() {
+    expect(res.body.data.captionsMode).to.equal("script");
+  });
+}

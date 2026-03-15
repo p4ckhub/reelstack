@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Point</title>
+<!--
+  Numbered point slide for carousels.
+  Params: ?brand=BRAND&number=1&title=TITLE&text=DESC
+  Optional: &color=#hex (overrides accent circle + footer)
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height)) var(--safe-left);
+    text-align: center;
+  }
+
+  .num-circle {
+    width: 12vw;
+    height: 12vw;
+    border-radius: 50%;
+    background: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5vh;
+  }
+
+  .num-text {
+    font-family: var(--brand-font-heading);
+    font-size: 5vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-bg-primary);
+    line-height: 1;
+  }
+
+  .title {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    max-width: 80vw;
+    margin-bottom: 3vh;
+  }
+
+  .description {
+    font-family: var(--brand-font-body);
+    font-size: 2vw;
+    color: var(--brand-text-secondary);
+    line-height: 1.6;
+    max-width: 70vw;
+  }
+
+  .accent-bar {
+    position: absolute;
+    bottom: calc(var(--footer-bottom) + var(--footer-height));
+    left: 0; right: 0;
+    height: 3px;
+    background: var(--brand-cta);
+  }
+
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0; right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-accent);
+    z-index: 2;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 2vw;
+    font-weight: var(--brand-heading-weight);
+    color: var(--brand-bg-primary);
+    letter-spacing: 0.03em;
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .num-circle { width: 16vw; height: 16vw; }
+    .num-text { font-size: 7vw; }
+    .description { font-size: 2.8vw; }
+    .footer-name { font-size: 2.6vw; }
+  }
+  @media (min-aspect-ratio: 4/3) {
+    .num-circle { width: 10vw; height: 10vw; }
+    .num-text { font-size: 4vw; }
+    .description { font-size: 1.6vw; }
+    .footer-name { font-size: 1.8vw; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="num-circle">
+    <span class="num-text" id="numText">#1</span>
+  </div>
+  <div class="title" id="title">Point title</div>
+  <div class="description" id="description"></div>
+</div>
+<div class="accent-bar"></div>
+<div class="footer">
+  <span class="footer-name" id="footerName"></span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-point.js"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080">
+<title>Webinar Program</title>
+<!--
+  Program section slide.
+  Params: ?brand=BRAND&number=1&duration=TEXT&title=TITLE&text=DESC
+  Optional: &color=#hex (overrides circle + accent bar)
+-->
+<link rel="stylesheet" href="_base.css">
+<link id="brand-css" rel="stylesheet" href="">
+<style>
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: var(--safe-top) 10vw calc(var(--safe-bottom) + var(--footer-height)) 10vw;
+  }
+
+  .top-row {
+    display: flex;
+    align-items: center;
+    gap: 3vw;
+    margin-bottom: 2vh;
+  }
+
+  .num-circle {
+    width: 14vw;
+    height: 14vw;
+    border-radius: 50%;
+    background: var(--brand-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .num-text {
+    font-family: var(--brand-font-heading);
+    font-size: 6vw;
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-bg-primary);
+  }
+
+  .duration {
+    font-family: var(--brand-font-mono);
+    font-size: 1.8vw;
+    color: var(--brand-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 2vw;
+  }
+
+  .title {
+    font-family: var(--brand-font-heading);
+    font-weight: var(--brand-heading-weight-heavy);
+    color: var(--brand-text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin-bottom: 3vh;
+  }
+
+  .description {
+    font-family: var(--brand-font-body);
+    font-size: 2.2vw;
+    color: var(--brand-text-secondary);
+    line-height: 1.7;
+  }
+
+  .accent-bar {
+    position: absolute;
+    bottom: calc(var(--footer-bottom) + var(--footer-height));
+    left: 0; right: 0;
+    height: 4px;
+    background: var(--brand-accent);
+  }
+
+  .footer {
+    position: absolute;
+    bottom: var(--footer-bottom);
+    left: 0; right: 0;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-bg-secondary);
+    border-top: 1px solid var(--brand-border);
+    z-index: 2;
+  }
+
+  .footer-name {
+    font-family: var(--brand-font-heading);
+    font-size: 1.6vw;
+    font-weight: 600;
+    color: var(--brand-text-secondary);
+  }
+
+  @media (max-aspect-ratio: 3/4) {
+    .num-circle { width: 18vw; height: 18vw; }
+    .num-text { font-size: 8vw; }
+    .duration { font-size: 2.4vw; }
+    .description { font-size: 2.8vw; }
+    .footer-name { font-size: 2.2vw; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top-row">
+    <div class="num-circle">
+      <span class="num-text" id="numText">1</span>
+    </div>
+    <div class="duration" id="duration">SECTION (XX MIN)</div>
+  </div>
+  <div class="content-area">
+    <div class="title" id="title">Program title</div>
+    <div class="description" id="description"></div>
+  </div>
+</div>
+<div class="accent-bar" id="accentBar"></div>
+<div class="footer">
+  <span class="footer-name" id="footerName"></span>
+</div>
+<script src="_base.js"></script>
+<script src="webinar-program.js"></script>
+</body>
+</html>

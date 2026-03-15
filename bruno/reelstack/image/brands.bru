@@ -1,0 +1,25 @@
+meta {
+  name: List Brands
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/image/brands
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns brands array", function() {
+    expect(res.body.data.brands).to.be.an("array");
+    expect(res.body.data.brands.length).to.be.greaterThan(0);
+  });
+}

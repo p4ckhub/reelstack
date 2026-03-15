@@ -1,0 +1,39 @@
+# Dependencies (** required - matches node_modules at all levels of monorepo)
+**/node_modules/
+.pnpm-store/
+
+# Build artifacts
+**/.next/
+dist/
+out/
+.turbo/
+
+# Version control
+.git/
+.gitignore
+
+# Environment (secrets) - catch all .env variants at every level
+**/.env
+**/.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Misc
+*.log
+*.tsbuildinfo
+*.md
+!package.json

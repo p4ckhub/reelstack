@@ -1,0 +1,36 @@
+meta {
+  name: Poll Job Status
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("has job status", function() {
+    expect(["queued", "processing", "completed", "failed"]).to.include(res.body.data.status);
+  });
+
+  test("has progress", function() {
+    expect(res.body.data.progress).to.be.a("number");
+  });
+
+  test("completed job has outputUrl", function() {
+    if (res.body.data.status === "completed") {
+      expect(res.body.data.outputUrl).to.be.a("string");
+      expect(res.body.data.downloadUrl).to.be.a("string");
+    }
+  });
+}

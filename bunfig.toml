@@ -1,0 +1,4 @@
+[install]
+# Use classic node_modules layout instead of Bun's .bun/ flat structure.
+# Required for webpack (used by @remotion/bundler) to resolve modules correctly.
+node-modules-dir = "classic"

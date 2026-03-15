@@ -1,0 +1,52 @@
+meta {
+  name: Batch Generate
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/batch
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "reels": [
+      {
+        "script": "Reel numer jeden — krótkie intro.",
+        "style": "calm",
+        "tts": { "provider": "edge-tts", "language": "pl-PL" }
+      },
+      {
+        "script": "Reel numer dwa — dynamiczna wersja.",
+        "style": "dynamic",
+        "tts": { "provider": "edge-tts", "language": "pl-PL" }
+      }
+    ],
+    "callbackUrl": "https://webhook.site/your-id-here"
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("has batchId", function() {
+    expect(res.body.data.batchId).to.be.a("string");
+  });
+
+  test("total matches input", function() {
+    expect(res.body.data.total).to.equal(2);
+  });
+
+  test("all queued", function() {
+    expect(res.body.data.queued).to.equal(2);
+    expect(res.body.data.failed).to.equal(0);
+  });
+}

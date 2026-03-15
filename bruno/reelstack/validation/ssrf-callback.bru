@@ -1,0 +1,32 @@
+meta {
+  name: SSRF - Private Callback URL - expect 400
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "script": "Test SSRF protection",
+    "callbackUrl": "https://192.168.1.1/internal-webhook"
+  }
+}
+
+tests {
+  test("returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("error code VALIDATION_ERROR", function() {
+    expect(res.body.error.code).to.equal("VALIDATION_ERROR");
+  });
+}

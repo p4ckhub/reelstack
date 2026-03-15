@@ -1,0 +1,36 @@
+{
+  "name": "@reelstack/modules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./remotion": "./src/remotion/index.ts"
+  },
+  "dependencies": {
+    "@reelstack/agent": "workspace:*",
+    "@reelstack/image-gen": "workspace:*",
+    "@reelstack/logger": "workspace:*",
+    "@reelstack/remotion": "workspace:*",
+    "@reelstack/storage": "workspace:*",
+    "@reelstack/transcription": "workspace:*",
+    "@reelstack/tts": "workspace:*",
+    "@reelstack/types": "workspace:*",
+    "react": "19.2.4",
+    "remotion": "4.0.431",
+    "playwright": "^1.58.2",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
