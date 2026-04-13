@@ -1,33 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  prismaMockFactory,
+  mockUserFindUnique,
+  mockUserUpsert,
+  mockReelJobAggregate,
+} from './prisma-mock';
 
-// Mock PrismaClient
-const mockUserFindUnique = vi.fn();
-const mockUserFindFirst = vi.fn();
-const mockUserUpsert = vi.fn();
-const mockReelJobAggregate = vi.fn();
+vi.mock('@prisma/client', prismaMockFactory);
 
-vi.mock('@prisma/client', () => {
-  const mockInstance = {
-    user: {
-      findUnique: mockUserFindUnique,
-      findFirst: mockUserFindFirst,
-      upsert: mockUserUpsert,
-    },
-    reelJob: {
-      aggregate: mockReelJobAggregate,
-    },
-  };
-  return {
-    PrismaClient: class { constructor() { return mockInstance; } },
-  };
-});
-
-const {
-  getUserByEmail,
-  getUserById,
-  upsertUser,
-  getMonthlyCreditsUsed,
-} = await import('../index');
+const { getUserByEmail, getUserById, upsertUser, getMonthlyCreditsUsed } = await import('../index');
 
 describe('User helpers', () => {
   beforeEach(() => vi.clearAllMocks());

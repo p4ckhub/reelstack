@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { syntheticTranscribe } from '../pipeline/transcribe';
 
 describe('syntheticTranscribe', () => {
@@ -77,20 +77,22 @@ describe('whisper.cpp token merging', () => {
 
     // Simulate whisper.cpp JSON: " C" + "ze" + "ść" + "!" + " Dz" + "isiaj"
     const json = {
-      transcription: [{
-        timestamps: { from: '00:00:00,000', to: '00:00:02,000' },
-        offsets: { from: 0, to: 2000 },
-        text: ' Cześć! Dzisiaj',
-        tokens: [
-          { text: '[_BEG_]', timestamps: { from: '0', to: '0' }, offsets: { from: 0, to: 0 } },
-          { text: ' C', timestamps: { from: '0', to: '0' }, offsets: { from: 50, to: 50 } },
-          { text: 'ze', timestamps: { from: '0', to: '0' }, offsets: { from: 160, to: 160 } },
-          { text: 'ść', timestamps: { from: '0', to: '0' }, offsets: { from: 200, to: 380 } },
-          { text: '!', timestamps: { from: '0', to: '0' }, offsets: { from: 380, to: 470 } },
-          { text: ' Dz', timestamps: { from: '0', to: '0' }, offsets: { from: 530, to: 590 } },
-          { text: 'isiaj', timestamps: { from: '0', to: '0' }, offsets: { from: 710, to: 930 } },
-        ],
-      }],
+      transcription: [
+        {
+          timestamps: { from: '00:00:00,000', to: '00:00:02,000' },
+          offsets: { from: 0, to: 2000 },
+          text: ' Cześć! Dzisiaj',
+          tokens: [
+            { text: '[_BEG_]', timestamps: { from: '0', to: '0' }, offsets: { from: 0, to: 0 } },
+            { text: ' C', timestamps: { from: '0', to: '0' }, offsets: { from: 50, to: 50 } },
+            { text: 'ze', timestamps: { from: '0', to: '0' }, offsets: { from: 160, to: 160 } },
+            { text: 'ść', timestamps: { from: '0', to: '0' }, offsets: { from: 200, to: 380 } },
+            { text: '!', timestamps: { from: '0', to: '0' }, offsets: { from: 380, to: 470 } },
+            { text: ' Dz', timestamps: { from: '0', to: '0' }, offsets: { from: 530, to: 590 } },
+            { text: 'isiaj', timestamps: { from: '0', to: '0' }, offsets: { from: 710, to: 930 } },
+          ],
+        },
+      ],
     };
 
     const result = parseWhisperCppJson(json);
@@ -102,20 +104,22 @@ describe('whisper.cpp token merging', () => {
   });
 
   it('handles " ur" + "uch" + "omi" + "ć" → "uruchomić"', async () => {
-    const { parseWhisperCppJson } = await import('../pipeline/transcribe') as any;
+    const { parseWhisperCppJson } = (await import('../pipeline/transcribe')) as any;
     const json = {
-      transcription: [{
-        timestamps: { from: '0', to: '0' },
-        offsets: { from: 0, to: 2500 },
-        text: ' jak uruchomić',
-        tokens: [
-          { text: ' jak', timestamps: { from: '0', to: '0' }, offsets: { from: 1640, to: 1840 } },
-          { text: ' ur', timestamps: { from: '0', to: '0' }, offsets: { from: 1840, to: 1870 } },
-          { text: 'uch', timestamps: { from: '0', to: '0' }, offsets: { from: 2030, to: 2170 } },
-          { text: 'omi', timestamps: { from: '0', to: '0' }, offsets: { from: 2170, to: 2370 } },
-          { text: 'ć', timestamps: { from: '0', to: '0' }, offsets: { from: 2370, to: 2490 } },
-        ],
-      }],
+      transcription: [
+        {
+          timestamps: { from: '0', to: '0' },
+          offsets: { from: 0, to: 2500 },
+          text: ' jak uruchomić',
+          tokens: [
+            { text: ' jak', timestamps: { from: '0', to: '0' }, offsets: { from: 1640, to: 1840 } },
+            { text: ' ur', timestamps: { from: '0', to: '0' }, offsets: { from: 1840, to: 1870 } },
+            { text: 'uch', timestamps: { from: '0', to: '0' }, offsets: { from: 2030, to: 2170 } },
+            { text: 'omi', timestamps: { from: '0', to: '0' }, offsets: { from: 2170, to: 2370 } },
+            { text: 'ć', timestamps: { from: '0', to: '0' }, offsets: { from: 2370, to: 2490 } },
+          ],
+        },
+      ],
     };
 
     const result = parseWhisperCppJson(json);
@@ -123,22 +127,38 @@ describe('whisper.cpp token merging', () => {
   });
 });
 
+vi.mock('child_process', () => ({
+  execFileSync: vi.fn(() => {
+    throw new Error('not found');
+  }),
+}));
+
 describe('transcribeAudio fallback', () => {
+  const savedOpenaiKey = process.env.OPENAI_API_KEY;
+  const savedOpenrouterKey = process.env.OPENROUTER_API_KEY;
+
   beforeEach(() => {
-    vi.unstubAllEnvs();
-    // Prevent whisper-cli from running on this machine
-    vi.mock('child_process', async (importOriginal) => {
-      const orig = await importOriginal<typeof import('child_process')>();
-      return {
-        ...orig,
-        execFileSync: vi.fn(() => { throw new Error('not found'); }),
-      };
-    });
+    process.env.OPENAI_API_KEY = savedOpenaiKey ?? '';
+    process.env.OPENROUTER_API_KEY = savedOpenrouterKey ?? '';
+  });
+
+  afterEach(() => {
+    // Restore original env
+    if (savedOpenaiKey !== undefined) {
+      process.env.OPENAI_API_KEY = savedOpenaiKey;
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+    if (savedOpenrouterKey !== undefined) {
+      process.env.OPENROUTER_API_KEY = savedOpenrouterKey;
+    } else {
+      delete process.env.OPENROUTER_API_KEY;
+    }
   });
 
   it('uses synthetic timing when no API key but text provided', async () => {
-    vi.stubEnv('OPENAI_API_KEY', '');
-    vi.stubEnv('OPENROUTER_API_KEY', '');
+    process.env.OPENAI_API_KEY = '';
+    process.env.OPENROUTER_API_KEY = '';
 
     const { transcribeAudio } = await import('../pipeline/transcribe');
 
@@ -154,7 +174,7 @@ describe('transcribeAudio fallback', () => {
   });
 
   it('throws when no API key and no text', async () => {
-    vi.stubEnv('OPENAI_API_KEY', '');
+    process.env.OPENAI_API_KEY = '';
 
     const { transcribeAudio } = await import('../pipeline/transcribe');
 

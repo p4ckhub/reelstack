@@ -54,13 +54,10 @@ export default function LandingPage() {
         <div className="mx-auto mb-6 w-fit rounded-full border px-4 py-1 text-sm text-muted-foreground">
           Script &rarr; TTS &rarr; Captions &rarr; Reel
         </div>
-        <h1 className="text-5xl font-bold tracking-tight">
-          Programmatic Video Pipeline
-        </h1>
+        <h1 className="text-5xl font-bold tracking-tight">Programmatic Video Pipeline</h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Generate reels and YouTube videos from text. Automated voiceover,
-          word-level karaoke captions, B-roll, transitions, and effects.
-          All from code or API.
+          Generate reels and YouTube videos from text. Automated voiceover, word-level karaoke
+          captions, B-roll, transitions, and effects. All from code or API.
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Link
@@ -69,10 +66,7 @@ export default function LandingPage() {
           >
             Create Your First Reel
           </Link>
-          <Link
-            href="/pricing"
-            className="rounded-md border px-6 py-3 font-medium hover:bg-muted"
-          >
+          <Link href="/pricing" className="rounded-md border px-6 py-3 font-medium hover:bg-muted">
             View Pricing
           </Link>
         </div>
@@ -84,30 +78,22 @@ export default function LandingPage() {
           <div className="rounded-md bg-background p-4">
             <div className="text-2xl">1</div>
             <p className="mt-1 font-medium">Write Script</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Plain text, any language
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Plain text, any language</p>
           </div>
           <div className="rounded-md bg-background p-4">
             <div className="text-2xl">2</div>
             <p className="mt-1 font-medium">Generate Voice</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Edge TTS, ElevenLabs, or OpenAI
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Edge TTS, ElevenLabs, or OpenAI</p>
           </div>
           <div className="rounded-md bg-background p-4">
             <div className="text-2xl">3</div>
             <p className="mt-1 font-medium">Auto Captions</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              whisper.cpp word-level timing
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">whisper.cpp word-level timing</p>
           </div>
           <div className="rounded-md bg-background p-4">
             <div className="text-2xl">4</div>
             <p className="mt-1 font-medium">Render Video</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Remotion + effects = MP4
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Remotion + effects = MP4</p>
           </div>
         </div>
       </section>
@@ -117,9 +103,7 @@ export default function LandingPage() {
         {features.map((feature) => (
           <div key={feature.title} className="rounded-lg border p-6">
             <h3 className="font-semibold">{feature.title}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {feature.description}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
           </div>
         ))}
       </section>
@@ -141,10 +125,7 @@ export default function LandingPage() {
             { name: 'Lower Thirds', desc: 'Name tags and context' },
             { name: 'CTA Overlays', desc: 'Buttons and pills' },
           ].map((effect) => (
-            <div
-              key={effect.name}
-              className="rounded-md border px-4 py-3"
-            >
+            <div key={effect.name} className="rounded-md border px-4 py-3">
               <p className="font-medium">{effect.name}</p>
               <p className="text-xs text-muted-foreground">{effect.desc}</p>
             </div>

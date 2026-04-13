@@ -39,16 +39,17 @@ export const CtaOverlay: React.FC<CtaOverlayProps> = ({ segment }) => {
 
   // Exit fade
   const exitDuration = Math.round(0.3 * fps);
-  const exitOpacity = interpolate(
-    frame,
-    [endFrame - exitDuration, endFrame],
-    [1, 0],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const exitOpacity = interpolate(frame, [endFrame - exitDuration, endFrame], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   const positionStyle: React.CSSProperties = {};
   if (position === 'bottom') positionStyle.bottom = '15%';
-  if (position === 'center') { positionStyle.top = '50%'; positionStyle.transform = 'translateY(-50%)'; }
+  if (position === 'center') {
+    positionStyle.top = '50%';
+    positionStyle.transform = 'translateY(-50%)';
+  }
   if (position === 'top') positionStyle.top = '15%';
 
   const displayText = icon ? `${icon} ${text}` : text;

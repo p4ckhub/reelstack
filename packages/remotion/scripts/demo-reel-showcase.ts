@@ -25,7 +25,7 @@ const REMOTION_PKG_DIR = path.resolve(__dirname, '..');
  * Evenly distributes time across words in each cue.
  */
 function buildKaraokeCues(
-  cues: Array<{ id: string; text: string; startTime: number; endTime: number }>,
+  cues: Array<{ id: string; text: string; startTime: number; endTime: number }>
 ) {
   return cues.map((cue) => {
     const words = cue.text.split(' ');

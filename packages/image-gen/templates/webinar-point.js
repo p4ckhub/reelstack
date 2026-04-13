@@ -1,5 +1,6 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, brandName = ctx.brandName;
+  var params = ctx.params,
+    brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
   var number = params.get('number');
@@ -17,7 +18,14 @@ initTemplate(function (ctx) {
     document.querySelector('.footer').style.background = color;
   }
 
-  autoSizeText(document.getElementById('title'), [
-    [30, 5], [60, 4], [100, 3.2], [Infinity, 2.6]
-  ], 0.25);
+  autoSizeText(
+    document.getElementById('title'),
+    [
+      [30, 5],
+      [60, 4],
+      [100, 3.2],
+      [Infinity, 2.6],
+    ],
+    0.25
+  );
 });

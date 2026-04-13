@@ -58,10 +58,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       // Rate-limit magic link requests: 5 per 10 minutes per email
       if (account?.provider === 'nodemailer' && user.email) {
-        const rl = await rateLimit(
-          `magic-link:${user.email}`,
-          { maxRequests: 5, windowMs: 10 * 60 * 1000 },
-        );
+        const rl = await rateLimit(`magic-link:${user.email}`, {
+          maxRequests: 5,
+          windowMs: 10 * 60 * 1000,
+        });
         if (!rl.success) {
           log.warn({ email: user.email }, 'Magic link rate limit exceeded');
           return false;

@@ -1,5 +1,6 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, brandName = ctx.brandName;
+  var params = ctx.params,
+    brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
   var badge = params.get('badge');
@@ -18,7 +19,14 @@ initTemplate(function (ctx) {
   if (!date) document.getElementById('date').style.display = 'none';
   if (!cta) document.getElementById('cta').style.display = 'none';
 
-  autoSizeText(document.getElementById('title'), [
-    [30, 5.5], [60, 4.5], [100, 3.8], [Infinity, 3]
-  ], 0.35);
+  autoSizeText(
+    document.getElementById('title'),
+    [
+      [30, 5.5],
+      [60, 4.5],
+      [100, 3.8],
+      [Infinity, 3],
+    ],
+    0.35
+  );
 });

@@ -37,7 +37,7 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [reels, setReels] = useState<ReelJobItem[]>([]);
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         .then((res) => (res.ok ? res.json() : null))
         .then((resp) => setUsage(resp?.data ?? null)),
     ])
-      .catch(err => console.warn('[dashboard] request failed:', err))
+      .catch((err) => console.warn('[dashboard] request failed:', err))
       .finally(() => setLoading(false));
   }, []);
 

@@ -83,7 +83,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
       const end = formatTime(cue.endTime, 'ass');
 
       // If cue has per-word timing and karaoke animation, generate \kf tags
-      if (cue.words && cue.words.length > 0 && cue.animationStyle === 'karaoke') {
+      if (cue.words && cue.words.length > 0 && style.animationStyle === 'karaoke') {
         const karaokeText = cue.words
           .map((word) => {
             // \kf uses centiseconds (1/100 s)

@@ -26,7 +26,11 @@ export class BullMQQueueAdapter implements QueueAdapter {
     return queue;
   }
 
-  async enqueue(jobId: string, payload: Record<string, unknown>, queueName?: QueueName): Promise<void> {
+  async enqueue(
+    jobId: string,
+    payload: Record<string, unknown>,
+    queueName?: QueueName
+  ): Promise<void> {
     const queue = this.getQueue(queueName);
     try {
       await queue.add(queueName ?? 'render', payload, {
@@ -70,7 +74,7 @@ export class BullMQQueueAdapter implements QueueAdapter {
   }
 
   async close(): Promise<void> {
-    const closePromises = Array.from(this.queues.values()).map(q => q.close());
+    const closePromises = Array.from(this.queues.values()).map((q) => q.close());
     await Promise.all(closePromises);
     this.queues.clear();
   }

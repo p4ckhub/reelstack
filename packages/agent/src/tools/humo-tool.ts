@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { ProductionTool } from '../registry/tool-interface';
-import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob, AssetGenerationStatus } from '../types';
+import type {
+  ToolCapability,
+  AssetGenerationRequest,
+  AssetGenerationJob,
+  AssetGenerationStatus,
+} from '../types';
 import { createLogger } from '@reelstack/logger';
+import { addCost } from '../context';
+import { calculateToolCost } from '../config/pricing';
 
 const log = createLogger('humo-tool');
 
@@ -86,17 +93,32 @@ HuMo 1.7B is a ByteDance talking-avatar model.
 
   async generate(request: AssetGenerationRequest): Promise<AssetGenerationJob> {
     if (!this.apiKey || !this.endpointId) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'RUNPOD_API_KEY or HUMO_RUNPOD_ENDPOINT_ID not set' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'RUNPOD_API_KEY or HUMO_RUNPOD_ENDPOINT_ID not set',
+      };
     }
 
     // avatarId doubles as image URL for this tool
     const imageUrl = request.avatarId ?? process.env.HUMO_DEFAULT_IMAGE_URL;
     if (!imageUrl) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'No image URL: set avatarId in request or HUMO_DEFAULT_IMAGE_URL env var' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'No image URL: set avatarId in request or HUMO_DEFAULT_IMAGE_URL env var',
+      };
     }
 
     if (!request.script && !request.prompt) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'script or prompt is required' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'script or prompt is required',
+      };
     }
 
     const body = {
@@ -122,27 +144,50 @@ HuMo 1.7B is a ByteDance talking-avatar model.
 
       if (!res.ok) {
         const errText = await res.text();
-        log.warn({ status: res.status, errPreview: errText.substring(0, 200) }, 'humo runpod submit failed');
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `RunPod API error (${res.status})` };
+        log.warn(
+          { status: res.status, errPreview: errText.substring(0, 200) },
+          'humo runpod submit failed'
+        );
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: `RunPod API error (${res.status})`,
+        };
       }
 
       const data = (await res.json()) as RunPodJobResponse;
 
       if (!data.id) {
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'No job ID returned from RunPod' };
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: 'No job ID returned from RunPod',
+        };
       }
 
       log.info({ runpodJobId: data.id }, 'HuMo job submitted to RunPod');
       return { jobId: data.id, toolId: this.id, status: 'processing' };
     } catch (err) {
       log.warn({ err }, 'humo generate error');
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `RunPod request failed: ${err instanceof Error ? err.message : 'unknown'}` };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: `RunPod request failed: ${err instanceof Error ? err.message : 'unknown'}`,
+      };
     }
   }
 
   async poll(jobId: string): Promise<AssetGenerationStatus> {
     if (!this.apiKey || !this.endpointId) {
-      return { jobId, toolId: this.id, status: 'failed', error: 'RUNPOD_API_KEY or HUMO_RUNPOD_ENDPOINT_ID not set' };
+      return {
+        jobId,
+        toolId: this.id,
+        status: 'failed',
+        error: 'RUNPOD_API_KEY or HUMO_RUNPOD_ENDPOINT_ID not set',
+      };
     }
 
     if (!safeId(jobId)) {
@@ -150,11 +195,14 @@ HuMo 1.7B is a ByteDance talking-avatar model.
     }
 
     try {
-      const res = await fetch(`${RUNPOD_BASE}/${this.endpointId}/status/${encodeURIComponent(jobId)}`, {
-        headers: { Authorization: `Bearer ${this.apiKey}` },
-        redirect: 'error',
-        signal: AbortSignal.timeout(10_000),
-      });
+      const res = await fetch(
+        `${RUNPOD_BASE}/${this.endpointId}/status/${encodeURIComponent(jobId)}`,
+        {
+          headers: { Authorization: `Bearer ${this.apiKey}` },
+          redirect: 'error',
+          signal: AbortSignal.timeout(10_000),
+        }
+      );
 
       if (!res.ok) {
         log.warn({ jobId, status: res.status }, 'humo poll failed');
@@ -175,8 +223,20 @@ HuMo 1.7B is a ByteDance talking-avatar model.
       if (data.status === 'COMPLETED') {
         const videoUrl = data.output?.video_url;
         if (!videoUrl) {
-          return { jobId, toolId: this.id, status: 'failed', error: 'COMPLETED but no video_url in output' };
+          return {
+            jobId,
+            toolId: this.id,
+            status: 'failed',
+            error: 'COMPLETED but no video_url in output',
+          };
         }
+        addCost({
+          step: `asset:${this.id}`,
+          provider: 'humo',
+          type: 'video',
+          costUSD: calculateToolCost(this.id),
+          inputUnits: 1,
+        });
         return {
           jobId,
           toolId: this.id,

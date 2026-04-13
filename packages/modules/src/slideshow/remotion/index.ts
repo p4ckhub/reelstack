@@ -16,9 +16,7 @@ const DEFAULT_DURATION_SECONDS = 15;
  * Dynamically set composition duration from props.durationSeconds.
  * Falls back to cue end times or DEFAULT_DURATION_SECONDS.
  */
-const calculateSlideshowMetadata: CalculateMetadataFunction<SlideshowProps> = async ({
-  props,
-}) => {
+const calculateSlideshowMetadata: CalculateMetadataFunction<SlideshowProps> = async ({ props }) => {
   const durations: number[] = [];
 
   if (props.durationSeconds) {
@@ -36,9 +34,7 @@ const calculateSlideshowMetadata: CalculateMetadataFunction<SlideshowProps> = as
   }
 
   const maxDuration =
-    durations.length > 0
-      ? Math.max(MIN_DURATION_SECONDS, ...durations)
-      : DEFAULT_DURATION_SECONDS;
+    durations.length > 0 ? Math.max(MIN_DURATION_SECONDS, ...durations) : DEFAULT_DURATION_SECONDS;
 
   return {
     fps: FPS,

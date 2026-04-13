@@ -11,7 +11,7 @@
  *
  * Run AFTER planning, BEFORE asset generation.
  */
-import type { ProductionPlan, EffectPlan } from '../types';
+import type { ProductionPlan } from '../types';
 
 export interface ValidationIssue {
   readonly severity: 'error' | 'warning';
@@ -347,7 +347,7 @@ function collectTimedElements(plan: ProductionPlan): TimedElement[] {
       type: e.type,
       startTime: e.startTime,
       endTime: e.endTime,
-      position: (e.config as any)?.position,
+      position: (e.config as Record<string, unknown> | undefined)?.position as string | undefined,
     });
   });
 
@@ -358,7 +358,7 @@ function collectTimedElements(plan: ProductionPlan): TimedElement[] {
       type: 'counter',
       startTime: c.startTime,
       endTime: c.endTime,
-      position: (c as any).position ?? 'center',
+      position: c.position ?? 'center',
     });
   });
 
@@ -369,7 +369,7 @@ function collectTimedElements(plan: ProductionPlan): TimedElement[] {
       type: 'cta',
       startTime: c.startTime,
       endTime: c.endTime,
-      position: (c as any).position ?? 'bottom',
+      position: c.position ?? 'bottom',
     });
   });
 

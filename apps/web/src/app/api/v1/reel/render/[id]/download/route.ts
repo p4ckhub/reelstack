@@ -41,5 +41,5 @@ export const GET = withAuth(
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('Cache-Control', 'private, no-store');
     return response;
-  },
+  }
 );

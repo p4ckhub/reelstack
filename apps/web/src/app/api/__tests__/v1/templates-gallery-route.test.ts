@@ -1,69 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
-const mockAuthenticate = vi.fn();
-
-vi.mock('@/lib/auth', () => ({
-  auth: vi.fn(),
-}));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Invalid or missing authentication' } },
-          { status: 401 }
-        );
-      }
-      return handler(req, ctx);
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  function paginatedResponse(
-    items: unknown[],
-    limit: number,
-    getCursor: (item: unknown) => string
-  ) {
-    const hasMore = items.length > limit;
-    const data = hasMore ? items.slice(0, limit) : items;
-    const nextCursor = hasMore && data.length > 0 ? getCursor(data[data.length - 1]) : null;
-    return NextResponse.json({ data, pagination: { nextCursor, hasMore } });
-  }
-  return { withAuth, successResponse, errorResponse, paginatedResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 19 }),
 }));
 
-const mockGetPublicTemplates = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getPublicTemplates: (...args: unknown[]) => mockGetPublicTemplates(...args),
-}));
+import { databaseMockFactory, mockGetPublicTemplates } from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-vi.mock('@reelstack/core', () => ({
-  BUILT_IN_TEMPLATES: [
-    {
-      id: 'built-in-1',
-      name: 'Default',
-      description: 'Default template',
-      style: { fontSize: 24 },
-      category: 'minimal',
-      usageCount: 100,
-    },
-  ],
-}));
+import { coreMockFactory } from '@/__test-utils__/core-mock';
+vi.mock('@reelstack/core', coreMockFactory);
 
 const { GET } = await import('../../v1/templates/gallery/route');
 
@@ -77,7 +26,9 @@ describe('GET /api/v1/templates/gallery', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuthenticate.mockResolvedValue(null);
-    const response = await GET(new Request('http://localhost/api/v1/templates/gallery') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/gallery') as unknown as NextRequest
+    );
     expect(response.status).toBe(401);
   });
 
@@ -95,7 +46,9 @@ describe('GET /api/v1/templates/gallery', () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetPublicTemplates.mockResolvedValue(publicTemplates);
 
-    const response = await GET(new Request('http://localhost/api/v1/templates/gallery') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/gallery') as unknown as NextRequest
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toHaveLength(2);
@@ -119,7 +72,9 @@ describe('GET /api/v1/templates/gallery', () => {
     mockGetPublicTemplates.mockResolvedValue(templates);
 
     const response = await GET(
-      new Request('http://localhost/api/v1/templates/gallery?cursor=pub-1&limit=10') as unknown as NextRequest
+      new Request(
+        'http://localhost/api/v1/templates/gallery?cursor=pub-1&limit=10'
+      ) as unknown as NextRequest
     );
     expect(response.status).toBe(200);
     const body = await response.json();

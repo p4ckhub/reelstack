@@ -1,5 +1,13 @@
 import { NextRequest } from 'next/server';
-import { prisma, getApiKeysByUser, createApiKey as dbCreateApiKey, createAuditLog } from '@reelstack/database';
+import {
+  prisma,
+  getApiKeysByUser,
+  createApiKey as dbCreateApiKey,
+  createAuditLog,
+} from '@reelstack/database';
+import { createLogger } from '@reelstack/logger';
+
+const log = createLogger('api-keys');
 import { SCOPE_PRESETS } from '@reelstack/types';
 import { generateApiKey } from '@/lib/api/v1/api-keys';
 import { withAuth, successResponse, errorResponse } from '@/lib/api/v1/middleware';
@@ -31,7 +39,7 @@ export const GET = withAuth(
         createdAt: k.createdAt,
       }))
     );
-  },
+  }
 );
 
 /** POST /api/v1/api-keys - Create a new API key (session only) */
@@ -86,7 +94,7 @@ export const POST = withAuth(
       action: 'apikey.create',
       target: record.id,
       ip: req.headers.get('x-forwarded-for') ?? undefined,
-    }).catch(() => {});
+    }).catch((err) => log.warn({ err, userId: ctx.user.id }, 'Audit log failed'));
 
     // Return plaintext key ONLY on creation (never stored in DB)
     return successResponse(
@@ -101,5 +109,5 @@ export const POST = withAuth(
       },
       201
     );
-  },
+  }
 );

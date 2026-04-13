@@ -26,16 +26,16 @@ const KEN_BURNS_PRESETS = [
 type EntranceType = 'fade-scale' | 'slide-up' | 'slide-left' | 'zoom-in' | 'wipe-down';
 
 const ENTRANCE_SEQUENCE: EntranceType[] = [
-  'fade-scale',   // slide 0: gentle fade + scale
-  'slide-up',     // slide 1: slides up from bottom
-  'zoom-in',      // slide 2: zooms from center
-  'slide-left',   // slide 3: slides from right
-  'wipe-down',    // slide 4: wipe from top
+  'fade-scale', // slide 0: gentle fade + scale
+  'slide-up', // slide 1: slides up from bottom
+  'zoom-in', // slide 2: zooms from center
+  'slide-left', // slide 3: slides from right
+  'wipe-down', // slide 4: wipe from top
 ];
 
 function computeEntrance(
   progress: number, // 0→1
-  type: EntranceType,
+  type: EntranceType
 ): { opacity: number; transform: string; clipPath?: string } {
   const p = Math.max(0, Math.min(1, progress));
 
@@ -81,9 +81,15 @@ const SlideImage: React.FC<{
 
   // Entrance animation (varied per slide)
   const entranceType = ENTRANCE_SEQUENCE[slideIndex % ENTRANCE_SEQUENCE.length]!;
-  const entranceProgress = transitionFrames > 0
-    ? spring({ frame, fps, config: { damping: 18, stiffness: 80 }, durationInFrames: transitionFrames })
-    : 1;
+  const entranceProgress =
+    transitionFrames > 0
+      ? spring({
+          frame,
+          fps,
+          config: { damping: 18, stiffness: 80 },
+          durationInFrames: transitionFrames,
+        })
+      : 1;
   const entrance = computeEntrance(entranceProgress, entranceType);
 
   // Ken Burns: slow zoom + pan
@@ -164,7 +170,12 @@ const SlideCounter: React.FC<{
   const { fps } = useVideoConfig();
 
   // Bounce in on slide change
-  const scale = spring({ frame, fps, config: { damping: 12, stiffness: 120 }, durationInFrames: 15 });
+  const scale = spring({
+    frame,
+    fps,
+    config: { damping: 12, stiffness: 120 },
+    durationInFrames: 15,
+  });
 
   return (
     <div
@@ -187,7 +198,9 @@ const SlideCounter: React.FC<{
           gap: 4,
         }}
       >
-        <span style={{ color: accentColor, fontWeight: 700, fontSize: 18, fontFamily: 'sans-serif' }}>
+        <span
+          style={{ color: accentColor, fontWeight: 700, fontSize: 18, fontFamily: 'sans-serif' }}
+        >
           {current}
         </span>
         <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, fontFamily: 'sans-serif' }}>
@@ -239,20 +252,13 @@ export const SlideshowComposition: React.FC<SlideshowProps> = (props) => {
       })}
 
       {/* Caption overlay */}
-      <CaptionOverlay
-        cues={cues}
-        style={captionStyle}
-      />
+      <CaptionOverlay cues={cues} style={captionStyle} />
 
       {/* Voiceover */}
-      {voiceoverUrl && (
-        <Audio src={resolveMediaUrl(voiceoverUrl)} volume={1} />
-      )}
+      {voiceoverUrl && <Audio src={resolveMediaUrl(voiceoverUrl)} volume={1} />}
 
       {/* Music */}
-      {musicUrl && (
-        <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} />
-      )}
+      {musicUrl && <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} />}
     </AbsoluteFill>
   );
 };

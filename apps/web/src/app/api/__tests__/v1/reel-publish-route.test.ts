@@ -1,57 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const mockAuthenticate = vi.fn();
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-          { status: 401 },
-        );
-      }
-      try {
-        return await handler(req, ctx);
-      } catch (err) {
-        console.error(err);
-        return NextResponse.json(
-          { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-          { status: 500 },
-        );
-      }
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
 
-const mockGetReelJob = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getReelJob: (...args: unknown[]) => mockGetReelJob(...args),
-}));
+import { databaseMockFactory, mockGetReelJob } from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-const mockEnqueue = vi.fn();
-vi.mock('@reelstack/queue', () => ({
-  createQueue: () => Promise.resolve({ enqueue: mockEnqueue }),
-}));
+import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
+vi.mock('@reelstack/queue', queueMockFactory);
 
 const { POST } = await import('../../v1/reel/publish/route');
 
@@ -72,7 +33,9 @@ describe('POST /api/v1/reel/publish', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuthenticate.mockResolvedValue(null);
-    const response = await POST(makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' }));
+    const response = await POST(
+      makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' })
+    );
     expect(response.status).toBe(401);
   });
 
@@ -95,21 +58,27 @@ describe('POST /api/v1/reel/publish', () => {
   it('returns 404 when reel job not found', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetReelJob.mockResolvedValue(null);
-    const response = await POST(makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' }));
+    const response = await POST(
+      makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' })
+    );
     expect(response.status).toBe(404);
   });
 
   it('returns 400 when reel not completed', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetReelJob.mockResolvedValue({ id: validReelId, status: 'PROCESSING', outputUrl: null });
-    const response = await POST(makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' }));
+    const response = await POST(
+      makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' })
+    );
     expect(response.status).toBe(400);
   });
 
   it('returns 400 when reel has no output URL', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetReelJob.mockResolvedValue({ id: validReelId, status: 'COMPLETED', outputUrl: null });
-    const response = await POST(makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' }));
+    const response = await POST(
+      makeRequest({ reelId: validReelId, platforms: ['tiktok'], caption: 'Hi' })
+    );
     expect(response.status).toBe(400);
   });
 
@@ -122,12 +91,14 @@ describe('POST /api/v1/reel/publish', () => {
     });
     mockEnqueue.mockResolvedValue(undefined);
 
-    const response = await POST(makeRequest({
-      reelId: validReelId,
-      platforms: ['tiktok', 'instagram'],
-      caption: 'Check this out!',
-      hashtags: ['#reel'],
-    }));
+    const response = await POST(
+      makeRequest({
+        reelId: validReelId,
+        platforms: ['tiktok', 'instagram'],
+        caption: 'Check this out!',
+        hashtags: ['#reel'],
+      })
+    );
     expect(response.status).toBe(201);
     const body = await response.json();
     expect(body.data.reelId).toBe(validReelId);
@@ -144,16 +115,18 @@ describe('POST /api/v1/reel/publish', () => {
     });
     mockEnqueue.mockResolvedValue(undefined);
 
-    await POST(makeRequest({
-      reelId: validReelId,
-      platforms: ['tiktok'],
-      caption: 'Hello',
-    }));
+    await POST(
+      makeRequest({
+        reelId: validReelId,
+        platforms: ['tiktok'],
+        caption: 'Hello',
+      })
+    );
 
     expect(mockEnqueue).toHaveBeenCalledWith(
       validReelId,
       expect.objectContaining({ jobId: validReelId, platforms: ['tiktok'], caption: 'Hello' }),
-      'reel-publish',
+      'reel-publish'
     );
   });
 
@@ -166,11 +139,13 @@ describe('POST /api/v1/reel/publish', () => {
     });
     mockEnqueue.mockRejectedValue(new Error('queue down'));
 
-    const response = await POST(makeRequest({
-      reelId: validReelId,
-      platforms: ['tiktok'],
-      caption: 'Hello',
-    }));
+    const response = await POST(
+      makeRequest({
+        reelId: validReelId,
+        platforms: ['tiktok'],
+        caption: 'Hello',
+      })
+    );
     expect(response.status).toBe(503);
   });
 });

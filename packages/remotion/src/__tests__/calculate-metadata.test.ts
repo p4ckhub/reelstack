@@ -8,7 +8,7 @@ vi.mock('@remotion/renderer', () => ({
 import { calculateReelMetadata } from '../compositions/calculate-metadata';
 import { getVideoMetadata } from '@remotion/renderer';
 
-const mockedGetVideoMetadata = vi.mocked(getVideoMetadata);
+const mockedGetVideoMetadata = getVideoMetadata as ReturnType<typeof vi.fn>;
 
 function makeProps(overrides: Record<string, unknown> = {}) {
   return {
@@ -24,6 +24,7 @@ function makeProps(overrides: Record<string, unknown> = {}) {
       highlights: [],
       effects: [],
       primaryVideoObjectPosition: 'center',
+      primaryVideoTransparent: false,
       dynamicCaptionPosition: false,
       musicVolume: 0.3,
       showProgressBar: true,

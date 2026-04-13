@@ -7,12 +7,7 @@ export {
   paginatedResponse,
 } from './middleware';
 
-export {
-  generateApiKey,
-  hashApiKey,
-  verifyApiKeyHash,
-  extractApiKey,
-} from './api-keys';
+export { generateApiKey, hashApiKey, verifyApiKeyHash, extractApiKey } from './api-keys';
 
 export type {
   AuthContext,

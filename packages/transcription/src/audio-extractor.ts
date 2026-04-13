@@ -11,7 +11,7 @@ const TARGET_SAMPLE_RATE = 16000; // Whisper expects 16kHz
  */
 export async function extractAudioFromFile(
   file: File | Blob,
-  onProgress?: (msg: string) => void,
+  onProgress?: (msg: string) => void
 ): Promise<{ audio: Float32Array; sampleRate: number }> {
   onProgress?.('Decoding audio...');
 
@@ -31,13 +31,14 @@ export async function extractAudioFromFile(
  */
 export async function extractAudioFromElement(
   element: HTMLVideoElement | HTMLAudioElement,
-  onProgress?: (msg: string) => void,
+  onProgress?: (msg: string) => void
 ): Promise<{ audio: Float32Array; sampleRate: number }> {
   onProgress?.('Extracting audio from video...');
 
   // If the element has a src that's a blob URL, fetch it
   const response = await fetch(element.src, {
     signal: AbortSignal.timeout(30_000),
+    redirect: 'error',
   });
   const blob = await response.blob();
   return extractAudioFromFile(blob, onProgress);
@@ -48,13 +49,11 @@ export async function extractAudioFromElement(
  */
 function resampleToMono(
   audioBuffer: AudioBuffer,
-  onProgress?: (msg: string) => void,
+  onProgress?: (msg: string) => void
 ): { audio: Float32Array; sampleRate: number } {
   onProgress?.('Resampling audio to 16kHz mono...');
 
-  const numSamples = Math.ceil(
-    (audioBuffer.length * TARGET_SAMPLE_RATE) / audioBuffer.sampleRate,
-  );
+  const numSamples = Math.ceil((audioBuffer.length * TARGET_SAMPLE_RATE) / audioBuffer.sampleRate);
 
   // Mix down to mono
   const channelData = audioBuffer.getChannelData(0);
@@ -95,10 +94,7 @@ function resampleToMono(
  * Convert Float32Array PCM to WAV Blob (for cloud providers that need a file).
  * Inspired by OpenReel's transcription-service.ts:158-203.
  */
-export function pcmToWavBlob(
-  pcm: Float32Array,
-  sampleRate: number,
-): Blob {
+export function pcmToWavBlob(pcm: Float32Array, sampleRate: number): Blob {
   const numChannels = 1;
   const bitDepth = 16;
   const bytesPerSample = bitDepth / 8;

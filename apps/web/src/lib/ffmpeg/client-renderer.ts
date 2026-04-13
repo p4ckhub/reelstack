@@ -32,8 +32,7 @@ async function getFFmpeg(onProgress: ProgressCallback): Promise<FFmpeg> {
   });
 
   const baseURL =
-    process.env.NEXT_PUBLIC_FFMPEG_CORE_URL ??
-    'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+    process.env.NEXT_PUBLIC_FFMPEG_CORE_URL ?? 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
 
   await ffmpeg.load({
     coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
@@ -69,10 +68,14 @@ export async function renderVideo(
 
   // Render with subtitles filter
   await ff.exec([
-    '-i', 'input.mp4',
-    '-vf', `ass=subtitles.ass`,
-    '-c:a', 'copy',
-    '-preset', 'fast',
+    '-i',
+    'input.mp4',
+    '-vf',
+    `ass=subtitles.ass`,
+    '-c:a',
+    'copy',
+    '-preset',
+    'fast',
     'output.mp4',
   ]);
 

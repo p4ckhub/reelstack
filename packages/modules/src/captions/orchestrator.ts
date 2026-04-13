@@ -57,7 +57,7 @@ export interface CaptionsRequest {
     language?: string;
   };
   whisper?: {
-    provider?: 'openrouter' | 'cloudflare' | 'ollama';
+    provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic';
     apiKey?: string;
   };
   brandPreset?: BrandPreset;
@@ -134,7 +134,7 @@ export async function produceCaptions(request: CaptionsRequest): Promise<Caption
       videoLocalPath = path.join(tmpDir, 'source-video.mp4');
       const res = await fetch(request.videoUrl, {
         signal: AbortSignal.timeout(120_000),
-        redirect: 'follow',
+        redirect: 'error',
       });
       if (!res.ok) throw new Error(`Failed to download video: ${res.status}`);
       fs.writeFileSync(videoLocalPath, Buffer.from(await res.arrayBuffer()));
@@ -190,16 +190,12 @@ export async function produceCaptions(request: CaptionsRequest): Promise<Caption
     }));
 
     const presetConfig = resolvePresetConfig(request.brandPreset);
-    cues = groupWordsIntoCues(
-      offsetWords,
-      {
-        maxWordsPerCue:
-          request.highlightMode === 'single-word' ? 1 : (presetConfig.maxWordsPerCue ?? 6),
-        maxDurationPerCue: presetConfig.maxDurationPerCue ?? 3,
-        breakOnPunctuation: true,
-      },
-      presetConfig.animationStyle ?? 'word-highlight'
-    ) as CaptionCue[];
+    cues = groupWordsIntoCues(offsetWords, {
+      maxWordsPerCue:
+        request.highlightMode === 'single-word' ? 1 : (presetConfig.maxWordsPerCue ?? 6),
+      maxDurationPerCue: presetConfig.maxDurationPerCue ?? 3,
+      breakOnPunctuation: true,
+    }) as CaptionCue[];
 
     // No voiceoverUrl — keep video's original audio
     voiceoverUrl = undefined;

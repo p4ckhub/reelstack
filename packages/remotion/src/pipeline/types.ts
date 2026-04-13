@@ -13,7 +13,7 @@ export interface ReelCreationRequest {
   };
   /** Whisper provider config */
   readonly whisper?: {
-    readonly provider?: 'openrouter' | 'cloudflare' | 'ollama';
+    readonly provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic';
     readonly apiKey?: string;
   };
   /** Primary video (talking head) - URL or filename in public/ */
@@ -39,7 +39,13 @@ export interface BrandPreset {
   readonly captionTemplate?: CaptionTemplate;
   readonly highlightColor?: string;
   readonly backgroundColor?: string;
-  readonly defaultTransition?: 'crossfade' | 'slide-left' | 'slide-right' | 'zoom-in' | 'wipe' | 'none';
+  readonly defaultTransition?:
+    | 'crossfade'
+    | 'slide-left'
+    | 'slide-right'
+    | 'zoom-in'
+    | 'wipe'
+    | 'none';
 }
 
 export interface ReelCreationResult {

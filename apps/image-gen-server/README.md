@@ -29,17 +29,17 @@ curl -X POST http://localhost:8000/generate \
 
 **Body params:**
 
-| Param | Required | Description |
-|-------|----------|-------------|
-| `brand` | yes | Brand name (built-in or uploaded) |
-| `template` | yes | Template name |
-| `size` | no | `post` (1080x1080), `story` (1080x1920), `youtube` (1280x720), or `WxH` |
-| `text` | no | Main quote/body text |
-| `attr` | no | Attribution / author |
-| `title` | no | Title text |
-| `badge` | no | Badge label |
-| `cta` | no | Call-to-action text |
-| `num` | no | Series number |
+| Param      | Required | Description                                                             |
+| ---------- | -------- | ----------------------------------------------------------------------- |
+| `brand`    | yes      | Brand name (built-in or uploaded)                                       |
+| `template` | yes      | Template name                                                           |
+| `size`     | no       | `post` (1080x1080), `story` (1080x1920), `youtube` (1280x720), or `WxH` |
+| `text`     | no       | Main quote/body text                                                    |
+| `attr`     | no       | Attribution / author                                                    |
+| `title`    | no       | Title text                                                              |
+| `badge`    | no       | Badge label                                                             |
+| `cta`      | no       | Call-to-action text                                                     |
+| `num`      | no       | Series number                                                           |
 
 ### List templates
 
@@ -72,15 +72,15 @@ curl -X DELETE http://localhost:8000/brands/mybrand \
 
 ## Built-in templates
 
-| Template | Description |
-|----------|-------------|
-| `quote-card` | Quote with attribution |
-| `tip-card` | Tip with badge |
-| `ad-card` | Ad/promo card |
-| `announcement` | Announcement card |
-| `webinar-cover` | Webinar cover |
-| `webinar-point` | Webinar slide point |
-| ...and more | `GET /templates` for full list |
+| Template        | Description                    |
+| --------------- | ------------------------------ |
+| `quote-card`    | Quote with attribution         |
+| `tip-card`      | Tip with badge                 |
+| `ad-card`       | Ad/promo card                  |
+| `announcement`  | Announcement card              |
+| `webinar-cover` | Webinar cover                  |
+| `webinar-point` | Webinar slide point            |
+| ...and more     | `GET /templates` for full list |
 
 ## Built-in brands
 
@@ -96,11 +96,11 @@ Upload via `POST /brands/:name` or mount a directory via `BRANDS_DIR` env var.
 
 ## Configuration
 
-| Env var | Required | Default | Description |
-|---------|----------|---------|-------------|
-| `API_KEY` | yes | — | Bearer token for authenticated endpoints |
-| `PORT` | no | `8000` | HTTP port |
-| `BRANDS_DIR` | no | `./data/brands` | Directory for user-uploaded brands |
+| Env var      | Required | Default         | Description                              |
+| ------------ | -------- | --------------- | ---------------------------------------- |
+| `API_KEY`    | yes      | —               | Bearer token for authenticated endpoints |
+| `PORT`       | no       | `8000`          | HTTP port                                |
+| `BRANDS_DIR` | no       | `./data/brands` | Directory for user-uploaded brands       |
 
 ## Build locally
 

@@ -1,16 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  databaseMockFactory,
+  mockGetReelJobInternal,
+  mockUpdateReelJobStatus,
+  mockMarkCallbackSent,
+  mockResetCallbackSent,
+} from '@/__test-utils__/database-mock';
 
-const mockGetReelJobInternal = vi.fn();
-const mockUpdateReelJobStatus = vi.fn();
-const mockMarkCallbackSent = vi.fn();
-const mockResetCallbackSent = vi.fn();
-
-vi.mock('@reelstack/database', () => ({
-  getReelJobInternal: (...args: unknown[]) => mockGetReelJobInternal(...args),
-  updateReelJobStatus: (...args: unknown[]) => mockUpdateReelJobStatus(...args),
-  markCallbackSent: (...args: unknown[]) => mockMarkCallbackSent(...args),
-  resetCallbackSent: (...args: unknown[]) => mockResetCallbackSent(...args),
-}));
+vi.mock('@reelstack/database', databaseMockFactory);
 
 const mockAgentProduce = vi.fn();
 const mockProduceComposition = vi.fn();
@@ -56,6 +53,11 @@ vi.mock('@reelstack/agent', () => ({
     discover: vi.fn().mockResolvedValue(undefined),
     getToolManifest: vi.fn().mockReturnValue({ tools: [], summary: '' }),
   })),
+  getCostSummary: vi.fn().mockReturnValue({ totalUSD: 0, byType: {}, byProvider: {}, entries: [] }),
+  resolvePresetConfig: vi.fn().mockReturnValue({
+    maxWordsPerCue: 5,
+    maxDurationPerCue: 3,
+  }),
 }));
 
 const mockUpload = vi.fn();

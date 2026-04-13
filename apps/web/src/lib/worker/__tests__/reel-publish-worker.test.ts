@@ -1,12 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  databaseMockFactory,
+  mockGetReelJobInternal,
+  mockUpdateReelJobStatus,
+} from '@/__test-utils__/database-mock';
 
-const mockGetReelJobInternal = vi.fn();
-const mockUpdateReelJobStatus = vi.fn();
-
-vi.mock('@reelstack/database', () => ({
-  getReelJobInternal: (...args: unknown[]) => mockGetReelJobInternal(...args),
-  updateReelJobStatus: (...args: unknown[]) => mockUpdateReelJobStatus(...args),
-}));
+vi.mock('@reelstack/database', databaseMockFactory);
 
 const mockPublish = vi.fn();
 vi.mock('@reelstack/publisher', () => ({
@@ -39,8 +38,14 @@ describe('processReelPublishJob', () => {
   });
 
   it('calls publisher with correct params', async () => {
-    mockGetReelJobInternal.mockResolvedValue({ id: 'reel-1', outputUrl: 'https://storage.example.com/reel.mp4' });
-    mockPublish.mockResolvedValue({ publishId: 'pub-1', platforms: [{ platform: 'tiktok', status: 'scheduled' }] });
+    mockGetReelJobInternal.mockResolvedValue({
+      id: 'reel-1',
+      outputUrl: 'https://storage.example.com/reel.mp4',
+    });
+    mockPublish.mockResolvedValue({
+      publishId: 'pub-1',
+      platforms: [{ platform: 'tiktok', status: 'scheduled' }],
+    });
 
     await processReelPublishJob('reel-1', publishConfig);
 
@@ -55,10 +60,16 @@ describe('processReelPublishJob', () => {
   });
 
   it('updates job status with publish result', async () => {
-    mockGetReelJobInternal.mockResolvedValue({ id: 'reel-1', outputUrl: 'https://storage.example.com/reel.mp4' });
+    mockGetReelJobInternal.mockResolvedValue({
+      id: 'reel-1',
+      outputUrl: 'https://storage.example.com/reel.mp4',
+    });
     mockPublish.mockResolvedValue({
       publishId: 'pub-1',
-      platforms: [{ platform: 'tiktok', status: 'scheduled' }, { platform: 'instagram', status: 'scheduled' }],
+      platforms: [
+        { platform: 'tiktok', status: 'scheduled' },
+        { platform: 'instagram', status: 'scheduled' },
+      ],
     });
 
     await processReelPublishJob('reel-1', publishConfig);
@@ -73,7 +84,10 @@ describe('processReelPublishJob', () => {
   });
 
   it('works without optional fields', async () => {
-    mockGetReelJobInternal.mockResolvedValue({ id: 'reel-1', outputUrl: 'https://storage.example.com/reel.mp4' });
+    mockGetReelJobInternal.mockResolvedValue({
+      id: 'reel-1',
+      outputUrl: 'https://storage.example.com/reel.mp4',
+    });
     mockPublish.mockResolvedValue({ publishId: 'pub-2', platforms: [] });
 
     await processReelPublishJob('reel-1', {
@@ -81,9 +95,11 @@ describe('processReelPublishJob', () => {
       caption: 'Hi',
     });
 
-    expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
-      hashtags: undefined,
-      scheduleDate: undefined,
-    }));
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hashtags: undefined,
+        scheduleDate: undefined,
+      })
+    );
   });
 });

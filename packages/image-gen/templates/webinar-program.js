@@ -1,5 +1,6 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, brandName = ctx.brandName;
+  var params = ctx.params,
+    brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
   var number = params.get('number');
@@ -19,7 +20,14 @@ initTemplate(function (ctx) {
     document.getElementById('accentBar').style.background = color;
   }
 
-  autoSizeText(document.getElementById('title'), [
-    [25, 5.5], [50, 4.5], [80, 3.5], [Infinity, 2.8]
-  ], 0.3);
+  autoSizeText(
+    document.getElementById('title'),
+    [
+      [25, 5.5],
+      [50, 4.5],
+      [80, 3.5],
+      [Infinity, 2.8],
+    ],
+    0.3
+  );
 });

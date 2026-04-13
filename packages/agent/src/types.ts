@@ -14,6 +14,15 @@ export type AssetType =
 
 export type CostTier = 'free' | 'cheap' | 'moderate' | 'expensive';
 
+/** Whisper transcription provider options */
+export type WhisperProviderType = 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic';
+
+/** Whisper config — shared across all modules */
+export interface WhisperConfig {
+  readonly provider?: WhisperProviderType;
+  readonly apiKey?: string;
+}
+
 export interface ToolCapability {
   readonly assetType: AssetType;
   /** Can generate from a text prompt? */
@@ -64,6 +73,44 @@ export interface AssetGenerationRequest {
   readonly searchQuery?: string;
   /** Source image URL for image-to-video generation */
   readonly imageUrl?: string;
+  /** Reference image for character consistency (last frame of previous clip) */
+  readonly referenceImageUrl?: string;
+  /** Audio URL for lip-sync tools (Kling Avatar, Seedance audio-driven) */
+  readonly audioUrl?: string;
+  /** End image URL for seamless loops (last frame = first frame) */
+  readonly endImageUrl?: string;
+  /**
+   * HeyGen character params — exact API field names, zero mapping.
+   * Docs: https://docs.heygen.com/reference/create-an-avatar-video-v2
+   */
+  readonly heygen_character?: {
+    readonly type?: 'avatar' | 'talking_photo';
+    readonly avatar_id?: string;
+    readonly avatar_style?: string;
+    readonly talking_photo_id?: string;
+    readonly use_avatar_iv_model?: boolean;
+    readonly prompt?: string;
+    readonly keep_original_prompt?: boolean;
+    /** v3 API: natural language body motion control */
+    readonly motion_prompt?: string;
+    /** v3 API: photo avatar expressiveness */
+    readonly expressiveness?: 'high' | 'medium' | 'low';
+  };
+  /** Background for HeyGen video. */
+  readonly heygen_background?: {
+    readonly type: 'color' | 'image';
+    readonly value: string;
+  };
+  /** Request HeyGen to remove background (avatar must be trained with matting). */
+  readonly heygen_remove_background?: boolean;
+  /**
+   * HeyGen voice params — exact API field names, zero mapping.
+   */
+  readonly heygen_voice?: {
+    readonly emotion?: string;
+    readonly speed?: number;
+    readonly pitch?: number;
+  };
 }
 
 export interface AssetGenerationJob {
@@ -204,6 +251,8 @@ export interface ShotPlan {
   /** For montage shots: asset IDs to show as multi-panel grid */
   readonly montagePanelIds?: readonly string[];
   readonly reason: string;
+  /** Chain visual continuity: use last frame of previous ai-video shot as first frame for this one */
+  readonly chainFromPrevious?: boolean;
 }
 
 export interface EffectPlan {
@@ -218,14 +267,14 @@ export interface EffectPlan {
 
 export interface BrandPreset {
   readonly captionPreset?: string;
-  readonly captionTemplate?: string;
   readonly animationStyle?:
     | 'none'
     | 'word-highlight'
     | 'word-by-word'
     | 'karaoke'
     | 'bounce'
-    | 'typewriter';
+    | 'typewriter'
+    | 'snap-pop';
   readonly maxWordsPerCue?: number;
   readonly maxDurationPerCue?: number;
   readonly textTransform?: 'none' | 'uppercase';
@@ -256,6 +305,8 @@ export interface BrandPreset {
     | 'zoom-in'
     | 'wipe'
     | 'none';
+  /** Presenter persona ID (registered via registerPersona) */
+  readonly personaId?: string;
   /** Logo / watermark overlay (persistent on all frames) */
   readonly logoOverlay?: {
     readonly url: string;
@@ -291,10 +342,7 @@ export interface ProductionRequest {
     readonly language?: string;
   };
   /** Whisper config */
-  readonly whisper?: {
-    readonly provider?: 'openrouter' | 'cloudflare' | 'ollama';
-    readonly apiKey?: string;
-  };
+  readonly whisper?: WhisperConfig;
   /** Brand preset */
   readonly brandPreset?: BrandPreset;
   /** Avatar settings (for HeyGen) */
@@ -302,6 +350,12 @@ export interface ProductionRequest {
     readonly avatarId?: string;
     readonly voice?: string;
   };
+  /**
+   * Preferred tool IDs for the LLM planner.
+   * When set, the planner will strongly prefer these tools over alternatives.
+   * Example: ['heygen-agent'] to force Video Agent, ['heygen'] for Studio.
+   */
+  readonly preferredToolIds?: readonly string[];
   /** Output path */
   readonly outputPath?: string;
   /** Montage profile ID (auto-selected from script if not provided) */
@@ -404,4 +458,27 @@ export interface GeneratedAsset {
   readonly url: string;
   readonly type: AssetType;
   readonly durationSeconds?: number;
+}
+
+// ── Cost tracking ────────────────────────────────────────────
+
+export type CostType = 'llm' | 'image' | 'video' | 'tts' | 'transcription' | 'render';
+
+export interface CostEntry {
+  readonly step: string;
+  readonly provider: string;
+  readonly model?: string;
+  readonly type: CostType;
+  readonly costUSD: number;
+  readonly inputUnits?: number;
+  readonly outputUnits?: number;
+  readonly durationMs?: number;
+  readonly metadata?: Record<string, unknown>;
+}
+
+export interface CostSummary {
+  readonly totalUSD: number;
+  readonly byType: Record<string, number>;
+  readonly byProvider: Record<string, number>;
+  readonly entries: readonly CostEntry[];
 }

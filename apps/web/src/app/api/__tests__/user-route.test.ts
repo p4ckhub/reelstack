@@ -5,16 +5,19 @@ vi.mock('@/lib/api/auth', () => ({
   getAuthUser: () => mockGetAuthUser(),
 }));
 
-const mockGetMonthlyCreditsUsed = vi.fn();
-const mockGetTokenBalance = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getMonthlyCreditsUsed: (...args: unknown[]) => mockGetMonthlyCreditsUsed(...args),
-  getTokenBalance: (...args: unknown[]) => mockGetTokenBalance(...args),
-}));
+import {
+  databaseMockFactory,
+  mockGetMonthlyCreditsUsed,
+  mockGetTokenBalance,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
 vi.mock('@/lib/api/validation', () => ({
   getTierLimits: (tier: string) => {
-    const limits: Record<string, { maxFileSize: number; maxDuration: number; creditsPerMonth: number }> = {
+    const limits: Record<
+      string,
+      { maxFileSize: number; maxDuration: number; creditsPerMonth: number }
+    > = {
       FREE: { maxFileSize: 100, maxDuration: 120, creditsPerMonth: 30 },
       PRO: { maxFileSize: 2000, maxDuration: 1800, creditsPerMonth: 1000 },
     };

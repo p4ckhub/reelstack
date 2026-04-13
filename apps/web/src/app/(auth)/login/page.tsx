@@ -25,7 +25,9 @@ function LoginForm() {
     script.async = true;
     script.type = 'module';
     document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
+    return () => {
+      document.head.removeChild(script);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +45,9 @@ function LoginForm() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ payload: altchaPayload }),
-    }).then((r) => r.json()).catch(() => ({ ok: false }));
+    })
+      .then((r) => r.json())
+      .catch(() => ({ ok: false }));
 
     if (!verification.ok) {
       setError('Verification failed. Please try again.');
@@ -82,8 +86,8 @@ function LoginForm() {
               Check your email for a sign-in link.
             </div>
             <p className="text-sm text-muted-foreground">
-              We sent a magic link to <strong>{email || 'your email'}</strong>.
-              Click the link to sign in. If you don&apos;t have an account, one will be created automatically.
+              We sent a magic link to <strong>{email || 'your email'}</strong>. Click the link to
+              sign in. If you don&apos;t have an account, one will be created automatically.
             </p>
             <Button
               variant="ghost"

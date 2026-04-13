@@ -1,4 +1,10 @@
-import type { DirectorInput, DirectorOutput, DirectorBRollSegment, DirectorEffectPlacement, MediaAsset } from './types';
+import type {
+  DirectorInput,
+  DirectorOutput,
+  DirectorBRollSegment,
+  DirectorEffectPlacement,
+  MediaAsset,
+} from './types';
 import { searchPexelsVideos } from './media-library';
 import { DIRECTOR_RULES } from './rules';
 import { createLogger } from '@reelstack/logger';
@@ -50,7 +56,10 @@ async function ruleBasedDirector(input: DirectorInput): Promise<DirectorOutput> 
   for (const cue of cues) {
     if (mediaPool.length === 0) break;
 
-    if (cue.startTime - lastBRollEnd >= intervalSec && cue.startTime + bRollDurationSec <= durationSeconds) {
+    if (
+      cue.startTime - lastBRollEnd >= intervalSec &&
+      cue.startTime + bRollDurationSec <= durationSeconds
+    ) {
       const media = mediaPool[bRollSegments.length % mediaPool.length];
 
       if (media) {
@@ -81,7 +90,10 @@ async function ruleBasedDirector(input: DirectorInput): Promise<DirectorOutput> 
         type: 'text-emphasis',
         startTime: firstCue.startTime,
         endTime: firstCue.startTime + 1,
-        config: { text: firstCue.text.split(' ').slice(0, 3).join(' ').toUpperCase(), position: 'center' },
+        config: {
+          text: firstCue.text.split(' ').slice(0, 3).join(' ').toUpperCase(),
+          position: 'center',
+        },
         reason: 'Hook emphasis',
       });
     }
@@ -126,9 +138,9 @@ async function ruleBasedDirector(input: DirectorInput): Promise<DirectorOutput> 
  * Claude-powered AI director using tool_use.
  */
 async function anthropicDirector(input: DirectorInput): Promise<DirectorOutput> {
-  const cuesSummary = input.cues.map((c) =>
-    `[${c.startTime.toFixed(1)}s-${c.endTime.toFixed(1)}s] "${c.text}"`
-  ).join('\n');
+  const cuesSummary = input.cues
+    .map((c) => `[${c.startTime.toFixed(1)}s-${c.endTime.toFixed(1)}s] "${c.text}"`)
+    .join('\n');
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -141,17 +153,23 @@ async function anthropicDirector(input: DirectorInput): Promise<DirectorOutput> 
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 2048,
       system: DIRECTOR_RULES,
-      messages: [{
-        role: 'user',
-        content: `Analyze this ${input.durationSeconds.toFixed(0)}s video transcript and decide where to place B-roll cutaways AND visual effects.\n\nTranscript cues:\n${cuesSummary}\n\nFull text:\n<user_script>\n${input.text}\n</user_script>\n\nStyle: ${input.style ?? 'dynamic'}\nDuration: ${input.durationSeconds.toFixed(1)}s\n\nReturn a JSON object with "placements" (B-roll) and "effects" (visual effects) arrays as described in your instructions.`,
-      }],
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this ${input.durationSeconds.toFixed(0)}s video transcript and decide where to place B-roll cutaways AND visual effects.\n\nTranscript cues:\n${cuesSummary}\n\nFull text:\n<user_script>\n${input.text}\n</user_script>\n\nStyle: ${input.style ?? 'dynamic'}\nDuration: ${input.durationSeconds.toFixed(1)}s\n\nReturn a JSON object with "placements" (B-roll) and "effects" (visual effects) arrays as described in your instructions.`,
+        },
+      ],
     }),
     signal: AbortSignal.timeout(30_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {
     const err = await response.text();
-    log.warn({ status: response.status, error: err }, 'Anthropic director failed, falling back to rules');
+    log.warn(
+      { status: response.status, error: err },
+      'Anthropic director failed, falling back to rules'
+    );
     return ruleBasedDirector(input);
   }
 
@@ -166,9 +184,9 @@ async function anthropicDirector(input: DirectorInput): Promise<DirectorOutput> 
  * OpenAI-powered AI director.
  */
 async function openaiDirector(input: DirectorInput): Promise<DirectorOutput> {
-  const cuesSummary = input.cues.map((c) =>
-    `[${c.startTime.toFixed(1)}s-${c.endTime.toFixed(1)}s] "${c.text}"`
-  ).join('\n');
+  const cuesSummary = input.cues
+    .map((c) => `[${c.startTime.toFixed(1)}s-${c.endTime.toFixed(1)}s] "${c.text}"`)
+    .join('\n');
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -180,7 +198,12 @@ async function openaiDirector(input: DirectorInput): Promise<DirectorOutput> {
       model: 'gpt-4o-mini',
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: DIRECTOR_RULES + '\n\nRespond with a JSON object: { "placements": [...], "effects": [...] }' },
+        {
+          role: 'system',
+          content:
+            DIRECTOR_RULES +
+            '\n\nRespond with a JSON object: { "placements": [...], "effects": [...] }',
+        },
         {
           role: 'user',
           content: `Analyze this ${input.durationSeconds.toFixed(0)}s video transcript and decide where to place B-roll cutaways AND visual effects.\n\nTranscript cues:\n${cuesSummary}\n\nFull text:\n<user_script>\n${input.text}\n</user_script>\n\nStyle: ${input.style ?? 'dynamic'}\nDuration: ${input.durationSeconds.toFixed(1)}s\n\nReturn a JSON object with "placements" and "effects" arrays as described in your instructions.`,
@@ -188,6 +211,7 @@ async function openaiDirector(input: DirectorInput): Promise<DirectorOutput> {
       ],
     }),
     signal: AbortSignal.timeout(30_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {
@@ -214,12 +238,16 @@ async function parseAIResponse(text: string, input: DirectorInput): Promise<Dire
     if (!jsonMatch) throw new Error('No JSON found in AI response');
 
     const parsed = JSON.parse(jsonMatch[0]);
-    const rawPlacements = Array.isArray(parsed) ? parsed : parsed.placements ?? [];
+    const rawPlacements = Array.isArray(parsed) ? parsed : (parsed.placements ?? []);
 
     const placements: AIPlacement[] = rawPlacements.filter((p: unknown) => {
       if (typeof p !== 'object' || p === null) return false;
       const obj = p as Record<string, unknown>;
-      return typeof obj.startTime === 'number' && typeof obj.endTime === 'number' && typeof obj.searchQuery === 'string';
+      return (
+        typeof obj.startTime === 'number' &&
+        typeof obj.endTime === 'number' &&
+        typeof obj.searchQuery === 'string'
+      );
     });
 
     // Resolve search queries to actual media URLs
@@ -258,10 +286,16 @@ async function parseAIResponse(text: string, input: DirectorInput): Promise<Dire
     }
 
     // Parse effects from AI response
-    const rawEffects: AIEffectPlacement[] = (Array.isArray(parsed) ? [] : parsed.effects ?? []).filter((e: unknown) => {
+    const rawEffects: AIEffectPlacement[] = (
+      Array.isArray(parsed) ? [] : (parsed.effects ?? [])
+    ).filter((e: unknown) => {
       if (typeof e !== 'object' || e === null) return false;
       const obj = e as Record<string, unknown>;
-      return typeof obj.type === 'string' && typeof obj.startTime === 'number' && typeof obj.endTime === 'number';
+      return (
+        typeof obj.type === 'string' &&
+        typeof obj.startTime === 'number' &&
+        typeof obj.endTime === 'number'
+      );
     });
 
     const effects: DirectorEffectPlacement[] = rawEffects
@@ -270,7 +304,8 @@ async function parseAIResponse(text: string, input: DirectorInput): Promise<Dire
         type: e.type,
         startTime: e.startTime,
         endTime: Math.min(e.endTime, input.durationSeconds),
-        config: (e.config && typeof e.config === 'object') ? e.config as Record<string, unknown> : {},
+        config:
+          e.config && typeof e.config === 'object' ? (e.config as Record<string, unknown>) : {},
         reason: e.reason ?? e.type,
       }));
 

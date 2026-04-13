@@ -18,11 +18,15 @@ const OUTPUT_PATH = path.join(OUTPUT_DIR, 'test-tts.mp3');
 
 // Parse args
 const args = process.argv.slice(2);
-const text = args.find((a) => !a.startsWith('--')) ?? 'Cześć, to jest testowy voiceover wygenerowany przez ReelStack.';
-const providerArg = args.find((a) => a.startsWith('--provider='))?.split('=')[1]
-  ?? (args.indexOf('--provider') !== -1 ? args[args.indexOf('--provider') + 1] : 'edge-tts');
-const voiceArg = args.find((a) => a.startsWith('--voice='))?.split('=')[1]
-  ?? (args.indexOf('--voice') !== -1 ? args[args.indexOf('--voice') + 1] : undefined);
+const text =
+  args.find((a) => !a.startsWith('--')) ??
+  'Cześć, to jest testowy voiceover wygenerowany przez ReelStack.';
+const providerArg =
+  args.find((a) => a.startsWith('--provider='))?.split('=')[1] ??
+  (args.indexOf('--provider') !== -1 ? args[args.indexOf('--provider') + 1] : 'edge-tts');
+const voiceArg =
+  args.find((a) => a.startsWith('--voice='))?.split('=')[1] ??
+  (args.indexOf('--voice') !== -1 ? args[args.indexOf('--voice') + 1] : undefined);
 
 // Build config
 let config: TTSConfig | undefined;

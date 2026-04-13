@@ -1,15 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { groupWordsIntoCues } from '../word-grouper';
 import type { TranscriptionWord } from '../types';
 
 // Mock crypto.randomUUID for deterministic tests
 let uuidCounter = 0;
-vi.stubGlobal('crypto', {
+const originalCrypto = globalThis.crypto;
+globalThis.crypto = {
+  ...originalCrypto,
   randomUUID: () => `test-uuid-${++uuidCounter}`,
-});
+} as Crypto;
 
 beforeEach(() => {
   uuidCounter = 0;
+});
+
+afterAll(() => {
+  globalThis.crypto = originalCrypto;
 });
 
 const makeWords = (texts: string[], startOffset = 0, wordDuration = 0.5): TranscriptionWord[] =>
@@ -30,7 +36,6 @@ describe('groupWordsIntoCues', () => {
     expect(cues).toHaveLength(1);
     expect(cues[0].text).toBe('Hello world');
     expect(cues[0].words).toHaveLength(2);
-    expect(cues[0].animationStyle).toBe('karaoke');
   });
 
   it('splits on maxWordsPerCue', () => {
@@ -74,10 +79,10 @@ describe('groupWordsIntoCues', () => {
     expect(cues[0].words![1]).toEqual({ text: 'world', startTime: 0.5, endTime: 1.0 });
   });
 
-  it('uses custom animation style', () => {
+  it('cues have no animationStyle (moved to captionStyle)', () => {
     const words = makeWords(['Hello', 'world']);
-    const cues = groupWordsIntoCues(words, {}, 'word-highlight');
-    expect(cues[0].animationStyle).toBe('word-highlight');
+    const cues = groupWordsIntoCues(words);
+    expect((cues[0] as unknown as Record<string, unknown>).animationStyle).toBeUndefined();
   });
 
   it('sets cue startTime and endTime from word boundaries', () => {

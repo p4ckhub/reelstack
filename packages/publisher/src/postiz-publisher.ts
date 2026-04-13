@@ -1,5 +1,12 @@
-import type { Publisher, PublishRequest, PublishResult, PlatformResult, PlatformIntegration, Platform } from './types';
-import { adaptCaption, toPostizPlatform } from './platform-adapters';
+import type {
+  Publisher,
+  PublishRequest,
+  PublishResult,
+  PlatformResult,
+  PlatformIntegration,
+  Platform,
+} from './types';
+import { adaptCaption } from './platform-adapters';
 
 /**
  * Publishes reels via Postiz API (self-hosted social media scheduler).
@@ -39,8 +46,9 @@ export class PostizPublisher implements Publisher {
       }
 
       try {
-        const caption = request.platformCaptions?.[platform]
-          ?? adaptCaption(request.caption, platform, request.hashtags);
+        const caption =
+          request.platformCaptions?.[platform] ??
+          adaptCaption(request.caption, platform, request.hashtags);
 
         const scheduleDate = request.scheduleDate ?? new Date().toISOString();
 
@@ -58,6 +66,7 @@ export class PostizPublisher implements Publisher {
             type: request.scheduleDate ? 'schedule' : 'now',
           }),
           signal: AbortSignal.timeout(30_000),
+          redirect: 'error',
         });
 
         if (!response.ok) {
@@ -104,6 +113,7 @@ export class PostizPublisher implements Publisher {
       const response = await fetch(`${this.baseUrl}/api/integrations`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
         signal: AbortSignal.timeout(10_000),
+        redirect: 'error',
       });
 
       if (!response.ok) return [];
@@ -134,12 +144,19 @@ export class PostizPublisher implements Publisher {
 
 function fromPostizPlatform(provider: string): Platform {
   switch (provider) {
-    case 'tiktok': return 'tiktok';
-    case 'instagram': return 'instagram';
-    case 'youtube': return 'youtube-shorts';
-    case 'facebook': return 'facebook';
-    case 'linkedin': return 'linkedin';
-    case 'x': return 'x';
-    default: return provider as Platform;
+    case 'tiktok':
+      return 'tiktok';
+    case 'instagram':
+      return 'instagram';
+    case 'youtube':
+      return 'youtube-shorts';
+    case 'facebook':
+      return 'facebook';
+    case 'linkedin':
+      return 'linkedin';
+    case 'x':
+      return 'x';
+    default:
+      return provider as Platform;
   }
 }

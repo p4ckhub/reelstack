@@ -1,7 +1,6 @@
 import {
   AbsoluteFill,
   Audio,
-  Loop,
   Sequence,
   OffthreadVideo,
   useCurrentFrame,
@@ -166,6 +165,7 @@ export const ReelComposition: React.FC<ReelProps> = ({
   primaryVideoDurationSeconds,
   primaryVideoObjectPosition = 'center',
   secondaryVideoUrl,
+  primaryVideoTransparent = false,
   bRollSegments,
   pipSegments = [],
   lowerThirds = [],
@@ -192,15 +192,11 @@ export const ReelComposition: React.FC<ReelProps> = ({
   const currentTime = frame / fps;
 
   // Looped primary video element for anchor/split layouts
-  const primaryLoopFrames = primaryVideoDurationSeconds
-    ? Math.round(primaryVideoDurationSeconds * fps)
-    : undefined;
-
   const renderPrimaryVideo = () => {
     if (!primaryVideoUrl) {
       return <div style={{ width: '100%', height: '100%', backgroundColor: '#0a0a14' }} />;
     }
-    const vid = (
+    return (
       <OffthreadVideo
         muted
         src={resolveMediaUrl(primaryVideoUrl)}
@@ -212,10 +208,6 @@ export const ReelComposition: React.FC<ReelProps> = ({
         }}
       />
     );
-    if (primaryLoopFrames) {
-      return <Loop durationInFrames={primaryLoopFrames}>{vid}</Loop>;
-    }
-    return vid;
   };
 
   const hasBRoll = bRollSegments.length > 0;
@@ -276,9 +268,10 @@ export const ReelComposition: React.FC<ReelProps> = ({
   if (dynamicCaptionPosition && captionStyle) {
     const basePosition = captionStyle.position ?? 80;
     const positionForOverlayType = (type: string | undefined): number => {
-      if (!type) return basePosition; // fullscreen
+      if (!type) return basePosition; // no overlay — presenter only
       if (type === 'split-screen') return Math.max(basePosition - 15, 50);
-      return Math.max(basePosition - 5, 50); // B-roll
+      // Fullscreen content (B-roll/image) — move captions higher to avoid overlap
+      return Math.max(basePosition - 12, 55);
     };
 
     let captionPosition = positionForOverlayType(undefined);
@@ -311,9 +304,33 @@ export const ReelComposition: React.FC<ReelProps> = ({
     scrollStopper as { preset: any; durationSeconds?: number } | undefined
   );
 
+  // Transparent avatar: primary video is an overlay, b-roll fills the background.
+  // Opaque avatar: primary video IS the background (standard behavior).
+  const renderTransparentAvatarOverlay = () => {
+    if (!primaryVideoTransparent || !primaryVideoUrl) return null;
+    return (
+      <AbsoluteFill style={{ zIndex: 2 }}>
+        <OffthreadVideo
+          muted
+          src={resolveMediaUrl(primaryVideoUrl)}
+          transparent
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            objectPosition: primaryVideoObjectPosition,
+          }}
+        />
+      </AbsoluteFill>
+    );
+  };
+
   const baseContent =
     layout === 'split-screen' ? (
       <SplitScreenLayout primaryVideoUrl={primaryVideoUrl} secondaryVideoUrl={secondaryVideoUrl} />
+    ) : primaryVideoTransparent ? (
+      // Background = black (b-roll overlays will cover it)
+      <AbsoluteFill style={{ backgroundColor }} />
     ) : (
       <FullscreenLayout
         primaryVideoUrl={primaryVideoUrl}
@@ -1074,6 +1091,9 @@ export const ReelComposition: React.FC<ReelProps> = ({
             />
           ) : null;
         })()}
+
+      {/* LAYER 2.5: Transparent avatar overlay (rmbg/greenscreen — renders ON TOP of b-roll) */}
+      {renderTransparentAvatarOverlay()}
 
       {/* LAYER 3: Picture-in-Picture */}
       {pipSegments.map((seg, i) => (

@@ -95,6 +95,7 @@ export class OpenRouterProvider implements TranscriptionProvider {
       headers: { Authorization: `Bearer ${this.apiKey}` },
       body: formData,
       signal: options?.signal ?? AbortSignal.timeout(120_000),
+      redirect: 'error',
     });
 
     const durationMs = Math.round(performance.now() - startTime);

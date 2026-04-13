@@ -39,7 +39,11 @@ function makeShot(id: string, visual: ShotPlan['visual'], startTime = 0, endTime
   };
 }
 
-function makeAsset(shotId: string, url: string, type: GeneratedAsset['type'] = 'ai-video'): GeneratedAsset {
+function makeAsset(
+  shotId: string,
+  url: string,
+  type: GeneratedAsset['type'] = 'ai-video'
+): GeneratedAsset {
   return { toolId: 'seedance2-piapi', shotId, url, type };
 }
 
@@ -48,9 +52,24 @@ describe('Pipeline: Plan → Assets → Composition', () => {
     it('generated asset URLs appear in bRollSegments when shotIds match', () => {
       const plan = makePlan({
         shots: [
-          makeShot('shot-1', { type: 'ai-video', prompt: 'terminal', toolId: 'seedance2-piapi' }, 0, 5),
-          makeShot('shot-2', { type: 'ai-video', prompt: 'cloud', toolId: 'seedance2-piapi' }, 5, 10),
-          makeShot('shot-3', { type: 'ai-image', prompt: 'freedom', toolId: 'nanobanana2-kie' }, 10, 15),
+          makeShot(
+            'shot-1',
+            { type: 'ai-video', prompt: 'terminal', toolId: 'seedance2-piapi' },
+            0,
+            5
+          ),
+          makeShot(
+            'shot-2',
+            { type: 'ai-video', prompt: 'cloud', toolId: 'seedance2-piapi' },
+            5,
+            10
+          ),
+          makeShot(
+            'shot-3',
+            { type: 'ai-image', prompt: 'freedom', toolId: 'nanobanana2-kie' },
+            10,
+            15
+          ),
         ],
       });
 
@@ -78,14 +97,17 @@ describe('Pipeline: Plan → Assets → Composition', () => {
       const plan = makePlan({
         shots: [
           makeShot('shot-1', { type: 'ai-video', prompt: 'test', toolId: 'seedance2-piapi' }, 0, 5),
-          makeShot('shot-2', { type: 'ai-video', prompt: 'test', toolId: 'seedance2-piapi' }, 5, 10),
+          makeShot(
+            'shot-2',
+            { type: 'ai-video', prompt: 'test', toolId: 'seedance2-piapi' },
+            5,
+            10
+          ),
         ],
       });
 
       // Only shot-1 has an asset, shot-2 is missing (e.g. generation failed)
-      const assets: GeneratedAsset[] = [
-        makeAsset('shot-1', 'https://cdn.piapi.ai/video1.mp4'),
-      ];
+      const assets: GeneratedAsset[] = [makeAsset('shot-1', 'https://cdn.piapi.ai/video1.mp4')];
 
       const result = assembleComposition({ plan, assets, cues: [] });
 
@@ -221,7 +243,12 @@ describe('Pipeline: Plan → Assets → Composition', () => {
     it('text-card shots render without any asset', () => {
       const plan = makePlan({
         shots: [
-          makeShot('shot-1', { type: 'text-card', headline: '73% savings', background: '#1a1a2e' }, 0, 5),
+          makeShot(
+            'shot-1',
+            { type: 'text-card', headline: '73% savings', background: '#1a1a2e' },
+            0,
+            5
+          ),
         ],
       });
       const result = assembleComposition({ plan, assets: [], cues: [] });
@@ -241,20 +268,78 @@ describe('Pipeline: Plan → Assets → Composition', () => {
       const plan = makePlan({
         primarySource: { type: 'none' },
         shots: [
-          makeShot('shot-1', { type: 'ai-video', prompt: 'dark terminal with green code', toolId: 'seedance2-piapi' }, 0, 3.5),
-          makeShot('shot-2', { type: 'ai-video', prompt: 'cloud servers', toolId: 'seedance2-piapi' }, 3.5, 7),
-          makeShot('shot-3', { type: 'ai-video', prompt: 'person typing', toolId: 'seedance2-piapi' }, 7, 10.5),
-          makeShot('shot-4', { type: 'ai-video', prompt: 'server rack ownership', toolId: 'seedance2-piapi' }, 10.5, 14),
-          makeShot('shot-5', { type: 'ai-video', prompt: 'destroying bills', toolId: 'seedance2-piapi' }, 14, 17),
-          makeShot('shot-6', { type: 'ai-video', prompt: 'open sky freedom', toolId: 'seedance2-piapi' }, 17, 20),
+          makeShot(
+            'shot-1',
+            {
+              type: 'ai-video',
+              prompt: 'dark terminal with green code',
+              toolId: 'seedance2-piapi',
+            },
+            0,
+            3.5
+          ),
+          makeShot(
+            'shot-2',
+            { type: 'ai-video', prompt: 'cloud servers', toolId: 'seedance2-piapi' },
+            3.5,
+            7
+          ),
+          makeShot(
+            'shot-3',
+            { type: 'ai-video', prompt: 'person typing', toolId: 'seedance2-piapi' },
+            7,
+            10.5
+          ),
+          makeShot(
+            'shot-4',
+            { type: 'ai-video', prompt: 'server rack ownership', toolId: 'seedance2-piapi' },
+            10.5,
+            14
+          ),
+          makeShot(
+            'shot-5',
+            { type: 'ai-video', prompt: 'destroying bills', toolId: 'seedance2-piapi' },
+            14,
+            17
+          ),
+          makeShot(
+            'shot-6',
+            { type: 'ai-video', prompt: 'open sky freedom', toolId: 'seedance2-piapi' },
+            17,
+            20
+          ),
         ],
         effects: [
-          { type: 'text-emphasis', startTime: 0, endTime: 1.5, config: { text: 'HOOK' }, reason: 'hook' },
-          { type: 'screen-shake', startTime: 3.5, endTime: 4, config: { intensity: 5 }, reason: 'impact' },
+          {
+            type: 'text-emphasis',
+            startTime: 0,
+            endTime: 1.5,
+            config: { text: 'HOOK' },
+            reason: 'hook',
+          },
+          {
+            type: 'screen-shake',
+            startTime: 3.5,
+            endTime: 4,
+            config: { intensity: 5 },
+            reason: 'impact',
+          },
         ],
         zoomSegments: [
-          { startTime: 0, endTime: 2, scale: 1.3, focusPoint: { x: 50, y: 50 }, easing: 'spring' as const },
-          { startTime: 7, endTime: 9, scale: 1.5, focusPoint: { x: 50, y: 40 }, easing: 'spring' as const },
+          {
+            startTime: 0,
+            endTime: 2,
+            scale: 1.3,
+            focusPoint: { x: 50, y: 50 },
+            easing: 'spring' as const,
+          },
+          {
+            startTime: 7,
+            endTime: 9,
+            scale: 1.5,
+            focusPoint: { x: 50, y: 40 },
+            easing: 'spring' as const,
+          },
         ],
       });
 
@@ -380,10 +465,30 @@ describe('Pipeline: Plan → Assets → Composition', () => {
         primarySource: { type: 'user-recording', url: 'https://storage.com/talking-head.mp4' },
         shots: [
           makeShot('shot-1', { type: 'primary' }, 0, 5),
-          makeShot('shot-2', { type: 'ai-video', prompt: 'code demo', toolId: 'seedance-kie' }, 5, 10),
-          makeShot('shot-3', { type: 'text-card', headline: 'Key Point', background: '#1a1a2e' }, 10, 13),
-          makeShot('shot-4', { type: 'b-roll', searchQuery: 'laptop typing', toolId: 'pexels' }, 13, 17),
-          makeShot('shot-5', { type: 'ai-image', prompt: 'futuristic dashboard', toolId: 'nanobanana2-kie' }, 17, 21),
+          makeShot(
+            'shot-2',
+            { type: 'ai-video', prompt: 'code demo', toolId: 'seedance-kie' },
+            5,
+            10
+          ),
+          makeShot(
+            'shot-3',
+            { type: 'text-card', headline: 'Key Point', background: '#1a1a2e' },
+            10,
+            13
+          ),
+          makeShot(
+            'shot-4',
+            { type: 'b-roll', searchQuery: 'laptop typing', toolId: 'pexels' },
+            13,
+            17
+          ),
+          makeShot(
+            'shot-5',
+            { type: 'ai-image', prompt: 'futuristic dashboard', toolId: 'nanobanana2-kie' },
+            17,
+            21
+          ),
           makeShot('shot-6', { type: 'primary' }, 21, 25),
         ],
       });

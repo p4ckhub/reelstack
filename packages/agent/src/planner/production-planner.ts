@@ -15,7 +15,7 @@ import { TRANSITION_TYPES, CAPTION_PROPERTY_CATALOG } from '@reelstack/remotion/
 import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
 import { PlanningError } from '../errors';
 import { detectProvider, callLLMWithSystem } from '../llm';
-import type { LLMProvider } from '../llm';
+import { isPublicUrl } from '../utils/url-validation';
 import { createLogger } from '@reelstack/logger';
 
 const log = createLogger('production-planner');
@@ -38,6 +38,16 @@ export interface PlannerInput {
   readonly timingReference?: string;
   /** Montage profile for per-profile director rules, pacing, SFX, transitions */
   readonly montageProfile?: MontageProfileEntry;
+  /** Preferred tool IDs — planner will strongly favor these tools */
+  readonly preferredToolIds?: readonly string[];
+  /** User-provided assets (screenshots, screencasts) the director can reference in shots */
+  readonly userAssets?: readonly {
+    id: string;
+    path: string;
+    url: string;
+    type: 'image' | 'video';
+    description: string;
+  }[];
 }
 
 // detectProvider is now imported from ../llm
@@ -60,7 +70,11 @@ export async function planProduction(input: PlannerInput): Promise<ProductionPla
     return ruleBasedPlan(input);
   }
 
-  const systemPrompt = buildPlannerPrompt(input.toolManifest, input.montageProfile);
+  const systemPrompt = buildPlannerPrompt(
+    input.toolManifest,
+    input.montageProfile,
+    input.preferredToolIds
+  );
   const userMessage = buildUserMessage(input);
 
   try {
@@ -336,6 +350,22 @@ function buildUserMessage(input: PlannerInput): string {
     parts.push(`\nRequested layout: ${input.layout}`);
   }
 
+  if (input.userAssets?.length) {
+    parts.push('\n## USER-PROVIDED ASSETS');
+    parts.push(
+      'The user has provided their own files. Use these instead of AI-generated content where they fit the narration.'
+    );
+    parts.push(
+      'Reference them as b-roll shots with toolId "user-upload" and searchQuery set to the asset ID.\n'
+    );
+    for (const asset of input.userAssets) {
+      parts.push(`- "${asset.id}" (${asset.type}): ${asset.description} → URL: ${asset.url}`);
+    }
+    parts.push(
+      '\nIMPORTANT: User assets are REAL content (screenshots, screencasts). They are MORE valuable than AI-generated content. Prefer them over AI generation when they match the narration.'
+    );
+  }
+
   parts.push('\nReturn only the JSON production plan, no explanation outside the JSON.');
   return parts.join('\n');
 }
@@ -350,7 +380,15 @@ function parseResponse(text: string, input: PlannerInput): ProductionPlan {
   } catch {
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) ?? text.match(/(\{[\s\S]*\})/);
     if (!jsonMatch) throw new PlanningError('No JSON found in planner response');
-    parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0]);
+    const jsonStr = jsonMatch[1] ?? jsonMatch[0];
+    if (!jsonStr) throw new PlanningError('Empty JSON match in planner response');
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (parseErr) {
+      throw new PlanningError(
+        `Invalid JSON in planner response: ${parseErr instanceof Error ? parseErr.message : 'parse error'}`
+      );
+    }
   }
 
   if (!parsed || typeof parsed !== 'object') {
@@ -897,11 +935,13 @@ function parseCtaSegments(raw: unknown): CtaPlan[] {
  * Post-process plan to enforce mandatory tool selection order.
  * LLM often ignores tool preference instructions, so we fix it programmatically.
  *
- * AI video priority: seedance2-piapi > veo31-gemini > kling-piapi > seedance-piapi > others
+ * AI video priority: seedance2-kie > seedance2-piapi > veo31-gemini > others
  * AI image priority: nanobanana2-kie > nanobanana > flux-* > others
  */
 function enforceToolPreferences(plan: ProductionPlan, availableToolIds: string[]): ProductionPlan {
   const VIDEO_PRIORITY = [
+    'seedance2-kie',
+    'seedance2-fast-kie',
     'seedance2-piapi',
     'veo31-gemini',
     'kling-piapi',
@@ -951,33 +991,5 @@ function enforceToolPreferences(plan: ProductionPlan, availableToolIds: string[]
 }
 
 /** Validate URL is public HTTPS (not internal/private) */
-export function isPublicUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    // Only allow http(s) — reject javascript:, data:, blob:, file:, ftp:, etc.
-    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-    // Reject credentials in URL
-    if (parsed.username || parsed.password) return false;
-    const host = parsed.hostname.toLowerCase();
-    // Reject loopback and special addresses
-    if (host === 'localhost' || host === '::1' || host === '0.0.0.0' || host === '[::]')
-      return false;
-    // Reject private IPv4 ranges
-    if (host.startsWith('127.') || host.startsWith('10.') || host.startsWith('169.254.'))
-      return false;
-    if (
-      host.startsWith('172.') &&
-      parseInt(host.split('.')[1]) >= 16 &&
-      parseInt(host.split('.')[1]) <= 31
-    )
-      return false;
-    if (host.startsWith('192.168.') || host.startsWith('0.')) return false;
-    // Reject IPv6 private/link-local (fe80::, fc00::, fd00::, ff00::)
-    if (/^\[?f[cde]|^\[?fe80|^\[?ff/i.test(host)) return false;
-    // Reject cloud metadata endpoints
-    if (host === 'metadata.google.internal' || host === '169.254.169.254') return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
+// Re-exported for backward compatibility. Canonical source: utils/url-validation.ts
+export { isPublicUrl } from '../utils/url-validation';

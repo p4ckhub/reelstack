@@ -45,8 +45,12 @@ async function main() {
     console.error('Options:');
     console.error('  --script "text"       Script text (inline)');
     console.error('  --script-file path    Script from file');
-    console.error('  --layout type         split-screen | fullscreen | picture-in-picture (default: fullscreen)');
-    console.error('  --style type          dynamic | calm | cinematic | educational (default: dynamic)');
+    console.error(
+      '  --layout type         split-screen | fullscreen | picture-in-picture (default: fullscreen)'
+    );
+    console.error(
+      '  --style type          dynamic | calm | cinematic | educational (default: dynamic)'
+    );
     console.error('  --tts provider        edge-tts | elevenlabs | openai (default: edge-tts)');
     console.error('  --voice name          TTS voice name');
     console.error('  --lang code           Language code, e.g. pl-PL, en-US (default: pl-PL)');
@@ -90,8 +94,12 @@ async function main() {
   console.log(`Layout: ${request.layout}`);
   console.log(`Style:  ${request.style}`);
   console.log(`TTS:    ${request.tts?.provider} (${request.tts?.language})`);
-  console.log(`Whisper: ${process.env.OPENAI_API_KEY ? 'OpenAI API' : 'whisper.cpp local (fallback: synthetic)'}`);
-  console.log(`AI Director: ${process.env.ANTHROPIC_API_KEY ? 'Claude' : process.env.OPENAI_API_KEY ? 'OpenAI' : 'rule-based (no API key)'}`);
+  console.log(
+    `Whisper: ${process.env.OPENAI_API_KEY ? 'OpenAI API' : 'whisper.cpp local (fallback: synthetic)'}`
+  );
+  console.log(
+    `AI Director: ${process.env.ANTHROPIC_API_KEY ? 'Claude' : process.env.OPENAI_API_KEY ? 'OpenAI' : 'rule-based (no API key)'}`
+  );
   console.log(`Pexels: ${process.env.PEXELS_API_KEY ? 'enabled' : 'disabled (no PEXELS_API_KEY)'}`);
   console.log('─'.repeat(50));
 
@@ -106,7 +114,9 @@ async function main() {
   console.log('');
   console.log('Pipeline steps:');
   for (const step of result.steps) {
-    console.log(`  ${step.name.padEnd(22)} ${(step.durationMs / 1000).toFixed(1)}s  ${step.detail ?? ''}`);
+    console.log(
+      `  ${step.name.padEnd(22)} ${(step.durationMs / 1000).toFixed(1)}s  ${step.detail ?? ''}`
+    );
   }
 
   const fileSize = fs.statSync(result.outputPath).size;
@@ -121,7 +131,9 @@ async function main() {
     console.log('B-roll segments:');
     for (const seg of result.props.bRollSegments) {
       const t = seg.transition ? ` [${seg.transition.type}]` : '';
-      console.log(`  ${seg.startTime.toFixed(1)}s-${seg.endTime.toFixed(1)}s  ${seg.media.type}${t}`);
+      console.log(
+        `  ${seg.startTime.toFixed(1)}s-${seg.endTime.toFixed(1)}s  ${seg.media.type}${t}`
+      );
     }
   }
 }

@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 import { API_SCOPES } from '@reelstack/types';
-import { createReelJob, consumeCredits, getCreditCost, updateReelJobStatus } from '@reelstack/database';
+import {
+  createReelJob,
+  consumeCredits,
+  getCreditCost,
+  updateReelJobStatus,
+} from '@reelstack/database';
 import { getTierLimits } from '@/lib/api/validation';
 import { createQueue } from '@reelstack/queue';
 import { withAuth, successResponse, errorResponse } from '@/lib/api/v1/middleware';
@@ -14,13 +19,36 @@ const log = createLogger('reel-multi-lang');
 
 /** TTS language code mapping: short code -> BCP-47 */
 const TTS_LANG_MAP: Record<string, string> = {
-  pl: 'pl-PL', en: 'en-US', es: 'es-ES', de: 'de-DE', fr: 'fr-FR',
-  it: 'it-IT', pt: 'pt-BR', nl: 'nl-NL', ru: 'ru-RU', uk: 'uk-UA',
-  cs: 'cs-CZ', sk: 'sk-SK', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN',
-  ar: 'ar-SA', hi: 'hi-IN', sv: 'sv-SE', da: 'da-DK', no: 'nb-NO',
-  fi: 'fi-FI', hu: 'hu-HU', ro: 'ro-RO', bg: 'bg-BG',
-  hr: 'hr-HR', sr: 'sr-RS', sl: 'sl-SI', tr: 'tr-TR',
-  vi: 'vi-VN', th: 'th-TH',
+  pl: 'pl-PL',
+  en: 'en-US',
+  es: 'es-ES',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  it: 'it-IT',
+  pt: 'pt-BR',
+  nl: 'nl-NL',
+  ru: 'ru-RU',
+  uk: 'uk-UA',
+  cs: 'cs-CZ',
+  sk: 'sk-SK',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  zh: 'zh-CN',
+  ar: 'ar-SA',
+  hi: 'hi-IN',
+  sv: 'sv-SE',
+  da: 'da-DK',
+  no: 'nb-NO',
+  fi: 'fi-FI',
+  hu: 'hu-HU',
+  ro: 'ro-RO',
+  bg: 'bg-BG',
+  hr: 'hr-HR',
+  sr: 'sr-RS',
+  sl: 'sl-SI',
+  tr: 'tr-TR',
+  vi: 'vi-VN',
+  th: 'th-TH',
 };
 
 /**
@@ -43,25 +71,20 @@ export const POST = withAuth(
       return errorResponse(
         'VALIDATION_ERROR',
         parsed.error.issues.map((i) => i.message).join(', '),
-        400,
+        400
       );
     }
 
     // Check AI API availability
     if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
-      return errorResponse(
-        'SERVICE_UNAVAILABLE',
-        'Translation service unavailable',
-        503,
-      );
+      return errorResponse('SERVICE_UNAVAILABLE', 'Translation service unavailable', 503);
     }
 
     const limits = await getTierLimits(ctx.user.tier as import('@/lib/api/validation').TierName);
     const cost = await getCreditCost('video_multilang');
     const batchId = randomUUID();
     const results: Array<
-      { language: string; jobId: string; status: 'queued' }
-      | { language: string; error: string }
+      { language: string; jobId: string; status: 'queued' } | { language: string; error: string }
     > = [];
 
     let queue: Awaited<ReturnType<typeof createQueue>> | null = null;
@@ -84,7 +107,7 @@ export const POST = withAuth(
           translatedScript = await translateText(
             parsed.data.script,
             parsed.data.sourceLanguage,
-            targetLang,
+            targetLang
           );
           log.info({ targetLang, scriptLen: translatedScript.length }, 'Translation complete');
         } catch (err) {
@@ -127,7 +150,9 @@ export const POST = withAuth(
         await queue.enqueue(job.id, { jobId: job.id }, 'reel-render');
         results.push({ language: targetLang, jobId: job.id, status: 'queued' });
       } catch {
-        await updateReelJobStatus(job.id, { status: 'FAILED', error: 'Queue unavailable' }).catch(() => {});
+        await updateReelJobStatus(job.id, { status: 'FAILED', error: 'Queue unavailable' }).catch(
+          () => {}
+        );
         results.push({ language: targetLang, error: 'Queue unavailable' });
       }
     }
@@ -144,7 +169,7 @@ export const POST = withAuth(
         failed,
         jobs: results,
       },
-      201,
+      201
     );
-  },
+  }
 );

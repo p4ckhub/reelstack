@@ -11,15 +11,10 @@ type CheckResult = {
   error?: string;
 };
 
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-): Promise<T> {
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), timeoutMs),
-    ),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs)),
   ]);
 }
 
@@ -28,10 +23,7 @@ const CHECK_TIMEOUT_MS = 3000;
 async function checkDatabase(): Promise<CheckResult> {
   const start = performance.now();
   try {
-    await withTimeout(
-      prisma.$queryRawUnsafe('SELECT 1'),
-      CHECK_TIMEOUT_MS,
-    );
+    await withTimeout(prisma.$queryRawUnsafe('SELECT 1'), CHECK_TIMEOUT_MS);
     return { status: 'ok', latencyMs: Math.round(performance.now() - start) };
   } catch (err) {
     return {
@@ -59,10 +51,7 @@ async function checkRedis(): Promise<CheckResult> {
     const port = parseInt(url.port || '6379', 10);
     const password = url.password || undefined;
 
-    const ok = await withTimeout(
-      redisPing(host, port, password),
-      CHECK_TIMEOUT_MS,
-    );
+    const ok = await withTimeout(redisPing(host, port, password), CHECK_TIMEOUT_MS);
     return ok
       ? { status: 'ok', latencyMs: Math.round(performance.now() - start) }
       : { status: 'error', latencyMs: Math.round(performance.now() - start), error: 'PING failed' };
@@ -78,9 +67,7 @@ async function checkRedis(): Promise<CheckResult> {
 function redisPing(host: string, port: number, password?: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const socket = createConnection({ host, port }, () => {
-      const commands = password
-        ? `AUTH ${password}\r\nPING\r\n`
-        : 'PING\r\n';
+      const commands = password ? `AUTH ${password}\r\nPING\r\n` : 'PING\r\n';
       socket.write(commands);
     });
 
@@ -132,7 +119,13 @@ function minioHealthCheck(host: string, port: number, useSSL: boolean): Promise<
   return new Promise((resolve, reject) => {
     const reqFn = useSSL ? httpsRequest : httpRequest;
     const req = reqFn(
-      { hostname: host, port, path: '/minio/health/live', method: 'GET', timeout: CHECK_TIMEOUT_MS },
+      {
+        hostname: host,
+        port,
+        path: '/minio/health/live',
+        method: 'GET',
+        timeout: CHECK_TIMEOUT_MS,
+      },
       (res) => {
         // MinIO returns 200 for healthy
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
@@ -142,7 +135,7 @@ function minioHealthCheck(host: string, port: number, useSSL: boolean): Promise<
           res.resume();
           reject(new Error(`MinIO health returned HTTP ${res.statusCode}`));
         }
-      },
+      }
     );
     req.on('error', reject);
     req.on('timeout', () => {
@@ -189,6 +182,6 @@ export async function GET() {
       checks,
       timestamp: new Date().toISOString(),
     },
-    { status: httpStatus },
+    { status: httpStatus }
   );
 }

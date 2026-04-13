@@ -77,6 +77,7 @@ export const POST = withAuth(
         numberOfTips: parsed.data.numberOfTips,
         variant: parsed.data.variant,
         montageProfile: parsed.data.montageProfile,
+        preferredToolIds: parsed.data.preferredToolIds,
         // Captions-specific fields
         videoUrl: parsed.data.videoUrl,
         cues: parsed.data.cues,

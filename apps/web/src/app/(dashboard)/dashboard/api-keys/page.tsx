@@ -80,17 +80,12 @@ export default function ApiKeysPage() {
                 <tr key={key.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-medium">{key.name}</td>
                   <td className="px-4 py-3">
-                    <code className="rounded bg-muted px-2 py-0.5 text-xs">
-                      {key.keyPrefix}...
-                    </code>
+                    <code className="rounded bg-muted px-2 py-0.5 text-xs">{key.keyPrefix}...</code>
                   </td>
                   <td className="max-w-48 px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {key.scopes.slice(0, 3).map((scope) => (
-                        <span
-                          key={scope}
-                          className="rounded bg-muted px-1.5 py-0.5 text-[10px]"
-                        >
+                        <span key={scope} className="rounded bg-muted px-1.5 py-0.5 text-[10px]">
                           {scope}
                         </span>
                       ))}
@@ -102,9 +97,7 @@ export default function ApiKeysPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {key.lastUsedAt
-                      ? new Date(key.lastUsedAt).toLocaleDateString()
-                      : 'Never'}
+                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : 'Never'}
                   </td>
                   <td className="px-4 py-3">
                     {key.isActive ? (
@@ -138,11 +131,7 @@ export default function ApiKeysPage() {
         </div>
       )}
 
-      <CreateApiKeyDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={fetchKeys}
-      />
+      <CreateApiKeyDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={fetchKeys} />
     </div>
   );
 }

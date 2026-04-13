@@ -4,10 +4,10 @@
 
 ReelStack has two compositions sharing common components:
 
-| Composition | Aspect | Resolution | Use Case |
-|-------------|--------|------------|----------|
-| `Reel` | 9:16 | 1080x1920 | Instagram/TikTok/Shorts |
-| `YouTubeLongForm` | 16:9 | 1920x1080 | YouTube videos |
+| Composition       | Aspect | Resolution | Use Case                |
+| ----------------- | ------ | ---------- | ----------------------- |
+| `Reel`            | 9:16   | 1080x1920  | Instagram/TikTok/Shorts |
+| `YouTubeLongForm` | 16:9   | 1920x1080  | YouTube videos          |
 
 Both compositions use the same effect components. All effects use CSS percentages and transforms (no pixel values), so they work at any resolution.
 
@@ -55,19 +55,19 @@ Layer 12: Progress bar
 
 All effect schemas defined in `src/schemas/reel-props.ts` and imported by `youtube-props.ts`:
 
-| Effect | Schema | Component | Both Compositions |
-|--------|--------|-----------|-------------------|
-| B-Roll Cutaways | `bRollSegmentSchema` | `BRollCutaway` | Yes |
-| Text Cards | part of bRollSegment | `TextCardSlide` | Yes |
-| PiP | `pipSegmentSchema` | `PiPOverlay` | Yes |
-| Lower Third | `lowerThirdSegmentSchema` | `LowerThird` | Yes |
-| CTA | `ctaSegmentSchema` | `CTAOverlay` | Yes |
-| Animated Counter | `counterSegmentSchema` | `AnimatedCounter` | Yes |
-| Zoom Effect | `zoomSegmentSchema` | `ZoomEffect` | Yes |
-| Highlight Box | `highlightSegmentSchema` | `HighlightBox` | Yes |
-| Captions | `captionCueSchema` | `CaptionOverlay` | Yes |
-| Progress Bar | boolean flag | `ProgressBar` | Yes |
-| Chapter Card | `chapterSegmentSchema` | `ChapterCard` | YouTube only |
+| Effect           | Schema                    | Component         | Both Compositions |
+| ---------------- | ------------------------- | ----------------- | ----------------- |
+| B-Roll Cutaways  | `bRollSegmentSchema`      | `BRollCutaway`    | Yes               |
+| Text Cards       | part of bRollSegment      | `TextCardSlide`   | Yes               |
+| PiP              | `pipSegmentSchema`        | `PiPOverlay`      | Yes               |
+| Lower Third      | `lowerThirdSegmentSchema` | `LowerThird`      | Yes               |
+| CTA              | `ctaSegmentSchema`        | `CTAOverlay`      | Yes               |
+| Animated Counter | `counterSegmentSchema`    | `AnimatedCounter` | Yes               |
+| Zoom Effect      | `zoomSegmentSchema`       | `ZoomEffect`      | Yes               |
+| Highlight Box    | `highlightSegmentSchema`  | `HighlightBox`    | Yes               |
+| Captions         | `captionCueSchema`        | `CaptionOverlay`  | Yes               |
+| Progress Bar     | boolean flag              | `ProgressBar`     | Yes               |
+| Chapter Card     | `chapterSegmentSchema`    | `ChapterCard`     | YouTube only      |
 
 ## Effect Details
 
@@ -79,9 +79,9 @@ Wraps the base layer content with `transform: scale()` + `transform-origin` base
 interface ZoomSegment {
   startTime: number;
   endTime: number;
-  scale: number;           // 1.0-3.0, default 1.5
+  scale: number; // 1.0-3.0, default 1.5
   focusPoint: { x: number; y: number }; // % coordinates, default {50,50}
-  easing: 'spring' | 'smooth';          // spring = snappy, smooth = gradual
+  easing: 'spring' | 'smooth'; // spring = snappy, smooth = gradual
 }
 ```
 
@@ -97,9 +97,9 @@ Animated number counting from 0 to target value.
 interface CounterSegment {
   startTime: number;
   endTime: number;
-  value: number;            // target number
-  prefix: string;           // "$", "" etc
-  suffix: string;           // " subscribers", " views"
+  value: number; // target number
+  prefix: string; // "$", "" etc
+  suffix: string; // " subscribers", " views"
   format: 'full' | 'abbreviated'; // 1,234,567 vs 1.2M
   textColor: string;
   fontSize: number;
@@ -119,15 +119,15 @@ Colored border around a screen region to draw attention.
 interface HighlightSegment {
   startTime: number;
   endTime: number;
-  x: number;          // % from left
-  y: number;          // % from top
-  width: number;      // % of screen width
-  height: number;     // % of screen height
-  color: string;      // border color, default '#FF0000'
+  x: number; // % from left
+  y: number; // % from top
+  width: number; // % of screen width
+  height: number; // % of screen height
+  color: string; // border color, default '#FF0000'
   borderWidth: number; // px, default 3
   borderRadius: number;
-  label?: string;     // text above/below box
-  glow: boolean;      // box-shadow glow effect
+  label?: string; // text above/below box
+  glow: boolean; // box-shadow glow effect
 }
 ```
 
@@ -142,8 +142,8 @@ Full-screen or overlay card for chapter transitions.
 ```typescript
 interface ChapterSegment {
   startTime: number;
-  endTime: number;       // typically 1.5-2.5s
-  number?: number;       // "Chapter 3"
+  endTime: number; // typically 1.5-2.5s
+  number?: number; // "Chapter 3"
   title: string;
   subtitle?: string;
   style: 'fullscreen' | 'overlay';
@@ -173,6 +173,7 @@ textCard: {
 ### BRollCutaway Transitions
 
 Available transition types for `bRollSegment.transition.type`:
+
 - `crossfade` - opacity blend
 - `slide-left` - enters from right
 - `slide-right` - enters from left
@@ -183,45 +184,58 @@ Available transition types for `bRollSegment.transition.type`:
 ## How Overlays Work
 
 ### Base = Always Fullscreen
+
 When `bRollSegments` are present, the base is ALWAYS fullscreen video. Split-screen is an overlay, not the base.
 
 ### Everything is an Overlay
+
 All visual changes are entries in `bRollSegments`:
+
 - `media.type: 'split-screen'` - split-screen layout, crossfades over fullscreen
 - `media.type: 'color' | 'image'` - B-roll cutaway with label/content
 - `media.type: 'text-card'` - gradient text card
 - No overlay active = fullscreen base visible
 
 ### Entrance-Only Transitions
+
 `computeEntrance()` only animates entrance (opacity 0→1, translateX 100%→0, etc). No exit animation. Exit handled by:
+
 1. **Adjacent segments** - held overlay keeps previous visible under incoming
 2. **Gap to fullscreen** - 300ms crossfade out
 
 ### Held Overlay (Cross-Transition)
+
 When segment B starts right when A ends (`A.endTime === B.startTime`, <100ms tolerance):
+
 - A stays at opacity 1 underneath B
 - B enters with its transition ON TOP of A
 - Single visual motion: B entering over A
 
 ### Exit Fade
+
 When overlay ends with no adjacent next segment:
+
 - 300ms crossfade out reveals fullscreen base
 
 ## YouTube Layouts
 
 ### Fullscreen
+
 Standard single-source layout. Same as Reel but 16:9.
 
 ### Sidebar (screen + webcam)
+
 ```
 ┌──────────────────────┬──────────┐
 │   Main content       │  Webcam  │
 │   (screen/demo)      │  (30%)   │
 └──────────────────────┴──────────┘
 ```
+
 Props: `sidebarPosition: 'left' | 'right'`, `sidebarWidth: number` (% default 30)
 
 ### Horizontal Split (dual-source)
+
 ```
 ┌───────────┬───────────┐
 │  Left     │  Right    │
@@ -249,6 +263,7 @@ For B-roll showing same video at current timeline position: do NOT use `startFro
 ## Whisper.cpp Token Merging
 
 whisper.cpp returns sub-word BPE tokens. Leading space = new word boundary:
+
 - ` C` + `ze` + `ść` + `!` → `Cześć!`
 - ` ur` + `uch` + `omi` + `ć` → `uruchomić`
 - Punctuation tokens append to previous word

@@ -17,6 +17,8 @@ import {
   isCoreMode,
   PipelineEngine,
   createGeneratePipeline,
+  getCostSummary,
+  isPublicUrl,
 } from '@reelstack/agent';
 import type {
   UserAsset,
@@ -55,6 +57,15 @@ async function deliverCallback(
   const secret = process.env.WEBHOOK_CALLBACK_SECRET;
   if (!secret) {
     log.warn({ jobId }, 'WEBHOOK_CALLBACK_SECRET not set, skipping callback');
+    return;
+  }
+
+  // Re-validate callback URL at delivery time (SSRF protection against TOCTOU)
+  if (!isPublicUrl(callbackUrl)) {
+    log.warn(
+      { jobId, callbackUrl },
+      'Callback URL failed SSRF validation at delivery time, skipping'
+    );
     return;
   }
 
@@ -109,7 +120,7 @@ function makeProgressCallback(jobId: string, progressMap: Record<string, number>
   };
 }
 
-export async function processReelPipelineJob(jobId: string): Promise<void> {
+export async function processReelPipelineJob(jobId: string, fromStepId?: string): Promise<void> {
   const job = await getReelJobInternal(jobId);
   if (!job) throw new Error(`Reel job ${jobId} not found`);
 
@@ -140,15 +151,14 @@ export async function processReelPipelineJob(jobId: string): Promise<void> {
       );
 
       const engine = new PipelineEngine();
-      const pipelineResult = await engine.runAll(
-        pipeline,
-        initialInput,
-        jobId,
-        (stepId: string, _status: StepStatus) => {
-          const progress = stepProgressMap[stepId] ?? 50;
-          updateReelJobStatus(jobId, { progress }).catch(() => {});
-        }
-      );
+      const onStepProgress = (stepId: string, _status: StepStatus) => {
+        const progress = stepProgressMap[stepId] ?? 50;
+        updateReelJobStatus(jobId, { progress }).catch(() => {});
+      };
+
+      const pipelineResult = fromStepId
+        ? await engine.resumeFrom(pipeline, jobId, fromStepId, onStepProgress)
+        : await engine.runAll(pipeline, initialInput, jobId, onStepProgress);
 
       if (pipelineResult.status === 'failed') {
         throw new Error(
@@ -302,6 +312,7 @@ async function buildGeneratePipelineSetup(
       whisper: config.whisper,
       brandPreset: config.brandPreset,
       montageProfile: config.montageProfile,
+      preferredToolIds: config.preferredToolIds,
     },
     stepProgressMap: {
       'script-review': 10,
@@ -480,11 +491,12 @@ async function runLegacyGenerate(
       | { provider?: 'edge-tts' | 'elevenlabs' | 'openai'; voice?: string; language?: string }
       | undefined,
     whisper: config.whisper as
-      | { provider?: 'openrouter' | 'cloudflare' | 'ollama'; apiKey?: string }
+      | { provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic'; apiKey?: string }
       | undefined,
     brandPreset: config.brandPreset as BrandPreset | undefined,
     avatar: config.avatar as { avatarId?: string; voice?: string } | undefined,
     montageProfile: config.montageProfile as string | undefined,
+    preferredToolIds: config.preferredToolIds as string[] | undefined,
     onProgress: makeProgressCallback(jobId, {
       'Discovering available tools...': 5,
       'Planning production...': 10,
@@ -644,6 +656,7 @@ function buildPipelineProductionMeta(result: PipelineResult): Record<string, unk
       error: s.error,
     })),
     durationSeconds: ttsResult?.audioDuration,
+    costs: getCostSummary(),
   };
 }
 

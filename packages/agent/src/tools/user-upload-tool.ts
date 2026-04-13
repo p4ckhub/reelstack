@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ProductionTool } from '../registry/tool-interface';
 import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob } from '../types';
-import { isPublicUrl } from '../planner/production-planner';
+import { isPublicUrl } from '../utils/url-validation';
 
 /**
  * Passthrough tool for user-provided recordings.
@@ -31,7 +31,12 @@ export class UserUploadTool implements ProductionTool {
     }
 
     if (!isPublicUrl(request.prompt)) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'URL must be a public HTTP(S) URL' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'URL must be a public HTTP(S) URL',
+      };
     }
 
     return {

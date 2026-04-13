@@ -15,9 +15,7 @@ function TemplateCard({
   return (
     <div className="rounded-lg border p-4">
       <h3 className="truncate font-medium">{template.name}</h3>
-      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-        {template.description}
-      </p>
+      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{template.description}</p>
       <div
         className="mt-3 flex h-10 items-center justify-center rounded text-sm font-medium"
         style={{

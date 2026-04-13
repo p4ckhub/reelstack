@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@reelstack/agent": "workspace:*",
+    "@reelstack/ffmpeg": "workspace:*",
     "@reelstack/image-gen": "workspace:*",
     "@reelstack/logger": "workspace:*",
     "@reelstack/remotion": "workspace:*",

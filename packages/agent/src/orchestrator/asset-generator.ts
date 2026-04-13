@@ -1,14 +1,21 @@
 import type { ProductionPlan, ShotPlan, AssetGenerationJob, GeneratedAsset } from '../types';
 import type { ToolRegistry } from '../registry/tool-registry';
 import { pollUntilDone } from '../polling';
-import { isPublicUrl } from '../planner/production-planner';
+import { isPublicUrl } from '../utils/url-validation';
+import { extractLastFrame } from '@reelstack/ffmpeg';
+import { createStorage } from '@reelstack/storage';
 import { createLogger } from '@reelstack/logger';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 const log = createLogger('asset-generator');
 
 interface GenerationTask {
   readonly shotId?: string;
   readonly toolId: string;
+  /** If true, this task should receive the last frame of the previous ai-video as imageUrl */
+  readonly chainFromPrevious?: boolean;
   readonly request: {
     purpose: string;
     prompt?: string;
@@ -18,12 +25,17 @@ interface GenerationTask {
     durationSeconds?: number;
     aspectRatio?: '9:16' | '16:9' | '1:1';
     searchQuery?: string;
+    imageUrl?: string;
   };
 }
 
 /**
- * Generates all assets needed by a production plan in parallel.
- * Returns generated assets mapped to their shot IDs.
+ * Generates all assets needed by a production plan.
+ *
+ * Independent tasks run in parallel (batches of 5).
+ * Chained tasks (chainFromPrevious) run sequentially — each receives the
+ * last frame of the previous video as imageUrl (first_frame_url) for
+ * visual continuity between clips.
  */
 export async function generateAssets(
   plan: ProductionPlan,
@@ -39,34 +51,183 @@ export async function generateAssets(
 
   onProgress?.(`Generating ${tasks.length} asset(s)...`);
 
-  // Limit concurrency to avoid rate limiting and resource exhaustion
-  const MAX_CONCURRENT = 5;
-  const results: PromiseSettledResult<GeneratedAsset | null>[] = [];
+  // Split into chained sequences and independent tasks.
+  // A chain is a consecutive run of tasks where chainFromPrevious is true.
+  const { chains, independent } = splitChainedTasks(tasks);
 
-  for (let i = 0; i < tasks.length; i += MAX_CONCURRENT) {
-    const batch = tasks.slice(i, i + MAX_CONCURRENT);
+  // Generate independent tasks in parallel batches
+  const MAX_CONCURRENT = 5;
+  const assets: GeneratedAsset[] = [];
+
+  for (let i = 0; i < independent.length; i += MAX_CONCURRENT) {
+    const batch = independent.slice(i, i + MAX_CONCURRENT);
     const batchResults = await Promise.allSettled(
       batch.map((task) => generateSingle(task, registry))
     );
-    results.push(...batchResults);
+    for (let j = 0; j < batchResults.length; j++) {
+      const result = batchResults[j];
+      const task = batch[j];
+      if (result.status === 'fulfilled' && result.value) {
+        assets.push(result.value);
+        onProgress?.(`Asset ready: ${task.toolId} for ${task.shotId ?? 'primary'}`);
+      } else {
+        const err = result.status === 'rejected' ? result.reason : 'null result';
+        log.warn({ task: task.shotId, err }, 'Asset generation failed');
+        onProgress?.(`Asset failed: ${task.toolId} for ${task.shotId ?? 'primary'}`);
+      }
+    }
   }
 
-  const assets: GeneratedAsset[] = [];
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    const task = tasks[i];
-    if (result.status === 'fulfilled' && result.value) {
-      assets.push(result.value);
-      onProgress?.(`Asset ready: ${task.toolId} for ${task.shotId ?? 'primary'}`);
-    } else if (result.status === 'rejected') {
-      log.warn({ task, err: result.reason }, 'Asset generation failed');
-      onProgress?.(
-        `Asset failed: ${task.toolId} for ${task.shotId ?? 'primary'} - ${result.reason}`
-      );
+  // Generate chained sequences sequentially with frame extraction between clips
+  for (const chain of chains) {
+    let lastFrameUrl: string | undefined;
+
+    for (const task of chain) {
+      // Inject last frame from previous clip as imageUrl
+      const chainedTask = lastFrameUrl
+        ? { ...task, request: { ...task.request, imageUrl: lastFrameUrl } }
+        : task;
+
+      const asset = await generateSingle(chainedTask, registry);
+      if (asset) {
+        assets.push(asset);
+        onProgress?.(`Asset ready (chained): ${task.toolId} for ${task.shotId}`);
+
+        // Extract last frame for next clip in chain
+        if (asset.type === 'ai-video' || asset.type === 'stock-video') {
+          lastFrameUrl = await extractAndUploadLastFrame(asset.url);
+          if (lastFrameUrl) {
+            log.info(
+              { shotId: task.shotId, frameUrl: lastFrameUrl.substring(0, 80) },
+              'Last frame extracted for chain'
+            );
+          }
+        }
+      } else {
+        onProgress?.(`Asset failed (chained): ${task.toolId} for ${task.shotId}`);
+        // Chain broken — continue without frame reference
+        lastFrameUrl = undefined;
+      }
     }
   }
 
   return assets;
+}
+
+/**
+ * Split tasks into chained sequences and independent tasks.
+ * A chain starts with a non-chained ai-video task, followed by consecutive chainFromPrevious tasks.
+ */
+function splitChainedTasks(tasks: GenerationTask[]): {
+  chains: GenerationTask[][];
+  independent: GenerationTask[];
+} {
+  const chains: GenerationTask[][] = [];
+  const independent: GenerationTask[] = [];
+  let currentChain: GenerationTask[] = [];
+
+  for (const task of tasks) {
+    if (task.chainFromPrevious && currentChain.length > 0) {
+      currentChain.push(task);
+    } else if (task.chainFromPrevious) {
+      // chainFromPrevious but no previous — treat as chain start
+      currentChain = [task];
+    } else if (task.request.prompt && (task.request.durationSeconds ?? 0) > 0) {
+      // AI video task that could start a chain — check if next task chains from it
+      if (currentChain.length > 0) chains.push(currentChain);
+      currentChain = [task];
+    } else {
+      if (currentChain.length > 0) chains.push(currentChain);
+      currentChain = [];
+      independent.push(task);
+    }
+  }
+  if (currentChain.length > 0) {
+    // Only keep as chain if it has chained members (>1 task)
+    if (currentChain.length > 1) {
+      chains.push(currentChain);
+    } else {
+      independent.push(currentChain[0]);
+    }
+  }
+
+  return { chains, independent };
+}
+
+/**
+ * Download video, extract last frame, upload to storage, return signed URL.
+ * Returns undefined on failure (non-blocking — chain continues without reference).
+ */
+async function extractAndUploadLastFrame(videoUrl: string): Promise<string | undefined> {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chain-frame-'));
+  const videoPath = path.join(tmpDir, 'clip.mp4');
+
+  try {
+    // Download video to temp
+    const res = await fetch(videoUrl, { signal: AbortSignal.timeout(60_000), redirect: 'error' });
+    if (!res.ok) return undefined;
+    const buf = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(videoPath, buf);
+
+    // Extract last frame
+    const framePath = extractLastFrame(videoPath);
+
+    // Upload to storage
+    const storage = await createStorage();
+    const key = `chain-frames/frame-${Date.now()}.jpg`;
+    await storage.upload(fs.readFileSync(framePath), key);
+    const url = await storage.getSignedUrl(key, 7200);
+
+    return url;
+  } catch (err) {
+    log.warn(
+      { videoUrl: videoUrl.substring(0, 80), err },
+      'Failed to extract last frame for chain'
+    );
+    return undefined;
+  } finally {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      /* cleanup best-effort */
+    }
+  }
+}
+
+/**
+ * Regenerate a single asset for a specific shot.
+ * Finds the shot in the plan, builds a generation task, generates, and returns the result.
+ * Optionally override the prompt.
+ */
+export async function regenerateAsset(
+  plan: ProductionPlan,
+  shotId: string,
+  registry: ToolRegistry,
+  options?: { prompt?: string; toolId?: string }
+): Promise<GeneratedAsset | null> {
+  const shot = plan.shots.find((s) => s.id === shotId);
+  if (!shot) {
+    log.warn({ shotId }, 'Shot not found in plan');
+    return null;
+  }
+
+  const task = shotToTask(shot);
+  if (!task) {
+    log.warn({ shotId, visualType: shot.visual.type }, 'Shot type does not need asset generation');
+    return null;
+  }
+
+  // Apply overrides
+  const overriddenTask: GenerationTask = {
+    ...task,
+    toolId: options?.toolId ?? task.toolId,
+    request: {
+      ...task.request,
+      ...(options?.prompt ? { prompt: options.prompt } : {}),
+    },
+  };
+
+  return generateSingle(overriddenTask, registry);
 }
 
 function collectTasks(plan: ProductionPlan): GenerationTask[] {
@@ -120,6 +281,7 @@ function shotToTask(shot: ShotPlan): GenerationTask | null {
       return {
         shotId: shot.id,
         toolId: shot.visual.toolId,
+        chainFromPrevious: shot.chainFromPrevious,
         request: {
           purpose: `AI video: ${shot.reason}`,
           prompt: shot.visual.prompt,
@@ -192,7 +354,10 @@ async function tryGenerate(
   task: GenerationTask
 ): Promise<GeneratedAsset | null> {
   try {
-    log.info({ toolId: tool.id, shotId: task.shotId }, 'Starting generation');
+    log.info(
+      { toolId: tool.id, shotId: task.shotId, hasImageUrl: !!task.request.imageUrl },
+      'Starting generation'
+    );
     const job = await tool.generate(task.request);
 
     if (job.status === 'failed') {
@@ -248,6 +413,8 @@ async function tryGenerate(
 }
 
 const VIDEO_FALLBACK_ORDER = [
+  'seedance2-kie',
+  'seedance2-fast-kie',
   'seedance2-piapi',
   'veo31-gemini',
   'kling-fal',

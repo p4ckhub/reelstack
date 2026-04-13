@@ -103,9 +103,7 @@ describe('PostizPublisher', () => {
         });
       });
 
-      const result = await publisher.publish(
-        makeRequest({ scheduleDate: '2026-04-01T10:00:00Z' })
-      );
+      const result = await publisher.publish(makeRequest({ scheduleDate: '2026-04-01T10:00:00Z' }));
 
       expect(result.platforms[0]!.status).toBe('scheduled');
       expect(result.platforms[0]!.scheduledAt).toBe('2026-04-01T10:00:00Z');

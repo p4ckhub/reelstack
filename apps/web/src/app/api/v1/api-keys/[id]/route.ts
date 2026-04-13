@@ -31,5 +31,5 @@ export const DELETE = withAuth(
     }).catch(() => {});
 
     return successResponse({ revoked: true });
-  },
+  }
 );

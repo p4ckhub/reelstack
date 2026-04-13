@@ -31,13 +31,15 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     navigationTimeout: 15000,
     // Force connection close to avoid keep-alive issues with streaming Next.js responses
-    extraHTTPHeaders: process.env.E2E_BASE_URL ? { 'Connection': 'close' } : {},
+    extraHTTPHeaders: process.env.E2E_BASE_URL ? { Connection: 'close' } : {},
   },
-  webServer: process.env.E2E_BASE_URL ? undefined : {
-    command: 'npx next dev --port 3077',
-    port: 3077,
-    reuseExistingServer: true,
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: 'npx next dev --port 3077',
+        port: 3077,
+        reuseExistingServer: true,
+      },
   projects: [
     // Auth setup - creates test user session
     {

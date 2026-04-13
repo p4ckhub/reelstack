@@ -49,13 +49,12 @@ function renderWordHighlight(
   words: readonly SubtitleWord[],
   currentTime: number,
   highlightColor: string,
-  upcomingColor?: string,
+  upcomingColor?: string
 ): AnimatedCaptionFrame {
   const lastWord = words[words.length - 1];
   const segments: WordSegment[] = words.map((word) => {
     const isLastWord = word === lastWord;
-    const isActive = currentTime >= word.startTime
-      && (isLastWord || currentTime < word.endTime);
+    const isActive = currentTime >= word.startTime && (isLastWord || currentTime < word.endTime);
     const isUpcoming = currentTime < word.startTime;
 
     let color: string | undefined;
@@ -76,11 +75,9 @@ function renderWordHighlight(
 
 function renderWordByWord(
   words: readonly SubtitleWord[],
-  currentTime: number,
+  currentTime: number
 ): AnimatedCaptionFrame {
-  const activeWord = words.find(
-    (w) => currentTime >= w.startTime && currentTime < w.endTime,
-  );
+  const activeWord = words.find((w) => currentTime >= w.startTime && currentTime < w.endTime);
 
   if (!activeWord) {
     const lastWord = words[words.length - 1];
@@ -103,7 +100,7 @@ function renderKaraoke(
   words: readonly SubtitleWord[],
   currentTime: number,
   highlightColor: string,
-  upcomingColor: string,
+  upcomingColor: string
 ): AnimatedCaptionFrame {
   const lastWord = words[words.length - 1];
   const segments: WordSegment[] = words.map((word) => {
@@ -115,8 +112,7 @@ function renderKaraoke(
     // For the last word in cue, treat it as active even at/past endTime
     // (the cue-level fade-out handles disappearance)
     const isLastWord = word === lastWord;
-    const isActive = currentTime >= word.startTime
-      && (isLastWord || currentTime < word.endTime);
+    const isActive = currentTime >= word.startTime && (isLastWord || currentTime < word.endTime);
     const isComplete = !isActive && currentTime >= word.endTime;
 
     let style: WordSegmentStyle = 'normal';
@@ -141,10 +137,7 @@ function renderKaraoke(
   return { segments, visible: true };
 }
 
-function renderBounce(
-  words: readonly SubtitleWord[],
-  currentTime: number,
-): AnimatedCaptionFrame {
+function renderBounce(words: readonly SubtitleWord[], currentTime: number): AnimatedCaptionFrame {
   const animationDuration = 0.3;
 
   const segments: WordSegment[] = words.map((word) => {
@@ -152,7 +145,13 @@ function renderBounce(
     const isVisible = currentTime >= word.startTime;
 
     if (!isVisible) {
-      return { text: word.text, style: 'hidden' as WordSegmentStyle, opacity: 0, scale: 0, offsetY: 20 };
+      return {
+        text: word.text,
+        style: 'hidden' as WordSegmentStyle,
+        opacity: 0,
+        scale: 0,
+        offsetY: 20,
+      };
     }
 
     const animProgress = clamp(timeSinceStart / animationDuration, 0, 1);
@@ -171,9 +170,58 @@ function renderBounce(
   return { segments, visible: true };
 }
 
+/**
+ * Snap-pop: words appear instantly at scale 1.3 then snap to 1.0 over ~0.12s.
+ * No fade, no bounce — hard entrance with quick settle. Jabłoński/Hormozi style.
+ */
+function renderSnapPop(words: readonly SubtitleWord[], currentTime: number): AnimatedCaptionFrame {
+  const popDuration = 0.12; // seconds to settle from 1.3 → 1.0
+
+  const segments: WordSegment[] = words.map((word) => {
+    const isVisible = currentTime >= word.startTime;
+
+    if (!isVisible) {
+      return {
+        text: word.text,
+        style: 'hidden' as WordSegmentStyle,
+        opacity: 0,
+        scale: 0,
+        offsetY: 0,
+      };
+    }
+
+    const elapsed = currentTime - word.startTime;
+    const isActive = currentTime >= word.startTime && currentTime < word.endTime;
+
+    if (elapsed < popDuration) {
+      // Pop phase: 1.3 → 1.0 with cubic ease-out
+      const t = elapsed / popDuration;
+      const eased = 1 - (1 - t) * (1 - t) * (1 - t); // cubic ease-out
+      const scale = 1.3 - 0.3 * eased;
+      return {
+        text: word.text,
+        style: 'active' as WordSegmentStyle,
+        opacity: 1,
+        scale,
+        offsetY: 0,
+      };
+    }
+
+    return {
+      text: word.text,
+      style: isActive ? 'active' : 'normal',
+      opacity: 1,
+      scale: 1,
+      offsetY: 0,
+    };
+  });
+
+  return { segments, visible: true };
+}
+
 function renderTypewriter(
   words: readonly SubtitleWord[],
-  currentTime: number,
+  currentTime: number
 ): AnimatedCaptionFrame {
   const visibleWords = words.filter((w) => currentTime >= w.startTime);
   if (visibleWords.length === 0) return EMPTY_FRAME;
@@ -197,13 +245,13 @@ function renderTypewriter(
 export function renderAnimatedCaption(
   cue: SubtitleCue,
   currentTime: number,
-  styleOverrides?: { highlightColor?: string; upcomingColor?: string },
+  styleOverrides?: { highlightColor?: string; upcomingColor?: string; animationStyle?: string }
 ): AnimatedCaptionFrame {
   if (currentTime < cue.startTime || currentTime > cue.endTime) {
     return EMPTY_FRAME;
   }
 
-  const animationStyle = cue.animationStyle ?? 'none';
+  const animationStyle = styleOverrides?.animationStyle ?? 'none';
 
   // If no per-word timing data, fall back to static rendering
   if (!cue.words || cue.words.length === 0 || animationStyle === 'none') {
@@ -224,6 +272,8 @@ export function renderAnimatedCaption(
       return renderBounce(cue.words, currentTime);
     case 'typewriter':
       return renderTypewriter(cue.words, currentTime);
+    case 'snap-pop':
+      return renderSnapPop(cue.words, currentTime);
     default:
       return renderNone(cue);
   }
@@ -236,6 +286,7 @@ export const CAPTION_ANIMATION_STYLES = [
   'karaoke',
   'bounce',
   'typewriter',
+  'snap-pop',
 ] as const;
 
 export function getAnimationStyleDisplayName(style: string): string {
@@ -246,6 +297,7 @@ export function getAnimationStyleDisplayName(style: string): string {
     karaoke: 'Karaoke',
     bounce: 'Bounce',
     typewriter: 'Typewriter',
+    'snap-pop': 'Snap Pop',
   };
   return names[style] ?? style;
 }

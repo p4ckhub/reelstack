@@ -20,9 +20,7 @@ describe('reelPropsSchema', () => {
     const result = reelPropsSchema.safeParse({
       layout: 'fullscreen',
       primaryVideoUrl: 'https://example.com/video.mp4',
-      cues: [
-        { id: '1', text: 'Hello', startTime: 0, endTime: 2 },
-      ],
+      cues: [{ id: '1', text: 'Hello', startTime: 0, endTime: 2 }],
     });
     expect(result.success).toBe(true);
   });

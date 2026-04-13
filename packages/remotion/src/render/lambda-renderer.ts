@@ -24,15 +24,12 @@ export class LambdaRenderer implements RemotionRenderer {
 
     if (!this.region || !this.functionName || !this.serveUrl) {
       throw new Error(
-        'Lambda renderer requires: AWS_REGION, REMOTION_LAMBDA_FUNCTION_NAME, REMOTION_LAMBDA_SERVE_URL',
+        'Lambda renderer requires: AWS_REGION, REMOTION_LAMBDA_FUNCTION_NAME, REMOTION_LAMBDA_SERVE_URL'
       );
     }
   }
 
-  async render(
-    props: Record<string, unknown>,
-    options: RenderOptions,
-  ): Promise<RenderResult> {
+  async render(props: Record<string, unknown>, options: RenderOptions): Promise<RenderResult> {
     const { renderMediaOnLambda } = await import('@remotion/lambda/client');
     const { getRenderProgress } = await import('@remotion/lambda/client');
 
@@ -70,7 +67,8 @@ export class LambdaRenderer implements RemotionRenderer {
       });
 
       if (progress.fatalErrorEncountered) {
-        const errorMsg = progress.errors?.map((e) => e.message).join('; ') ?? 'Unknown Lambda error';
+        const errorMsg =
+          progress.errors?.map((e) => e.message).join('; ') ?? 'Unknown Lambda error';
         throw new Error(`Lambda render failed: ${errorMsg}`);
       }
 
@@ -94,6 +92,7 @@ export class LambdaRenderer implements RemotionRenderer {
 
     const response = await fetch(outputUrl, {
       signal: AbortSignal.timeout(120_000),
+      redirect: 'error',
     });
     if (!response.ok) {
       throw new Error(`Failed to download render from S3: ${response.status}`);

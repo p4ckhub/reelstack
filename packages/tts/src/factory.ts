@@ -15,11 +15,13 @@ export function createTTSProvider(config?: TTSConfig): TTSProvider {
 
   switch (config.provider) {
     case 'elevenlabs':
-      if (!config.apiKey) throw new TTSError('ElevenLabs requires ELEVENLABS_API_KEY environment variable');
+      if (!config.apiKey)
+        throw new TTSError('ElevenLabs requires ELEVENLABS_API_KEY environment variable');
       return new ElevenLabsProvider(config.apiKey);
 
     case 'openai':
-      if (!config.apiKey) throw new TTSError('OpenAI TTS requires OPENAI_API_KEY environment variable');
+      if (!config.apiKey)
+        throw new TTSError('OpenAI TTS requires OPENAI_API_KEY environment variable');
       return new OpenAITTSProvider(config.apiKey);
 
     case 'edge-tts':

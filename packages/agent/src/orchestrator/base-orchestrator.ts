@@ -18,8 +18,10 @@ import {
 } from '@reelstack/remotion/pipeline';
 import { createRenderer } from '@reelstack/remotion/render';
 import { createStorage } from '@reelstack/storage';
-import type { ProductionStep, BrandPreset } from '../types';
+import type { ProductionStep, BrandPreset, WhisperConfig } from '../types';
 import { BUILT_IN_CAPTION_PRESETS, DEFAULT_CAPTION_PRESET } from '@reelstack/types';
+import { addCost } from '../context';
+import { calculateTTSCost, calculateWhisperCost } from '../config/pricing';
 
 // ── Pure helpers ──────────────────────────────────────────────
 
@@ -99,10 +101,7 @@ export interface TTSPipelineInput {
     voice?: string;
     language?: string;
   };
-  whisper?: {
-    provider?: 'openrouter' | 'cloudflare' | 'ollama';
-    apiKey?: string;
-  };
+  whisper?: WhisperConfig;
   brandPreset?: BrandPreset;
 }
 
@@ -136,10 +135,20 @@ export async function runTTSPipeline(
   const voiceoverPath = path.join(tmpDir, `voiceover.${ttsResult.format}`);
   fs.writeFileSync(voiceoverPath, ttsResult.audioBuffer);
 
+  const ttsDurationMs = performance.now() - ttsStart;
   steps.push({
     name: 'TTS',
-    durationMs: performance.now() - ttsStart,
+    durationMs: ttsDurationMs,
     detail: `${ttsProvider.name}, ${(ttsResult.audioBuffer.length / 1024).toFixed(0)} KB`,
+  });
+
+  addCost({
+    step: 'tts',
+    provider: ttsProvider.name,
+    type: 'tts',
+    costUSD: calculateTTSCost(ttsConfig.provider ?? 'edge-tts', request.script.length),
+    inputUnits: request.script.length,
+    durationMs: ttsDurationMs,
   });
 
   // Normalize audio
@@ -164,12 +173,23 @@ export async function runTTSPipeline(
     language: request.tts?.language?.split('-')[0],
     text: request.script,
     durationSeconds: audioDuration,
+    provider: request.whisper?.provider,
   });
 
+  const whisperDurationMs = performance.now() - whisperStart;
   steps.push({
     name: 'Whisper transcription',
-    durationMs: performance.now() - whisperStart,
+    durationMs: whisperDurationMs,
     detail: `${transcription.words.length} words`,
+  });
+
+  addCost({
+    step: 'whisper',
+    provider: request.whisper?.provider ?? 'cloudflare',
+    type: 'transcription',
+    costUSD: calculateWhisperCost(request.whisper?.provider ?? 'cloudflare', audioDuration),
+    inputUnits: Math.round(audioDuration),
+    durationMs: whisperDurationMs,
   });
 
   // Align Whisper output with original script text.
@@ -200,15 +220,11 @@ export async function runTTSPipeline(
 
   // Group into cues using preset config
   const presetConfig = resolvePresetConfig(request.brandPreset);
-  const cues = groupWordsIntoCues(
-    offsetWords,
-    {
-      maxWordsPerCue: presetConfig.maxWordsPerCue,
-      maxDurationPerCue: presetConfig.maxDurationPerCue,
-      breakOnPunctuation: true,
-    },
-    presetConfig.animationStyle
-  );
+  const cues = groupWordsIntoCues(offsetWords, {
+    maxWordsPerCue: presetConfig.maxWordsPerCue,
+    maxDurationPerCue: presetConfig.maxDurationPerCue,
+    breakOnPunctuation: true,
+  });
 
   return {
     voiceoverPath,
@@ -224,7 +240,6 @@ export async function runTTSPipeline(
       startTime: c.startTime,
       endTime: c.endTime,
       words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
-      animationStyle: c.animationStyle,
     })),
     steps,
   };

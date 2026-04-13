@@ -86,8 +86,8 @@ app.post('/generate', async (c) => {
 
 // ── List brands ───────────────────────────────────────────────
 app.get('/brands', (c) => {
-  const builtin = listBrands(DEFAULT_BRANDS_DIR).map(name => ({ name, source: 'builtin' }));
-  const user = listBrands(USER_BRANDS_DIR).map(name => ({ name, source: 'user' }));
+  const builtin = listBrands(DEFAULT_BRANDS_DIR).map((name) => ({ name, source: 'builtin' }));
+  const user = listBrands(USER_BRANDS_DIR).map((name) => ({ name, source: 'user' }));
   return c.json({ brands: [...builtin, ...user] });
 });
 

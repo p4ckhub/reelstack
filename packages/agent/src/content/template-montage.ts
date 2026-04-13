@@ -10,7 +10,7 @@
  */
 
 import type { ProductionPlan, ShotPlan, EffectPlan, PipSegmentPlan } from '../types';
-import type { ContentPackage, ContentSection, ContentAsset } from './content-package';
+import type { ContentPackage, ContentAsset } from './content-package';
 
 // ── Template configs ──────────────────────────────────────────
 
@@ -33,7 +33,7 @@ export interface TemplateMontageConfig {
   /** Transition between shots */
   transition: 'crossfade' | 'slide-left' | 'zoom-in' | 'varied';
   /** Caption highlight mode (overrides default) */
-  captionMode?: 'hormozi' | 'single-word' | 'pill' | 'text';
+  highlightMode?: 'hormozi' | 'single-word' | 'pill' | 'text';
   /** Max seconds for final head/CTA shot */
   maxCtaSeconds?: number;
   /** Show presenter as PiP circle during content shots */
@@ -84,12 +84,13 @@ export interface TemplateMontageConfig {
   /** Transition duration in ms */
   transitionDurationMs?: number;
 
-  /** Caption style overrides (beyond captionMode) */
+  /** Caption style overrides (beyond highlightMode) */
   captionStyleOverrides?: {
     highlightColor?: string;
     fontSize?: number;
     fontFamily?: string;
     position?: number;
+    animationStyle?: string;
   };
 
   /** Auto SFX on montage events (zoom changes, shot transitions) */
@@ -175,7 +176,10 @@ registerTemplate({
   name: 'Anchor Bottom (Simple)',
   layout: 'anchor-bottom',
   shotPattern: [
-    { type: 'head', durationStrategy: 'fixed', fixedDurationSeconds: 2.5 },
+    { type: 'head', durationStrategy: 'fixed', fixedDurationSeconds: 1.5 },
+    { type: 'content', durationStrategy: 'fill-section', maxDurationSeconds: 4 },
+    { type: 'content', durationStrategy: 'fill-section', maxDurationSeconds: 3.5 },
+    { type: 'head', durationStrategy: 'fixed', fixedDurationSeconds: 1.2 },
     { type: 'content', durationStrategy: 'fill-section', maxDurationSeconds: 4 },
   ],
   transition: 'crossfade',
@@ -405,45 +409,9 @@ export function buildTemplatePlan(content: ContentPackage, templateId: string): 
 
   // PiP segments: show presenter as circle during content shots.
   // Merge adjacent content shots into one continuous PiP segment (no re-entrance animation).
-  const pipSegments: PipSegmentPlan[] = [];
-  if (config.showPip) {
-    const pip = config.pipConfig ?? {};
-    let pipStart: number | null = null;
-    let pipEnd = 0;
-
-    for (const shot of shots) {
-      if (shot.shotLayout === 'content') {
-        if (pipStart === null) {
-          pipStart = shot.startTime;
-        }
-        pipEnd = shot.endTime;
-      } else {
-        if (pipStart !== null) {
-          pipSegments.push({
-            startTime: pipStart,
-            endTime: pipEnd,
-            position: pip.position ?? 'bottom-right',
-            size: pip.size ?? 28,
-            shape: pip.shape ?? 'circle',
-            borderColor: defaults.pipStyle.borderColor,
-            borderWidth: defaults.pipStyle.borderWidth,
-          });
-          pipStart = null;
-        }
-      }
-    }
-    if (pipStart !== null) {
-      pipSegments.push({
-        startTime: pipStart,
-        endTime: pipEnd,
-        position: pip.position ?? 'bottom-right',
-        size: pip.size ?? 28,
-        shape: pip.shape ?? 'circle',
-        borderColor: defaults.pipStyle.borderColor,
-        borderWidth: defaults.pipStyle.borderWidth,
-      });
-    }
-  }
+  const pipSegments = config.showPip
+    ? buildPipSegments(shots, config.pipConfig ?? {}, defaults)
+    : [];
 
   return {
     primarySource: primaryVideo
@@ -460,8 +428,7 @@ export function buildTemplatePlan(content: ContentPackage, templateId: string): 
     animationPool: defaults.animations,
     layout: config.layout,
     captionStyle: {
-      highlightMode: config.captionMode ?? 'hormozi',
-      highlightColor: '#FFD700',
+      highlightMode: config.highlightMode ?? 'hormozi',
       ...(config.showPip ? { position: defaults.pipStyle.captionOffset } : {}),
       ...defaults.captionStyleOverrides,
     },
@@ -650,4 +617,37 @@ function buildAutoSfx(
   sfx.sort((a, b) => a.startTime - b.startTime);
 
   return sfx;
+}
+
+function buildPipSegments(
+  shots: ShotPlan[],
+  pip: NonNullable<TemplateMontageConfig['pipConfig']>,
+  defaults: ResolvedDefaults
+): PipSegmentPlan[] {
+  const segments: PipSegmentPlan[] = [];
+  let pipStart: number | null = null;
+  let pipEnd = 0;
+
+  const makePipSegment = (start: number, end: number): PipSegmentPlan => ({
+    startTime: start,
+    endTime: end,
+    position: pip.position ?? 'bottom-right',
+    size: pip.size ?? 28,
+    shape: pip.shape ?? 'circle',
+    borderColor: defaults.pipStyle.borderColor,
+    borderWidth: defaults.pipStyle.borderWidth,
+  });
+
+  for (const shot of shots) {
+    if (shot.shotLayout === 'content') {
+      if (pipStart === null) pipStart = shot.startTime;
+      pipEnd = shot.endTime;
+    } else if (pipStart !== null) {
+      segments.push(makePipSegment(pipStart, pipEnd));
+      pipStart = null;
+    }
+  }
+  if (pipStart !== null) segments.push(makePipSegment(pipStart, pipEnd));
+
+  return segments;
 }

@@ -9,7 +9,8 @@
 import { produceN8nExplainer, callLLM } from '../packages/agent/src/index';
 
 // Same workflow URL as the last completed job
-const WORKFLOW_URL = 'https://n8n.io/workflows/3121-ai-image-generator-using-replicate-and-google-drive';
+const WORKFLOW_URL =
+  'https://n8n.io/workflows/3121-ai-image-generator-using-replicate-and-google-drive';
 
 console.log('Starting n8n-explainer local test...');
 console.log('Quality settings: imageFormat=png, crf=18 (from lambda-renderer.ts)');

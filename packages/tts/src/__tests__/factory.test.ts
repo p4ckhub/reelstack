@@ -37,6 +37,8 @@ describe('createTTSProvider', () => {
   });
 
   it('throws for unknown provider', () => {
-    expect(() => createTTSProvider({ provider: 'unknown' as never })).toThrow('Unknown TTS provider');
+    expect(() => createTTSProvider({ provider: 'unknown' as never })).toThrow(
+      'Unknown TTS provider'
+    );
   });
 });

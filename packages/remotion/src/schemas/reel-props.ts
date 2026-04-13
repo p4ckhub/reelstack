@@ -199,10 +199,13 @@ export const reelPropsSchema = z.object({
 
   // Media
   primaryVideoUrl: z.string().optional(),
-  /** Duration of the primary video in seconds. When set, the video loops via <Loop>. */
+  /** Duration of the primary video in seconds. When set, the video loops via the loop prop. */
   primaryVideoDurationSeconds: z.number().positive().optional(),
   /** CSS objectPosition for primary video (e.g. 'center bottom' for bottom-aligned avatars). */
   primaryVideoObjectPosition: z.string().default('center'),
+  /** When true, primary video has transparent background (WebM alpha / rmbg).
+   *  Renders as overlay on top of b-roll content instead of as background layer. */
+  primaryVideoTransparent: z.boolean().default(false),
   secondaryVideoUrl: z.string().optional(),
   bRollSegments: z.array(bRollSegmentSchema).default([]),
 

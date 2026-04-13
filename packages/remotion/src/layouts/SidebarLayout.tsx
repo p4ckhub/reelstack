@@ -40,9 +40,8 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({
     height,
     overflow: 'hidden',
     backgroundColor: '#1a1a2e',
-    boxShadow: sidebarPosition === 'right'
-      ? '-4px 0 20px rgba(0,0,0,0.5)'
-      : '4px 0 20px rgba(0,0,0,0.5)',
+    boxShadow:
+      sidebarPosition === 'right' ? '-4px 0 20px rgba(0,0,0,0.5)' : '4px 0 20px rgba(0,0,0,0.5)',
   };
 
   return (

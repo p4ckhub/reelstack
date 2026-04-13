@@ -28,6 +28,7 @@ export class OllamaProvider implements TranscriptionProvider {
     try {
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         signal: AbortSignal.timeout(3000),
+        redirect: 'error',
       });
       if (!response.ok) return false;
       const data: { models?: Array<{ name: string }> } = await response.json();
@@ -40,7 +41,7 @@ export class OllamaProvider implements TranscriptionProvider {
   async transcribe(
     audio: Float32Array,
     sampleRate: number,
-    options?: TranscribeOptions,
+    options?: TranscribeOptions
   ): Promise<TranscriptionResult> {
     options?.onProgress?.({
       status: 'transcribing',
@@ -50,9 +51,7 @@ export class OllamaProvider implements TranscriptionProvider {
 
     const wavBlob = pcmToWavBlob(audio, sampleRate);
     const wavBuffer = await wavBlob.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(wavBuffer)),
-    );
+    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(wavBuffer)));
 
     options?.onProgress?.({
       status: 'transcribing',
@@ -70,6 +69,7 @@ export class OllamaProvider implements TranscriptionProvider {
         stream: false,
       }),
       signal: options?.signal ?? AbortSignal.timeout(120_000),
+      redirect: 'error',
     });
 
     if (!response.ok) {

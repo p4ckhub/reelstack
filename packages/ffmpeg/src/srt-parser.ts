@@ -6,11 +6,7 @@ import { formatTime, parseTime } from './time-utils';
  */
 export function parseSRT(content: string): SubtitleCue[] {
   const cues: SubtitleCue[] = [];
-  const blocks = content
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .trim()
-    .split(/\n\n+/);
+  const blocks = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split(/\n\n+/);
 
   for (const block of blocks) {
     const lines = block.trim().split('\n');

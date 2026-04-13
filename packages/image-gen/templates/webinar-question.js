@@ -15,7 +15,14 @@ initTemplate(function (ctx) {
   if (optD) document.getElementById('optD').textContent = optD;
   if (footer) document.getElementById('footerInfo').textContent = footer;
 
-  autoSizeText(document.getElementById('question'), [
-    [30, 5], [50, 4.2], [80, 3.5], [Infinity, 2.8]
-  ], 0.25);
+  autoSizeText(
+    document.getElementById('question'),
+    [
+      [30, 5],
+      [50, 4.2],
+      [80, 3.5],
+      [Infinity, 2.8],
+    ],
+    0.25
+  );
 });

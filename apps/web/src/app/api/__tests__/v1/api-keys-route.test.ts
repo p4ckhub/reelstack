@@ -1,66 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const mockAuthenticate = vi.fn();
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-          { status: 401 },
-        );
-      }
-      try {
-        return await handler(req, ctx);
-      } catch (err) {
-        console.error(err);
-        return NextResponse.json(
-          { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-          { status: 500 },
-        );
-      }
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
 
-const mockGetApiKeysByUser = vi.fn();
-const mockCreateApiKey = vi.fn();
-const mockApiKeyCount = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getApiKeysByUser: (...args: unknown[]) => mockGetApiKeysByUser(...args),
-  createApiKey: (...args: unknown[]) => mockCreateApiKey(...args),
-  createAuditLog: vi.fn().mockResolvedValue({}),
-  prisma: {
-    apiKey: {
-      count: (...args: unknown[]) => mockApiKeyCount(...args),
-    },
-  },
-}));
+import {
+  databaseMockFactory,
+  mockGetApiKeysByUser,
+  mockCreateApiKey,
+  mockPrisma,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-vi.mock('@reelstack/types', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@reelstack/types')>();
-  return { ...original };
-});
+// Note: @reelstack/types passthrough — bun can't do `await import()` inside vi.mock factory.
+// Importing directly works because bun resolves workspace packages before mock hoisting.
+import * as reelstackTypes from '@reelstack/types';
+vi.mock('@reelstack/types', () => reelstackTypes);
 
 const mockGenerateApiKey = vi.fn();
 vi.mock('@/lib/api/v1/api-keys', () => ({
@@ -161,7 +120,7 @@ describe('POST /api/v1/api-keys', () => {
 
   it('returns 400 when max keys reached', async () => {
     mockAuthenticate.mockResolvedValue({ user: { id: 'user-1' } });
-    mockApiKeyCount.mockResolvedValue(10);
+    mockPrisma.apiKey.count.mockResolvedValue(10);
     const response = await POST(makePostRequest({ name: 'New Key' }));
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -170,7 +129,7 @@ describe('POST /api/v1/api-keys', () => {
 
   it('creates API key and returns 201 with plaintext', async () => {
     mockAuthenticate.mockResolvedValue({ user: { id: 'user-1' } });
-    mockApiKeyCount.mockResolvedValue(0);
+    mockPrisma.apiKey.count.mockResolvedValue(0);
     mockGenerateApiKey.mockReturnValue({
       plaintext: 'rs_live_full_key_value',
       prefix: 'rs_live_abcd',

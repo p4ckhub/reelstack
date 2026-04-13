@@ -33,7 +33,7 @@ export type { LLMProvider, LLMCallOptions } from './llm';
 export { getModel } from './config/models';
 export type { ModelRole } from './config/models';
 export { ToolRegistry } from './registry/tool-registry';
-export { discoverTools } from './registry/discovery';
+export { discoverTools, registerExternalTool } from './registry/discovery';
 export { discoverAvailableTools, findFirstAvailableTool } from './registry/tool-helpers';
 export { planProduction, planComposition, revisePlan } from './planner/production-planner';
 export {
@@ -54,11 +54,7 @@ export { persistAssetsToStorage } from './orchestrator/asset-persistence';
 export { pollUntilDone } from './polling';
 export { AgentError, PlanningError, GenerationError } from './errors';
 export { PipelineLogger } from './orchestrator/pipeline-logger';
-export type {
-  PipelineLog,
-  PipelineStep as PipelineLogStep,
-  PipelineLogSummary,
-} from './orchestrator/pipeline-logger';
+export type { PipelineLog, PipelineLogSummary } from './orchestrator/pipeline-logger';
 export { PipelineEngine } from './orchestrator/pipeline-engine';
 export type {
   PipelineContext,
@@ -85,7 +81,25 @@ export {
 export type { ReelModule, BaseModuleRequest, ModuleResult, ProgressCallback } from './modules';
 
 export { detectLanguage } from './utils/detect-language';
-export { getJobId, runWithJobId, jobContext } from './context';
+export { isPublicUrl, isPrivateHost } from './utils/url-validation';
+export {
+  getJobId,
+  runWithJobId,
+  jobContext,
+  addCost,
+  getCosts,
+  getCostSummary,
+  setApiCallLogger,
+  logApiCall,
+} from './context';
+export {
+  calculateLLMCost,
+  calculateToolCost,
+  calculateTTSCost,
+  calculateWhisperCost,
+} from './config/pricing';
+export { registerPersona, getPersona, listPersonas } from './config/personas';
+export type { PresenterPersona } from './config/personas';
 
 // ── Types ─────────────────────────────────────────────────────
 export type { ProductionTool } from './registry/tool-interface';
@@ -103,21 +117,17 @@ export type {
   AssetGenerationRequest,
   AssetGenerationJob,
   AssetGenerationStatus,
+  CostEntry,
+  CostSummary,
+  CostType,
   ToolCapability,
   ToolManifest,
   ToolManifestEntry,
   CostTier,
   BrandPreset,
+  WhisperConfig,
+  WhisperProviderType,
 } from './types';
-
-/**
- * Creates a production agent and runs the full pipeline.
- * Convenience wrapper over produce().
- */
-export async function createProductionAgent() {
-  const { produce: produceFn } = await import('./orchestrator/production-orchestrator');
-  return { produce: produceFn };
-}
 
 // ── Content + Montage system ──────────────────────────────────
 export type {
@@ -125,7 +135,6 @@ export type {
   ContentSection,
   ContentAsset,
   PrimaryVideo,
-  CaptionCue as ContentCaptionCue,
   ContentMetadata,
   AssetFillMode,
   EffectsMode,

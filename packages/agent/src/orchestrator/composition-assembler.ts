@@ -1,4 +1,4 @@
-import type { ProductionPlan, GeneratedAsset, EffectPlan, BrandPreset } from '../types';
+import type { ProductionPlan, GeneratedAsset, BrandPreset } from '../types';
 import { BUILT_IN_CAPTION_PRESETS, DEFAULT_CAPTION_PRESET } from '@reelstack/types';
 import type { CaptionPreset } from '@reelstack/types';
 import { EFFECT_CATALOG, sfxIdToUrl } from '@reelstack/remotion/catalog';
@@ -21,6 +21,7 @@ export interface AssembledProps {
   primaryVideoUrl?: string;
   primaryVideoDurationSeconds?: number;
   primaryVideoObjectPosition?: string;
+  primaryVideoTransparent?: boolean;
   secondaryVideoUrl?: string;
   voiceoverUrl?: string;
   bRollSegments: BRollSegment[];
@@ -69,7 +70,6 @@ interface CueEntry {
   startTime: number;
   endTime: number;
   words?: Array<{ text: string; startTime: number; endTime: number }>;
-  animationStyle?: string;
 }
 
 export interface AssemblyInput {
@@ -82,6 +82,8 @@ export interface AssemblyInput {
   primaryVideoDurationSeconds?: number;
   /** CSS objectPosition for primary video (from avatar framing metadata) */
   primaryVideoObjectPosition?: string;
+  /** Primary video has transparent background (rmbg/greenscreen WebM alpha) */
+  primaryVideoTransparent?: boolean;
 }
 
 /** Extract string from unknown, return undefined if not string */
@@ -349,6 +351,7 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
       (str(llm.textTransform) as 'none' | 'uppercase') ??
       preset.style.textTransform ??
       'none',
+    animationStyle: brandPreset?.animationStyle ?? str(llm.animationStyle) ?? preset.animationStyle,
   };
 
   // Map plan segments to props
@@ -407,10 +410,13 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
   }));
 
   return {
-    layout: brandPreset?.layout ?? plan.layout,
+    // Layout is decided by the orchestrator (request > plan), not by brandPreset.
+    // BrandPreset.layout is intentionally ignored here — use request.layout at orchestrator level.
+    layout: plan.layout,
     primaryVideoUrl,
     primaryVideoDurationSeconds,
     primaryVideoObjectPosition: input.primaryVideoObjectPosition,
+    ...(input.primaryVideoTransparent ? { primaryVideoTransparent: true } : {}),
     voiceoverUrl: voiceoverFilename,
     bRollSegments,
     effects,

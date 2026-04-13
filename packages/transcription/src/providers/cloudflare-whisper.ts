@@ -90,6 +90,7 @@ export class CloudflareWhisperProvider implements TranscriptionProvider {
       headers: { Authorization: `Bearer ${this.apiToken}` },
       body: formData,
       signal: options?.signal ?? AbortSignal.timeout(120_000),
+      redirect: 'error',
     });
 
     const durationMs = Math.round(performance.now() - startTime);

@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
   // Bun's flat monorepo layout breaks Node resolution for ioredis subpath imports
   // when treated as external. Bundling it with Next.js fixes the issue.
   serverExternalPackages: ['@prisma/client', 'prisma', 'sharp', 'pino', 'pino-pretty'],
+  turbopack: {
+    rules: {
+      '*.md': { loaders: ['raw-loader'], as: '*.js' },
+    },
+  },
   experimental: {
     proxyClientMaxBodySize: '500mb',
   },
@@ -47,7 +52,12 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           // HSTS - configurable via HSTS_MAX_AGE env var (set to 0 to disable)
           ...(hstsMaxAge !== '0'
-            ? [{ key: 'Strict-Transport-Security', value: `max-age=${hstsMaxAge}; includeSubDomains` }]
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: `max-age=${hstsMaxAge}; includeSubDomains`,
+                },
+              ]
             : []),
         ],
       },

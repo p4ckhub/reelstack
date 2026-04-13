@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { ProductionTool } from '../registry/tool-interface';
-import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob, AssetGenerationStatus } from '../types';
+import type {
+  ToolCapability,
+  AssetGenerationRequest,
+  AssetGenerationJob,
+  AssetGenerationStatus,
+} from '../types';
 import { createLogger } from '@reelstack/logger';
+import { addCost } from '../context';
+import { calculateToolCost } from '../config/pricing';
 import { RUNWAY_GUIDELINES } from './prompt-guidelines';
 
 const log = createLogger('runway-tool');
@@ -47,14 +54,20 @@ export class RunwayTool implements ProductionTool {
 
   async generate(request: AssetGenerationRequest): Promise<AssetGenerationJob> {
     if (!this.apiKey) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'RUNWAY_API_KEY not set' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'RUNWAY_API_KEY not set',
+      };
     }
 
-    const ratio = request.aspectRatio === '16:9'
-      ? '1280:768'
-      : request.aspectRatio === '1:1'
-        ? '1024:1024'
-        : '768:1280';
+    const ratio =
+      request.aspectRatio === '16:9'
+        ? '1280:768'
+        : request.aspectRatio === '1:1'
+          ? '1024:1024'
+          : '768:1280';
 
     const rawDuration = Math.round((request.durationSeconds ?? 5) / 5) * 5;
     const duration = Math.min(Math.max(5, rawDuration), 10) as 5 | 10;
@@ -74,18 +87,32 @@ export class RunwayTool implements ProductionTool {
           model: 'gen4_turbo',
         }),
         signal: AbortSignal.timeout(30_000),
+        redirect: 'error',
       });
 
       if (!res.ok) {
         const errBody = await res.text();
-        log.warn({ status: res.status, errorPreview: errBody.substring(0, 200) }, 'runway generate failed');
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `Runway API error (${res.status})` };
+        log.warn(
+          { status: res.status, errorPreview: errBody.substring(0, 200) },
+          'runway generate failed'
+        );
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: `Runway API error (${res.status})`,
+        };
       }
 
       const data = (await res.json()) as { id?: string };
 
       if (!data.id) {
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'No task id returned' };
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: 'No task id returned',
+        };
       }
 
       log.info({ taskId: data.id }, 'runway video generation started');
@@ -93,7 +120,12 @@ export class RunwayTool implements ProductionTool {
       return { jobId: data.id, toolId: this.id, status: 'processing' };
     } catch (err) {
       log.warn({ err }, 'runway generate error');
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `Runway request failed: ${err instanceof Error ? err.message : 'unknown'}` };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: `Runway request failed: ${err instanceof Error ? err.message : 'unknown'}`,
+      };
     }
   }
 
@@ -113,6 +145,7 @@ export class RunwayTool implements ProductionTool {
           'X-Runway-Version': RUNWAY_VERSION,
         },
         signal: AbortSignal.timeout(10_000),
+        redirect: 'error',
       });
 
       if (!res.ok) {
@@ -128,14 +161,32 @@ export class RunwayTool implements ProductionTool {
       };
 
       if (data.status === 'FAILED' || data.status === 'CANCELLED') {
-        return { jobId, toolId: this.id, status: 'failed', error: data.failure ?? 'Runway generation failed' };
+        return {
+          jobId,
+          toolId: this.id,
+          status: 'failed',
+          error: data.failure ?? 'Runway generation failed',
+        };
       }
 
       if (data.status === 'SUCCEEDED') {
         const url = data.output?.[0];
         if (!url) {
-          return { jobId, toolId: this.id, status: 'failed', error: 'No video URL in Runway result' };
+          return {
+            jobId,
+            toolId: this.id,
+            status: 'failed',
+            error: 'No video URL in Runway result',
+          };
         }
+        addCost({
+          step: `asset:${this.id}`,
+          provider: 'runway',
+          model: 'gen4_turbo',
+          type: 'video',
+          costUSD: calculateToolCost(this.id, 10),
+          inputUnits: 1,
+        });
         return { jobId, toolId: this.id, status: 'completed', url };
       }
 

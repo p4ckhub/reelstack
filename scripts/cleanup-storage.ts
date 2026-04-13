@@ -44,7 +44,9 @@ const bucket = process.env.MINIO_BUCKET || 'subtitle-burner';
 const cutoffDate = new Date();
 cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
 
-console.log(`Looking for jobs completed/failed before ${cutoffDate.toISOString()} (${daysThreshold} days ago)`);
+console.log(
+  `Looking for jobs completed/failed before ${cutoffDate.toISOString()} (${daysThreshold} days ago)`
+);
 if (dryRun) {
   console.log('[DRY RUN] No files will be deleted.\n');
 }
@@ -76,7 +78,9 @@ for (const job of jobs) {
     const sizeBytes = stat.size;
 
     if (dryRun) {
-      console.log(`[DRY RUN] Would delete: ${objectPath} (${formatBytes(sizeBytes)}) - ${job.status} at ${job.completedAt?.toISOString()}`);
+      console.log(
+        `[DRY RUN] Would delete: ${objectPath} (${formatBytes(sizeBytes)}) - ${job.status} at ${job.completedAt?.toISOString()}`
+      );
     } else {
       await minio.removeObject(bucket, objectPath);
       console.log(`Deleted: ${objectPath} (${formatBytes(sizeBytes)})`);
@@ -86,7 +90,12 @@ for (const job of jobs) {
     freedBytes += sizeBytes;
   } catch (err: unknown) {
     // Object might not exist (e.g., failed jobs with no output)
-    if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'NotFound') {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      (err as { code: string }).code === 'NotFound'
+    ) {
       // Silently skip - no file to delete
       continue;
     }

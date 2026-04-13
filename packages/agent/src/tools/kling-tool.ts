@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { ProductionTool } from '../registry/tool-interface';
-import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob, AssetGenerationStatus } from '../types';
+import type {
+  ToolCapability,
+  AssetGenerationRequest,
+  AssetGenerationJob,
+  AssetGenerationStatus,
+} from '../types';
 import { createLogger } from '@reelstack/logger';
+import { addCost } from '../context';
+import { calculateToolCost } from '../config/pricing';
 import { KLING_GUIDELINES } from './prompt-guidelines';
 
 const log = createLogger('kling-tool');
@@ -46,14 +53,18 @@ export class KlingTool implements ProductionTool {
 
   async generate(request: AssetGenerationRequest): Promise<AssetGenerationJob> {
     if (!this.apiKey) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: 'KLING_API_KEY not set' };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: 'KLING_API_KEY not set',
+      };
     }
 
     const prompt = request.prompt ?? 'abstract cinematic background';
     const duration = Math.min(request.durationSeconds ?? 5, 10);
-    const aspectRatio = request.aspectRatio === '16:9' ? '16:9'
-      : request.aspectRatio === '1:1' ? '1:1'
-        : '9:16';
+    const aspectRatio =
+      request.aspectRatio === '16:9' ? '16:9' : request.aspectRatio === '1:1' ? '1:1' : '9:16';
 
     try {
       const res = await fetch(`${KLING_API}/v1/videos/text2video`, {
@@ -70,18 +81,36 @@ export class KlingTool implements ProductionTool {
           mode: 'std',
         }),
         signal: AbortSignal.timeout(30_000),
+        redirect: 'error',
       });
 
       if (!res.ok) {
         const errBody = await res.text();
-        log.warn({ status: res.status, errorPreview: errBody.substring(0, 200) }, 'Kling generate failed');
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `Kling API error (${res.status})` };
+        log.warn(
+          { status: res.status, errorPreview: errBody.substring(0, 200) },
+          'Kling generate failed'
+        );
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: `Kling API error (${res.status})`,
+        };
       }
 
-      const data = (await res.json()) as { data?: { task_id?: string }; code?: number; message?: string };
+      const data = (await res.json()) as {
+        data?: { task_id?: string };
+        code?: number;
+        message?: string;
+      };
 
       if (!data.data?.task_id) {
-        return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: data.message ?? 'No task_id returned' };
+        return {
+          jobId: randomUUID(),
+          toolId: this.id,
+          status: 'failed',
+          error: data.message ?? 'No task_id returned',
+        };
       }
 
       log.info({ taskId: data.data.task_id }, 'Kling video generation started');
@@ -92,7 +121,12 @@ export class KlingTool implements ProductionTool {
         status: 'processing',
       };
     } catch (err) {
-      return { jobId: randomUUID(), toolId: this.id, status: 'failed', error: `Kling request failed: ${err instanceof Error ? err.message : 'unknown'}` };
+      return {
+        jobId: randomUUID(),
+        toolId: this.id,
+        status: 'failed',
+        error: `Kling request failed: ${err instanceof Error ? err.message : 'unknown'}`,
+      };
     }
   }
 
@@ -109,6 +143,7 @@ export class KlingTool implements ProductionTool {
       const res = await fetch(`${KLING_API}/v1/videos/text2video/${encodeURIComponent(jobId)}`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
         signal: AbortSignal.timeout(10_000),
+        redirect: 'error',
       });
 
       if (!res.ok) {
@@ -123,6 +158,14 @@ export class KlingTool implements ProductionTool {
       if (task.task_status === 'succeed') {
         const videoUrl = task.task_result?.videos?.[0]?.url;
         if (videoUrl) {
+          addCost({
+            step: `asset:${this.id}`,
+            provider: 'kling',
+            model: 'kling-3.0',
+            type: 'video',
+            costUSD: calculateToolCost(this.id, 5),
+            inputUnits: 1,
+          });
           return {
             jobId,
             toolId: this.id,

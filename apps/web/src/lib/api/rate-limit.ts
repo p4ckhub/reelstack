@@ -110,11 +110,7 @@ async function rateLimitRedis(
   const windowSec = Math.ceil(windowMs / 1000);
 
   try {
-    const results = await redis
-      .multi()
-      .incr(redisKey)
-      .pttl(redisKey)
-      .exec();
+    const results = await redis.multi().incr(redisKey).pttl(redisKey).exec();
 
     const count = (results?.[0]?.[1] as number) ?? 1;
     const ttl = (results?.[1]?.[1] as number) ?? -1;

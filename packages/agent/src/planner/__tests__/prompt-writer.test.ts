@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { writePrompt, isPromptWriterEnabled, getGuidelinesForTool } from '../prompt-writer';
+import { getModel } from '../../config/models';
 import type { ShotBrief } from '../prompt-writer';
 import {
   SEEDANCE_GUIDELINES,
@@ -98,6 +99,10 @@ describe('writePrompt', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Control LLM provider routing - prevent env leak from parent process
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENAI_API_KEY;
     vi.restoreAllMocks();
   });
 
@@ -136,7 +141,7 @@ describe('writePrompt', () => {
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
 
     const body = JSON.parse(opts!.body as string);
-    expect(body.model).toBe('anthropic/claude-sonnet-4.6');
+    expect(body.model).toBe(getModel('promptWriter', 'openrouter'));
     expect(body.max_tokens).toBe(1024);
   });
 
@@ -161,7 +166,7 @@ describe('writePrompt', () => {
     expect(url).toBe('https://api.anthropic.com/v1/messages');
 
     const body = JSON.parse(opts!.body as string);
-    expect(body.model).toBe('claude-sonnet-4-6');
+    expect(body.model).toBe(getModel('promptWriter', 'anthropic'));
   });
 
   it('injects correct guidelines per toolId into system prompt', async () => {

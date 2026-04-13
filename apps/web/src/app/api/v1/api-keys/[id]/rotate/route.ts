@@ -71,5 +71,5 @@ export const POST = withAuth(
       createdAt: newKey.createdAt,
       rotatedFrom: id,
     });
-  },
+  }
 );

@@ -2,3 +2,9 @@
 # Use classic node_modules layout instead of Bun's .bun/ flat structure.
 # Required for webpack (used by @remotion/bundler) to resolve modules correctly.
 node-modules-dir = "classic"
+
+[test]
+# CRITICAL: Clear API keys during tests to prevent accidental real API calls.
+# .env is auto-loaded by bun — without this, tests hit real Anthropic/OpenRouter APIs.
+preload = ["./tests/setup.ts"]
+exclude = ["**/e2e/**"]

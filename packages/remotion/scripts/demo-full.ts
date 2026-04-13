@@ -55,15 +55,16 @@ async function main() {
     }
     colorPreset = presets[args['preset']];
     if (!colorPreset) {
-      console.error(`Unknown preset "${args['preset']}". Available: ${Object.keys(presets).join(', ')}`);
+      console.error(
+        `Unknown preset "${args['preset']}". Available: ${Object.keys(presets).join(', ')}`
+      );
       process.exit(1);
     }
   }
 
-  const probeJson = execSync(
-    `ffprobe -v quiet -print_format json -show_format "${inputVideo}"`,
-    { encoding: 'utf-8' },
-  );
+  const probeJson = execSync(`ffprobe -v quiet -print_format json -show_format "${inputVideo}"`, {
+    encoding: 'utf-8',
+  });
   let probeData: any;
   try {
     probeData = JSON.parse(probeJson);
@@ -85,25 +86,28 @@ async function main() {
     // ── Step 1: Extract & transcribe ──────────────────────────
     console.log('  → Extracting audio...');
     const wavPath = path.join(tmpDir, 'audio.wav');
-    execSync(
-      `ffmpeg -y -i "${inputVideo}" -ar 16000 -ac 1 -f wav "${wavPath}"`,
-      { stdio: 'pipe' },
-    );
+    execSync(`ffmpeg -y -i "${inputVideo}" -ar 16000 -ac 1 -f wav "${wavPath}"`, { stdio: 'pipe' });
 
     console.log('  → Transcribing with whisper.cpp...');
     const whisperStart = performance.now();
     const wavBuffer = fs.readFileSync(wavPath);
     const transcription = await transcribeAudio(wavBuffer, { language: 'pl' });
-    console.log(`    ${transcription.words.length} words in ${((performance.now() - whisperStart) / 1000).toFixed(1)}s`);
+    console.log(
+      `    ${transcription.words.length} words in ${((performance.now() - whisperStart) / 1000).toFixed(1)}s`
+    );
     console.log(`    "${transcription.text.slice(0, 100)}..."`);
 
     // ── Step 2: Build cues ────────────────────────────────────
     console.log('  → Building cues...');
-    const cues = groupWordsIntoCues(transcription.words, {
-      maxWordsPerCue: 5,
-      maxDurationPerCue: 2.5,
-      breakOnPunctuation: true,
-    }, 'karaoke');
+    const cues = groupWordsIntoCues(
+      transcription.words,
+      {
+        maxWordsPerCue: 5,
+        maxDurationPerCue: 2.5,
+        breakOnPunctuation: true,
+      },
+      'karaoke'
+    );
     console.log(`    ${cues.length} cues`);
 
     // ── Step 3: Copy video + extract audio to public/ ──────────
@@ -113,10 +117,9 @@ async function main() {
     fs.copyFileSync(inputVideo, videoPublicPath);
 
     // Extract audio as separate track (all videos will be muted)
-    execSync(
-      `ffmpeg -y -i "${inputVideo}" -vn -acodec libmp3lame -q:a 2 "${audioPublicPath}"`,
-      { stdio: 'pipe' },
-    );
+    execSync(`ffmpeg -y -i "${inputVideo}" -vn -acodec libmp3lame -q:a 2 "${audioPublicPath}"`, {
+      stdio: 'pipe',
+    });
 
     // ── Step 4: Build B-roll segments ─────────────────────────
     // Place B-roll at key moments based on content analysis
@@ -205,11 +208,14 @@ async function main() {
 
     const fullscreenSegs = bRollSegments.filter((s) => s.media.type === 'video');
     const placeholderSegs = bRollSegments.filter((s) => s.media.type === 'color');
-    console.log(`    ${bRollSegments.length} segments: ${fullscreenSegs.length} fullscreen, ${placeholderSegs.length} B-roll placeholders`);
+    console.log(
+      `    ${bRollSegments.length} segments: ${fullscreenSegs.length} fullscreen, ${placeholderSegs.length} B-roll placeholders`
+    );
     for (const seg of bRollSegments) {
-      const label = seg.media.type === 'video'
-        ? `FULLSCREEN (${seg.transition?.type})`
-        : `${seg.media.label} (${seg.transition?.type})`;
+      const label =
+        seg.media.type === 'video'
+          ? `FULLSCREEN (${seg.transition?.type})`
+          : `${seg.media.label} (${seg.transition?.type})`;
       console.log(`      ${seg.startTime.toFixed(1)}s-${seg.endTime.toFixed(1)}s  ${label}`);
     }
 
@@ -256,7 +262,9 @@ async function main() {
         highlightColor: colorPreset?.highlightColor ?? '#F59E0B',
         upcomingColor: colorPreset?.upcomingColor ?? '#8888A0',
         highlightMode: (args['highlight'] as any) ?? colorPreset?.highlightMode ?? 'text',
-        textTransform: (args['uppercase'] === 'true' ? 'uppercase' : colorPreset?.textTransform ?? 'none') as any,
+        textTransform: (args['uppercase'] === 'true'
+          ? 'uppercase'
+          : (colorPreset?.textTransform ?? 'none')) as any,
         pillColor: colorPreset?.pillColor ?? '#F59E0B',
         pillBorderRadius: colorPreset?.pillBorderRadius ?? 10,
         pillPadding: colorPreset?.pillPadding ?? 12,

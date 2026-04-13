@@ -1,4 +1,4 @@
-import { useCurrentFrame, useVideoConfig, spring, interpolate } from 'remotion';
+import { useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
 import { renderAnimatedCaption } from '@reelstack/core';
 import type { WordSegment } from '@reelstack/core';
 import type { SubtitleCue, SubtitleStyle } from '@reelstack/types';
@@ -120,7 +120,8 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ cues, style: sty
               captionStyle.shadowBlur + 4,
               captionStyle.shadowColor
             ),
-            textTransform: (captionStyle.textTransform ?? 'none') as any,
+            textTransform: (captionStyle.textTransform ??
+              'none') as React.CSSProperties['textTransform'],
           }}
         >
           {displayText}
@@ -147,20 +148,21 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ cues, style: sty
 
   if (!activeCue) return null;
 
-  // If highlight mode needs per-word animation (pill, hormozi, etc.) but cue has no animationStyle,
-  // force word-highlight so words get 'highlighted' style for the mode renderer to act on.
+  // Resolve animation style: captionStyle.animationStyle is the source of truth.
+  // If highlight mode needs per-word animation (pill, hormozi, etc.) but no animationStyle set,
+  // fall back to word-highlight so words get 'highlighted' style for the mode renderer to act on.
   const needsWordAnimation =
     captionStyle.highlightMode &&
     captionStyle.highlightMode !== 'text' &&
     captionStyle.highlightMode !== 'single-word';
-  const cueForRender =
-    needsWordAnimation && !activeCue.animationStyle && activeCue.words?.length
-      ? { ...activeCue, animationStyle: 'word-highlight' as const }
-      : activeCue;
+  const resolvedAnimationStyle =
+    captionStyle.animationStyle ??
+    (needsWordAnimation && activeCue.words?.length ? 'word-highlight' : 'none');
 
-  const { segments, visible } = renderAnimatedCaption(cueForRender, currentTime, {
+  const { segments, visible } = renderAnimatedCaption(activeCue, currentTime, {
     highlightColor: captionStyle.highlightColor,
     upcomingColor: captionStyle.upcomingColor,
+    animationStyle: resolvedAnimationStyle,
   });
 
   if (!visible || segments.length === 0) return null;
@@ -217,7 +219,7 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ cues, style: sty
           color: captionStyle.fontColor,
           textAlign: 'center',
           textShadow,
-          textTransform: textTransform as any,
+          textTransform: textTransform as React.CSSProperties['textTransform'],
           lineHeight: captionStyle.lineHeight,
           maxWidth: '90%',
           margin: 0,

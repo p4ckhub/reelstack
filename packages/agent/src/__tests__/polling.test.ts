@@ -119,7 +119,7 @@ describe('pollUntilDone', () => {
         initialDelayMs: 10,
         maxDelayMs: 10,
         timeoutMs: 100,
-      }),
+      })
     ).rejects.toThrow('Polling timed out');
   });
 

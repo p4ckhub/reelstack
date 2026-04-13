@@ -110,9 +110,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Default preferences for new reels
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Default preferences for new reels</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
@@ -269,7 +267,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Tier:</span>
             <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {(user as Record<string, unknown>)?.tier as string ?? 'FREE'}
+              {((user as Record<string, unknown>)?.tier as string) ?? 'FREE'}
             </span>
           </div>
         </CardContent>

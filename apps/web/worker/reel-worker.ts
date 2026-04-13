@@ -47,7 +47,7 @@ const renderWorker = new Worker(
   'reel-render',
   async (job) => {
     log.info({ jobId: job.id, queue: 'reel-render' }, 'Processing reel-render job');
-    await processReelPipelineJob(job.data.jobId);
+    await processReelPipelineJob(job.data.jobId, job.data.fromStepId);
     log.info({ jobId: job.id, queue: 'reel-render' }, 'Completed reel-render job');
   },
   {

@@ -1,6 +1,7 @@
 # @reelstack/agent
 
 AI production agent for ReelStack. Turns a script into a fully produced video by:
+
 1. Discovering available tools (Pexels, HeyGen, Veo3, Kling, Seedance, NanoBanana)
 2. Planning production with Claude (shot list, effects, layout)
 3. Generating assets in parallel with TTS voiceover
@@ -18,13 +19,13 @@ Full AI pipeline. Claude plans everything from scratch.
 
 ```ts
 const result = await produce({
-  script: "Cześć! Dziś pokażę jak zautomatyzować...",
-  style: 'dynamic',            // 'dynamic' | 'calm' | 'cinematic' | 'educational'
-  layout: 'fullscreen',        // optional, Claude decides if omitted
+  script: 'Cześć! Dziś pokażę jak zautomatyzować...',
+  style: 'dynamic', // 'dynamic' | 'calm' | 'cinematic' | 'educational'
+  layout: 'fullscreen', // optional, Claude decides if omitted
   primaryVideoUrl: 'https://...', // optional: skip avatar gen, use this as primary
 
   tts: {
-    provider: 'edge-tts',      // 'edge-tts' (free) | 'elevenlabs' | 'openai'
+    provider: 'edge-tts', // 'edge-tts' (free) | 'elevenlabs' | 'openai'
     voice: 'pl-PL-MarekNeural',
     language: 'pl-PL',
   },
@@ -37,7 +38,7 @@ const result = await produce({
   },
 
   avatar: {
-    avatarId: 'avatar_xyz',    // HeyGen avatar ID (optional)
+    avatarId: 'avatar_xyz', // HeyGen avatar ID (optional)
     voice: 'voice_abc',
   },
 
@@ -45,11 +46,11 @@ const result = await produce({
   onProgress: (step) => console.log(step),
 });
 
-console.log(result.outputPath);       // path to rendered MP4
-console.log(result.durationSeconds);  // video duration
-console.log(result.plan);             // ProductionPlan (shots, effects, layout)
-console.log(result.steps);            // timing breakdown per pipeline step
-console.log(result.generatedAssets);  // list of generated/fetched assets
+console.log(result.outputPath); // path to rendered MP4
+console.log(result.durationSeconds); // video duration
+console.log(result.plan); // ProductionPlan (shots, effects, layout)
+console.log(result.steps); // timing breakdown per pipeline step
+console.log(result.generatedAssets); // list of generated/fetched assets
 ```
 
 ### `produceComposition(request: ComposeRequest): Promise<ProductionResult>`
@@ -58,7 +59,7 @@ Compose mode: user provides all materials, Claude arranges them. No asset genera
 
 ```ts
 const result = await produceComposition({
-  script: "Dziś pokażę dashboard...",
+  script: 'Dziś pokażę dashboard...',
   assets: [
     {
       id: 'talking-head',
@@ -66,7 +67,7 @@ const result = await produceComposition({
       type: 'video',
       description: 'Talking head, mówię do kamery',
       durationSeconds: 45,
-      isPrimary: true,           // use as primary source
+      isPrimary: true, // use as primary source
     },
     {
       id: 'dashboard-screenshot',
@@ -142,7 +143,12 @@ Implement the `ProductionTool` interface:
 ```ts
 // packages/agent/src/tools/mytool-tool.ts
 import type { ProductionTool } from '../registry/tool-interface';
-import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob, AssetGenerationStatus } from '../types';
+import type {
+  ToolCapability,
+  AssetGenerationRequest,
+  AssetGenerationJob,
+  AssetGenerationStatus,
+} from '../types';
 
 export class MyTool implements ProductionTool {
   readonly id = 'mytool';
@@ -158,13 +164,13 @@ export class MyTool implements ProductionTool {
 
   readonly capabilities: ToolCapability[] = [
     {
-      assetType: 'ai-video',     // or 'ai-image', 'avatar-video', 'stock-video', etc.
+      assetType: 'ai-video', // or 'ai-image', 'avatar-video', 'stock-video', etc.
       supportsPrompt: true,
       supportsScript: false,
       maxDurationSeconds: 10,
       estimatedLatencyMs: 120_000,
-      isAsync: true,             // true = requires poll()
-      costTier: 'moderate',      // 'free' | 'cheap' | 'moderate' | 'expensive'
+      isAsync: true, // true = requires poll()
+      costTier: 'moderate', // 'free' | 'cheap' | 'moderate' | 'expensive'
     },
   ];
 
@@ -199,21 +205,22 @@ That's it. The tool will be auto-discovered, included in the LLM manifest, and i
 
 ## Tool Reference
 
-| Tool ID | Class | Asset type | Async | Env var |
-|---------|-------|-----------|-------|---------|
-| `pexels` | PexelsTool | stock-video | no | `PEXELS_API_KEY` |
-| `user-upload` | UserUploadTool | user-recording | no | (always) |
-| `heygen` | HeyGenTool | avatar-video | yes | `HEYGEN_API_KEY` |
-| `veo3` | Veo3Tool | ai-video | yes | `VEO3_API_KEY` + `VEO3_PROJECT_ID` |
-| `kling` | KlingTool | ai-video | yes | `KLING_API_KEY` |
-| `seedance` | SeedanceTool | ai-video | yes | `SEEDANCE_API_KEY` |
-| `nanobanana` | NanoBananaTool | ai-image | no | `NANOBANANA_API_KEY` or `GEMINI_API_KEY` |
+| Tool ID       | Class          | Asset type     | Async | Env var                                  |
+| ------------- | -------------- | -------------- | ----- | ---------------------------------------- |
+| `pexels`      | PexelsTool     | stock-video    | no    | `PEXELS_API_KEY`                         |
+| `user-upload` | UserUploadTool | user-recording | no    | (always)                                 |
+| `heygen`      | HeyGenTool     | avatar-video   | yes   | `HEYGEN_API_KEY`                         |
+| `veo3`        | Veo3Tool       | ai-video       | yes   | `VEO3_API_KEY` + `VEO3_PROJECT_ID`       |
+| `kling`       | KlingTool      | ai-video       | yes   | `KLING_API_KEY`                          |
+| `seedance`    | SeedanceTool   | ai-video       | yes   | `SEEDANCE_API_KEY`                       |
+| `nanobanana`  | NanoBananaTool | ai-image       | no    | `NANOBANANA_API_KEY` or `GEMINI_API_KEY` |
 
 ## Prompt Writing Guidelines
 
 Each tool has `promptGuidelines` that are injected into the LLM planner prompt **only if the tool is available**. This keeps the prompt lean — if Veo3 isn't configured, its guidelines don't appear.
 
 Guidelines are written based on each tool's API documentation and prompting research. See the vault notes for source material:
+
 - `vault/brands/_shared/reference/video-prompting-seedance.md` - Seedance 2.0 framework
 - `vault/brands/_shared/reference/json-prompting-image-generation.md` - NanoBanana JSON schema
 - `vault/brands/_shared/automation/b-roll-video-generation.md` - Veo 3.1 patterns
@@ -222,35 +229,35 @@ Guidelines are written based on each tool's API documentation and prompting rese
 
 Defined in `packages/agent/src/planner/prompt-builder.ts` as `EFFECT_CATALOG`:
 
-| Effect type | Description |
-|-------------|-------------|
-| `emoji-popup` | Animated emoji overlay |
-| `text-emphasis` | Bold text flash |
-| `screen-shake` | Camera shake/jitter |
-| `color-flash` | Fullscreen color flash |
-| `glitch-transition` | RGB split + scanlines |
-| `subscribe-banner` | Subscribe CTA banner |
-| `circular-counter` | Animated progress counter |
-| `png-overlay` | Static image overlay |
-| `gif-overlay` | Animated GIF overlay |
-| `blur-background` | Blur background with overlay |
-| `parallax-screenshot` | 3D perspective tilt/scroll |
+| Effect type            | Description                       |
+| ---------------------- | --------------------------------- |
+| `emoji-popup`          | Animated emoji overlay            |
+| `text-emphasis`        | Bold text flash                   |
+| `screen-shake`         | Camera shake/jitter               |
+| `color-flash`          | Fullscreen color flash            |
+| `glitch-transition`    | RGB split + scanlines             |
+| `subscribe-banner`     | Subscribe CTA banner              |
+| `circular-counter`     | Animated progress counter         |
+| `png-overlay`          | Static image overlay              |
+| `gif-overlay`          | Animated GIF overlay              |
+| `blur-background`      | Blur background with overlay      |
+| `parallax-screenshot`  | 3D perspective tilt/scroll        |
 | `split-screen-divider` | Split screen with glowing divider |
 
 ## Key Files
 
-| File | What it does |
-|------|-------------|
-| `src/index.ts` | Public API exports |
-| `src/types.ts` | All interfaces (ProductionRequest, ProductionPlan, ShotPlan, etc.) |
-| `src/registry/tool-interface.ts` | ProductionTool interface |
-| `src/registry/tool-registry.ts` | Registry: register, discover, getToolManifest |
-| `src/registry/discovery.ts` | Auto-discover tools from env vars |
-| `src/planner/production-planner.ts` | Claude API call, structured JSON output |
-| `src/planner/prompt-builder.ts` | Builds dynamic system prompt with tool manifest + effects |
-| `src/orchestrator/production-orchestrator.ts` | Main pipeline: produce() + produceComposition() |
-| `src/orchestrator/asset-generator.ts` | Parallel asset generation with polling |
-| `src/orchestrator/composition-assembler.ts` | ProductionPlan + assets -> ReelProps |
-| `src/orchestrator/timeline-adjuster.ts` | Stretch/compress shot timestamps to match TTS duration |
-| `src/polling.ts` | Generic async polling with exponential backoff |
-| `src/errors.ts` | AgentError, PlanningError, GenerationError |
+| File                                          | What it does                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `src/index.ts`                                | Public API exports                                                 |
+| `src/types.ts`                                | All interfaces (ProductionRequest, ProductionPlan, ShotPlan, etc.) |
+| `src/registry/tool-interface.ts`              | ProductionTool interface                                           |
+| `src/registry/tool-registry.ts`               | Registry: register, discover, getToolManifest                      |
+| `src/registry/discovery.ts`                   | Auto-discover tools from env vars                                  |
+| `src/planner/production-planner.ts`           | Claude API call, structured JSON output                            |
+| `src/planner/prompt-builder.ts`               | Builds dynamic system prompt with tool manifest + effects          |
+| `src/orchestrator/production-orchestrator.ts` | Main pipeline: produce() + produceComposition()                    |
+| `src/orchestrator/asset-generator.ts`         | Parallel asset generation with polling                             |
+| `src/orchestrator/composition-assembler.ts`   | ProductionPlan + assets -> ReelProps                               |
+| `src/orchestrator/timeline-adjuster.ts`       | Stretch/compress shot timestamps to match TTS duration             |
+| `src/polling.ts`                              | Generic async polling with exponential backoff                     |
+| `src/errors.ts`                               | AgentError, PlanningError, GenerationError                         |

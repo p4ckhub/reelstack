@@ -10,7 +10,7 @@ const PEXELS_API = 'https://api.pexels.com';
  */
 export async function searchPexelsVideos(
   query: string,
-  options?: { perPage?: number; orientation?: 'landscape' | 'portrait' },
+  options?: { perPage?: number; orientation?: 'landscape' | 'portrait' }
 ): Promise<MediaAsset[]> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) return [];
@@ -24,6 +24,7 @@ export async function searchPexelsVideos(
   const response = await fetch(`${PEXELS_API}/videos/search?${params}`, {
     headers: { Authorization: apiKey },
     signal: AbortSignal.timeout(10_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {
@@ -33,20 +34,22 @@ export async function searchPexelsVideos(
 
   const data = (await response.json()) as PexelsVideoResponse;
 
-  return data.videos.map((v) => {
-    // Prefer HD quality, portrait orientation
-    const file = v.video_files
-      .filter((f) => f.width && f.height && f.width <= 1080)
-      .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0]
-      ?? v.video_files[0];
+  return data.videos
+    .map((v) => {
+      // Prefer HD quality, portrait orientation
+      const file =
+        v.video_files
+          .filter((f) => f.width && f.height && f.width <= 1080)
+          .sort((a, b) => (b.width ?? 0) - (a.width ?? 0))[0] ?? v.video_files[0];
 
-    return {
-      url: file?.link ?? '',
-      type: 'video' as const,
-      tags: query.split(' '),
-      durationSeconds: v.duration,
-    };
-  }).filter((a) => a.url);
+      return {
+        url: file?.link ?? '',
+        type: 'video' as const,
+        tags: query.split(' '),
+        durationSeconds: v.duration,
+      };
+    })
+    .filter((a) => a.url);
 }
 
 /**
@@ -54,7 +57,7 @@ export async function searchPexelsVideos(
  */
 export async function searchPexelsImages(
   query: string,
-  options?: { perPage?: number; orientation?: 'landscape' | 'portrait' },
+  options?: { perPage?: number; orientation?: 'landscape' | 'portrait' }
 ): Promise<MediaAsset[]> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) return [];
@@ -68,6 +71,7 @@ export async function searchPexelsImages(
   const response = await fetch(`${PEXELS_API}/v1/search?${params}`, {
     headers: { Authorization: apiKey },
     signal: AbortSignal.timeout(10_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {

@@ -53,6 +53,7 @@ export class ElevenLabsProvider implements TTSProvider {
         },
       }),
       signal: AbortSignal.timeout(60_000),
+      redirect: 'error',
     });
 
     const durationMs = Math.round(performance.now() - startTime);
@@ -90,6 +91,7 @@ export class ElevenLabsProvider implements TTSProvider {
     const response = await fetch(`${API_BASE}/voices`, {
       headers: { 'xi-api-key': this.apiKey },
       signal: AbortSignal.timeout(10_000),
+      redirect: 'error',
     });
 
     if (!response.ok) {

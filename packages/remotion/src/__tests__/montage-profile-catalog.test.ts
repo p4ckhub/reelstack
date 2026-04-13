@@ -14,7 +14,7 @@ describe('Montage profile registry', () => {
   it('has at least the default profile', () => {
     const profiles = listMontageProfiles();
     expect(profiles.length).toBeGreaterThanOrEqual(1);
-    expect(profiles.find(p => p.id === 'default')).toBeDefined();
+    expect(profiles.find((p) => p.id === 'default')).toBeDefined();
   });
 
   it('getMontageProfile returns default profile', () => {
@@ -36,7 +36,7 @@ describe('Montage profile registry', () => {
       maxShotDurationSec: 5,
       effectsPerThirtySec: 8,
       allowedTransitions: ['crossfade', 'none'],
-      sfxMapping: { 'test': 'pop' },
+      sfxMapping: { test: 'pop' },
       directorRules: ['Test rule'],
       topicKeywords: ['test'],
       toolPreference: ['pexels'],
@@ -54,8 +54,8 @@ describe('Montage profile registry', () => {
 
   it('MONTAGE_PROFILE_CATALOG proxy works for backward compat', () => {
     expect(MONTAGE_PROFILE_CATALOG.length).toBeGreaterThanOrEqual(1);
-    expect(MONTAGE_PROFILE_CATALOG.find(p => p.id === 'default')).toBeDefined();
-    expect(MONTAGE_PROFILE_CATALOG.map(p => p.id)).toContain('default');
+    expect(MONTAGE_PROFILE_CATALOG.find((p) => p.id === 'default')).toBeDefined();
+    expect(MONTAGE_PROFILE_CATALOG.map((p) => p.id)).toContain('default');
   });
 
   it('each profile has required fields', () => {
@@ -73,7 +73,7 @@ describe('Montage profile registry', () => {
   });
 
   it('default profile allowedTransitions reference valid transition types', () => {
-    const validTypes = TRANSITION_CATALOG.map(t => t.type);
+    const validTypes = TRANSITION_CATALOG.map((t) => t.type);
     const defaultProfile = getMontageProfile('default')!;
     for (const t of defaultProfile.allowedTransitions) {
       expect(validTypes).toContain(t);
@@ -81,7 +81,7 @@ describe('Montage profile registry', () => {
   });
 
   it('default profile sfxMapping values reference valid SFX IDs', () => {
-    const validSfxIds = SFX_CATALOG.map(s => s.id);
+    const validSfxIds = SFX_CATALOG.map((s) => s.id);
     const defaultProfile = getMontageProfile('default')!;
     for (const sfxId of Object.values(defaultProfile.sfxMapping)) {
       expect(validSfxIds).toContain(sfxId);

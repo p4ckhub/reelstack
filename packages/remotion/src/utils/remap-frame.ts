@@ -13,7 +13,7 @@
 export function remapFrame(
   globalFrame: number,
   fps: number,
-  speedRamps: readonly { startTime: number; endTime: number; rate: number }[],
+  speedRamps: readonly { startTime: number; endTime: number; rate: number }[]
 ): number {
   if (globalFrame < 0) return 0;
   if (speedRamps.length === 0) return globalFrame;

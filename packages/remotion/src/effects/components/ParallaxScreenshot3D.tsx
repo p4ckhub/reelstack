@@ -1,4 +1,4 @@
-import { useCurrentFrame, useVideoConfig, interpolate, Img } from 'remotion';
+import { useCurrentFrame, useVideoConfig, Img } from 'remotion';
 import { useEffectAnimation } from '../hooks/useEffectAnimation';
 import { resolveMediaUrl } from '../../utils/resolve-media-url';
 import type { ParallaxScreenshot3DEffect } from '../types';

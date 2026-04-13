@@ -17,6 +17,7 @@
 import { createStorage } from '@reelstack/storage';
 import type { StorageAdapter } from '@reelstack/types';
 import { createLogger } from '@reelstack/logger';
+import { getCostSummary } from '../context';
 
 const log = createLogger('pipeline-logger');
 
@@ -26,6 +27,7 @@ export interface PipelineLog {
   completedAt?: number;
   totalDurationMs?: number;
   steps: PipelineStep[];
+  costs?: import('../types').CostSummary;
 }
 
 export interface PipelineStep {
@@ -122,12 +124,14 @@ export class PipelineLogger {
    * Called once at the end of the pipeline. This one DOES await.
    */
   async persist(): Promise<void> {
+    const costs = getCostSummary();
     const pipelineLog: PipelineLog = {
       jobId: this.jobId,
       startedAt: this.startedAt,
       completedAt: Date.now(),
       totalDurationMs: Date.now() - this.startedAt,
       steps: this.steps,
+      costs: costs.entries.length > 0 ? costs : undefined,
     };
 
     try {

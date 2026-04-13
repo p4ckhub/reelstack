@@ -41,7 +41,7 @@ export class LocalWhisperProvider implements TranscriptionProvider {
   async transcribe(
     audio: Float32Array,
     sampleRate: number,
-    options?: TranscribeOptions,
+    options?: TranscribeOptions
   ): Promise<TranscriptionResult> {
     const { pipeline: createPipeline } = await import('@huggingface/transformers');
 
@@ -53,14 +53,10 @@ export class LocalWhisperProvider implements TranscriptionProvider {
         message: `Loading Whisper model (${this.modelId})...`,
       });
 
-      this.pipeline = await createPipeline(
-        'automatic-speech-recognition',
-        this.modelId,
-        {
-          dtype: 'q8',
-          device: 'wasm',
-        },
-      );
+      this.pipeline = await createPipeline('automatic-speech-recognition', this.modelId, {
+        dtype: 'q8',
+        device: 'wasm',
+      });
     }
 
     options?.onProgress?.({
@@ -75,7 +71,7 @@ export class LocalWhisperProvider implements TranscriptionProvider {
 
     const pipe = this.pipeline as (
       input: Float32Array,
-      opts: Record<string, unknown>,
+      opts: Record<string, unknown>
     ) => Promise<{
       text: string;
       chunks?: Array<{

@@ -9,17 +9,34 @@ export const TEMPLATES_DIR = path.resolve(PACKAGE_DIR, 'templates');
 export const DEFAULT_BRANDS_DIR = path.resolve(PACKAGE_DIR, 'brands');
 
 export const SIZES: Record<string, [number, number]> = {
-  post:    [1080, 1080],
-  story:   [1080, 1920],
+  post: [1080, 1080],
+  story: [1080, 1920],
   youtube: [1280, 720],
 };
 
 export const CONTENT_KEYS = [
-  'text', 'attr', 'title', 'badge', 'bullets', 'number',
-  'label', 'date', 'cta', 'num', 'urgency', 'bg_opacity',
+  'text',
+  'attr',
+  'title',
+  'badge',
+  'bullets',
+  'number',
+  'label',
+  'date',
+  'cta',
+  'num',
+  'urgency',
+  'bg_opacity',
 ] as const;
 
-export const META_KEYS = new Set(['brand', 'template', 'size', 'output_prefix', 'output_dir', 'brands_dir']);
+export const META_KEYS = new Set([
+  'brand',
+  'template',
+  'size',
+  'output_prefix',
+  'output_dir',
+  'brands_dir',
+]);
 
 /**
  * Parse size string into list of SizeSpecs.
@@ -51,12 +68,13 @@ export function parseSize(sizeStr: string): SizeSpec[] {
 export function validateBrand(brand: string, brandsDir: string): string {
   const brandPath = path.join(brandsDir, `${brand}.css`);
   if (!fs.existsSync(brandPath)) {
-    const available = fs.readdirSync(brandsDir)
-      .filter(f => f.endsWith('.css') && !f.startsWith('_'))
-      .map(f => f.replace('.css', ''))
+    const available = fs
+      .readdirSync(brandsDir)
+      .filter((f) => f.endsWith('.css') && !f.startsWith('_'))
+      .map((f) => f.replace('.css', ''))
       .sort();
     throw new Error(
-      `Brand '${brand}' not found. Available: ${available.length ? available.join(', ') : 'none'}`,
+      `Brand '${brand}' not found. Available: ${available.length ? available.join(', ') : 'none'}`
     );
   }
   return brandPath;
@@ -68,9 +86,10 @@ export function validateBrand(brand: string, brandsDir: string): string {
 export function validateTemplate(template: string, templatesDir = TEMPLATES_DIR): string {
   const templatePath = path.join(templatesDir, `${template}.html`);
   if (!fs.existsSync(templatePath)) {
-    const available = fs.readdirSync(templatesDir)
-      .filter(f => f.endsWith('.html') && !f.startsWith('_'))
-      .map(f => f.replace('.html', ''))
+    const available = fs
+      .readdirSync(templatesDir)
+      .filter((f) => f.endsWith('.html') && !f.startsWith('_'))
+      .map((f) => f.replace('.html', ''))
       .sort();
     throw new Error(`Template '${template}' not found. Available: ${available.join(', ')}`);
   }
@@ -81,9 +100,10 @@ export function validateTemplate(template: string, templatesDir = TEMPLATES_DIR)
  * Return list of available template names.
  */
 export function listTemplates(templatesDir = TEMPLATES_DIR): string[] {
-  return fs.readdirSync(templatesDir)
-    .filter(f => f.endsWith('.html') && !f.startsWith('_'))
-    .map(f => f.replace('.html', ''))
+  return fs
+    .readdirSync(templatesDir)
+    .filter((f) => f.endsWith('.html') && !f.startsWith('_'))
+    .map((f) => f.replace('.html', ''))
     .sort();
 }
 
@@ -92,16 +112,22 @@ export function listTemplates(templatesDir = TEMPLATES_DIR): string[] {
  */
 export function listBrands(brandsDir: string): string[] {
   if (!fs.existsSync(brandsDir)) return [];
-  return fs.readdirSync(brandsDir)
-    .filter(f => f.endsWith('.css') && !f.startsWith('_'))
-    .map(f => f.replace('.css', ''))
+  return fs
+    .readdirSync(brandsDir)
+    .filter((f) => f.endsWith('.css') && !f.startsWith('_'))
+    .map((f) => f.replace('.css', ''))
     .sort();
 }
 
 /**
  * Build file:// URL with brand path and content params.
  */
-export function buildUrl(templatePath: string, brand: string, brandsDir: string, params: Record<string, string>): string {
+export function buildUrl(
+  templatePath: string,
+  brand: string,
+  brandsDir: string,
+  params: Record<string, string>
+): string {
   const query = new URLSearchParams({ brand, brands_dir: brandsDir, ...params });
   return `file://${templatePath}?${query.toString()}`;
 }

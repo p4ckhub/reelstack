@@ -36,11 +36,12 @@ export interface PlatformIntegration {
   readonly connected: boolean;
 }
 
-export const PLATFORM_LIMITS: Record<Platform, { maxCaptionLength: number; maxHashtags: number }> = {
-  'tiktok': { maxCaptionLength: 2200, maxHashtags: 30 },
-  'instagram': { maxCaptionLength: 2200, maxHashtags: 30 },
-  'youtube-shorts': { maxCaptionLength: 5000, maxHashtags: 15 },
-  'facebook': { maxCaptionLength: 63206, maxHashtags: 30 },
-  'linkedin': { maxCaptionLength: 3000, maxHashtags: 10 },
-  'x': { maxCaptionLength: 280, maxHashtags: 5 },
-};
+export const PLATFORM_LIMITS: Record<Platform, { maxCaptionLength: number; maxHashtags: number }> =
+  {
+    tiktok: { maxCaptionLength: 2200, maxHashtags: 30 },
+    instagram: { maxCaptionLength: 2200, maxHashtags: 30 },
+    'youtube-shorts': { maxCaptionLength: 5000, maxHashtags: 15 },
+    facebook: { maxCaptionLength: 63206, maxHashtags: 30 },
+    linkedin: { maxCaptionLength: 3000, maxHashtags: 10 },
+    x: { maxCaptionLength: 280, maxHashtags: 5 },
+  };

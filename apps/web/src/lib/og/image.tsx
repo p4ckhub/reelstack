@@ -127,9 +127,7 @@ function OgTemplate({ title, titleAccent, description, badge, tiers }: OgImagePr
                 }}
               >
                 <span style={{ color: TEXT, fontWeight: 700, fontSize: 16 }}>{tier.name}</span>
-                {tier.price && (
-                  <span style={{ color: MUTED, fontSize: 14 }}>{tier.price}</span>
-                )}
+                {tier.price && <span style={{ color: MUTED, fontSize: 14 }}>{tier.price}</span>}
               </div>
             ))}
           </div>
@@ -140,9 +138,7 @@ function OgTemplate({ title, titleAccent, description, badge, tiers }: OgImagePr
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {(['Script', 'TTS', 'Captions', 'Render'] as const).map((step, i) => (
           <span key={step} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {i > 0 && (
-              <span style={{ color: PRIMARY, fontSize: 14, fontWeight: 600 }}>→</span>
-            )}
+            {i > 0 && <span style={{ color: PRIMARY, fontSize: 14, fontWeight: 600 }}>→</span>}
             <span style={{ fontSize: 15, color: MUTED }}>{step}</span>
           </span>
         ))}

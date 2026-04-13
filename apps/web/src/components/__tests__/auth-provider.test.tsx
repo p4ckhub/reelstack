@@ -1,3 +1,13 @@
+// Minimal DOM polyfill for bun test (no jsdom/happy-dom needed)
+if (!globalThis.document) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Window } = require('happy-dom');
+  const window = new Window();
+  globalThis.document = window.document;
+  globalThis.window = window as unknown as Window & typeof globalThis;
+  globalThis.navigator = window.navigator;
+}
+
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import React from 'react';

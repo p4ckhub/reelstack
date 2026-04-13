@@ -55,9 +55,7 @@ export const calculateYouTubeMetadata: CalculateMetadataFunction<YouTubeProps> =
   }
 
   const maxDuration =
-    durations.length > 0
-      ? Math.max(MIN_DURATION_SECONDS, ...durations)
-      : DEFAULT_DURATION_SECONDS;
+    durations.length > 0 ? Math.max(MIN_DURATION_SECONDS, ...durations) : DEFAULT_DURATION_SECONDS;
 
   return {
     fps: FPS,

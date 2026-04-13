@@ -11,12 +11,13 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "test": "turbo test",
+    "test": "bun test packages/core && bun test packages/tts && bun test packages/transcription && bun test packages/ffmpeg && bun test packages/storage && bun test packages/queue && bun test packages/database && bun test packages/image-gen && bun test packages/remotion && bun test packages/modules && bun test packages/agent && bun test apps/web/src",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "api:seed": "bun scripts/dev-seed.ts",
     "api:test": "npx @usebruno/cli run bruno/reelstack --env local",
-    "api:test:validation": "npx @usebruno/cli run bruno/reelstack/validation --env local"
+    "api:test:validation": "npx @usebruno/cli run bruno/reelstack/validation --env local",
+    "rs": "bun packages/agent/src/cli.ts"
   },
   "overrides": {
     "fast-xml-parser": ">=5.3.6",
@@ -28,6 +29,7 @@
     ]
   },
   "devDependencies": {
+    "happy-dom": "^20.8.9",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prisma": "~6.3.1",

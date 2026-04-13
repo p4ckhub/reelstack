@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { reviewScript, isScriptReviewEnabled } from '../script-reviewer';
+import { getModel } from '../../config/models';
 import type { ScriptReview } from '../script-reviewer';
 
 describe('isScriptReviewEnabled', () => {
@@ -54,6 +55,9 @@ describe('reviewScript', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    // Ensure we control which LLM provider is used
+    delete process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENAI_API_KEY;
     vi.restoreAllMocks();
   });
 
@@ -145,7 +149,7 @@ describe('reviewScript', () => {
     expect(result.issues).toEqual([]);
   });
 
-  it('sends the correct model (default: claude-sonnet-4-6)', async () => {
+  it('sends the correct model from config', async () => {
     process.env.ANTHROPIC_API_KEY = 'test-key';
     delete process.env.REVIEWER_MODEL;
 
@@ -159,7 +163,7 @@ describe('reviewScript', () => {
     await reviewScript('Test script');
 
     const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-    expect(body.model).toBe('claude-sonnet-4-6');
+    expect(body.model).toBe(getModel('scriptReviewer', 'anthropic'));
   });
 
   it('respects REVIEWER_MODEL env var', async () => {

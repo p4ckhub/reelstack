@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { buildTimingReference, resolvePresetConfig } from '../base-orchestrator';
 
 // ── renderVideo: compositionId routing ───────────────────────
@@ -11,13 +11,10 @@ vi.mock('@reelstack/remotion/render', () => ({
   createRenderer: () => ({ render: mockRender }),
 }));
 
-vi.mock('node:crypto', () => ({
-  randomUUID: () => 'test-uuid',
-}));
-
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
-  return { ...actual, mkdirSync: vi.fn() };
+import fs from 'fs';
+const mkdirSpy = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => '' as any);
+afterAll(() => {
+  mkdirSpy.mockRestore();
 });
 
 describe('renderVideo', () => {
@@ -30,7 +27,7 @@ describe('renderVideo', () => {
     await renderVideo({ compositionId: 'ScreenExplainer', foo: 'bar' }, '/tmp/test-out.mp4');
     expect(mockRender).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ compositionId: 'ScreenExplainer' }),
+      expect.objectContaining({ compositionId: 'ScreenExplainer' })
     );
   });
 
@@ -39,7 +36,7 @@ describe('renderVideo', () => {
     await renderVideo({ compositionId: 'VideoClip' }, '/tmp/test-out.mp4');
     expect(mockRender).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ compositionId: 'VideoClip' }),
+      expect.objectContaining({ compositionId: 'VideoClip' })
     );
   });
 
@@ -48,7 +45,7 @@ describe('renderVideo', () => {
     await renderVideo({ compositionId: 'PresenterExplainer' }, '/tmp/test-out.mp4');
     expect(mockRender).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ compositionId: 'PresenterExplainer' }),
+      expect.objectContaining({ compositionId: 'PresenterExplainer' })
     );
   });
 
@@ -57,7 +54,7 @@ describe('renderVideo', () => {
     await renderVideo({ layout: 'fullscreen' }, '/tmp/test-out.mp4');
     expect(mockRender).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ compositionId: undefined }),
+      expect.objectContaining({ compositionId: undefined })
     );
   });
 });
@@ -76,9 +73,7 @@ describe('buildTimingReference', () => {
       { text: 'you?', startTime: 1.8, endTime: 2.2 },
     ];
     const result = buildTimingReference(words);
-    expect(result).toBe(
-      '[0.0s-1.0s] Hello world.\n[1.2s-2.2s] How are you?',
-    );
+    expect(result).toBe('[0.0s-1.0s] Hello world.\n[1.2s-2.2s] How are you?');
   });
 
   it('flushes remaining words without punctuation as final sentence', () => {

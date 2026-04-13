@@ -63,6 +63,7 @@ export class OpenAITTSProvider implements TTSProvider {
         response_format: 'mp3',
       }),
       signal: AbortSignal.timeout(60_000),
+      redirect: 'error',
     });
 
     const durationMs = Math.round(performance.now() - startTime);

@@ -1,5 +1,6 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, brandName = ctx.brandName;
+  var params = ctx.params,
+    brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
   var badge = params.get('badge');
@@ -29,7 +30,10 @@ initTemplate(function (ctx) {
   }
 
   autoSizeText(document.getElementById('title'), [
-    [30, 5], [60, 4.2], [100, 3.5], [Infinity, 2.8]
+    [30, 5],
+    [60, 4.2],
+    [100, 3.5],
+    [Infinity, 2.8],
   ]);
 
   var vw = window.innerWidth / 100;

@@ -15,7 +15,7 @@ If you discover a security vulnerability, please report it responsibly:
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | latest  | Yes       |
 
 ## Security Measures

@@ -44,7 +44,7 @@ describe('parseSize', () => {
   it('all returns 3 sizes', () => {
     const result = parseSize('all');
     expect(result).toHaveLength(3);
-    const names = result.map(r => r.name);
+    const names = result.map((r) => r.name);
     expect(names).toContain('post');
     expect(names).toContain('story');
     expect(names).toContain('youtube');
@@ -150,14 +150,18 @@ describe('listBrands', () => {
 
 describe('buildUrl', () => {
   it('builds correct file:// URL', () => {
-    const url = buildUrl('/app/templates/quote-card.html', 'testbrand', brandsDir, { text: 'Hello world' });
+    const url = buildUrl('/app/templates/quote-card.html', 'testbrand', brandsDir, {
+      text: 'Hello world',
+    });
     expect(url).toMatch(/^file:\/\/\/app\/templates\/quote-card\.html\?/);
     expect(url).toContain('brand=testbrand');
     expect(url).toContain('text=');
   });
 
   it('encodes special characters', () => {
-    const url = buildUrl('/app/templates/quote-card.html', 'testbrand', brandsDir, { text: 'Hello & goodbye' });
+    const url = buildUrl('/app/templates/quote-card.html', 'testbrand', brandsDir, {
+      text: 'Hello & goodbye',
+    });
     // Should be URL-encoded, not raw ampersand in value
     expect(url).not.toMatch(/text=Hello & goodbye/);
   });

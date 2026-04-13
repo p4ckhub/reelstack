@@ -28,9 +28,7 @@ async function getMediaDuration(url: string): Promise<number | null> {
  *
  * Takes the maximum of all sources. Falls back to DEFAULT_DURATION_SECONDS.
  */
-export const calculateReelMetadata: CalculateMetadataFunction<ReelProps> = async ({
-  props,
-}) => {
+export const calculateReelMetadata: CalculateMetadataFunction<ReelProps> = async ({ props }) => {
   const durations: number[] = [];
 
   // Get video durations (dynamic import avoids webpack bundling server code)
@@ -69,13 +67,10 @@ export const calculateReelMetadata: CalculateMetadataFunction<ReelProps> = async
   }
 
   const maxDuration =
-    durations.length > 0
-      ? Math.max(MIN_DURATION_SECONDS, ...durations)
-      : DEFAULT_DURATION_SECONDS;
+    durations.length > 0 ? Math.max(MIN_DURATION_SECONDS, ...durations) : DEFAULT_DURATION_SECONDS;
 
   return {
     fps: FPS,
     durationInFrames: Math.ceil(maxDuration * FPS),
   };
 };
-

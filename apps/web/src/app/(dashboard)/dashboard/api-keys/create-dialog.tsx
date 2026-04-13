@@ -100,9 +100,7 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {createdKey ? 'API Key Created' : 'Create API Key'}
-          </DialogTitle>
+          <DialogTitle>{createdKey ? 'API Key Created' : 'Create API Key'}</DialogTitle>
         </DialogHeader>
 
         {createdKey ? (
@@ -111,11 +109,7 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
               Copy your API key now. You won&apos;t be able to see it again.
             </p>
             <div className="flex gap-2">
-              <Input
-                value={createdKey}
-                readOnly
-                className="font-mono text-xs"
-              />
+              <Input value={createdKey} readOnly className="font-mono text-xs" />
               <Button variant="outline" onClick={handleCopy}>
                 {copied ? 'Copied!' : 'Copy'}
               </Button>

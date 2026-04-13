@@ -136,15 +136,12 @@ export default function ReelWizardPage() {
           ...(d.brandPreset?.backgroundColor && { backgroundColor: d.brandPreset.backgroundColor }),
         }));
       })
-      .catch(err => console.warn('[reel-wizard] preferences fetch failed:', err));
+      .catch((err) => console.warn('[reel-wizard] preferences fetch failed:', err));
   }, []);
 
-  const update = useCallback(
-    <K extends keyof FormData>(key: K, value: FormData[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
+  const update = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   // Apply caption preset
   const applyPreset = useCallback(
@@ -158,7 +155,7 @@ export default function ReelWizardPage() {
         }
       }
     },
-    [update],
+    [update]
   );
 
   // Get available voices for selected language
@@ -191,9 +188,7 @@ export default function ReelWizardPage() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(
-          body?.error?.message ?? `Request failed (${res.status})`,
-        );
+        throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
       }
 
       const { data } = await res.json();
@@ -302,10 +297,7 @@ export default function ReelWizardPage() {
 
                 <div>
                   <Label>Voice</Label>
-                  <Select
-                    value={form.ttsVoice}
-                    onValueChange={(v) => update('ttsVoice', v)}
-                  >
+                  <Select value={form.ttsVoice} onValueChange={(v) => update('ttsVoice', v)}>
                     <SelectTrigger className="mt-1.5">
                       <SelectValue />
                     </SelectTrigger>
@@ -322,10 +314,7 @@ export default function ReelWizardPage() {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <Button
-                onClick={() => setStep('style')}
-                disabled={form.script.trim().length < 10}
-              >
+              <Button onClick={() => setStep('style')} disabled={form.script.trim().length < 10}>
                 Next: Caption Style
               </Button>
             </div>
@@ -341,9 +330,7 @@ export default function ReelWizardPage() {
     return (
       <div className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-bold">Caption Style</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choose how your captions look.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose how your captions look.</p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           {CAPTION_PRESETS.map((preset) => (
@@ -351,9 +338,7 @@ export default function ReelWizardPage() {
               key={preset.id}
               onClick={() => applyPreset(preset.id)}
               className={`rounded-lg border p-4 text-left transition-colors ${
-                form.captionPreset === preset.id
-                  ? 'border-primary bg-primary/5'
-                  : 'hover:bg-muted'
+                form.captionPreset === preset.id ? 'border-primary bg-primary/5' : 'hover:bg-muted'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -368,9 +353,7 @@ export default function ReelWizardPage() {
                 </div>
                 <div>
                   <p className="font-medium">{preset.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {preset.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{preset.description}</p>
                 </div>
               </div>
             </button>
@@ -405,16 +388,12 @@ export default function ReelWizardPage() {
                       type="color"
                       id="bg"
                       value={form.backgroundColor}
-                      onChange={(e) =>
-                        update('backgroundColor', e.target.value)
-                      }
+                      onChange={(e) => update('backgroundColor', e.target.value)}
                       className="h-9 w-12 cursor-pointer rounded border"
                     />
                     <Input
                       value={form.backgroundColor}
-                      onChange={(e) =>
-                        update('backgroundColor', e.target.value)
-                      }
+                      onChange={(e) => update('backgroundColor', e.target.value)}
                       className="flex-1"
                     />
                   </div>
@@ -440,9 +419,7 @@ export default function ReelWizardPage() {
     return (
       <div className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-bold">Reel Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Final touches before generating.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Final touches before generating.</p>
 
         {error && (
           <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -457,23 +434,15 @@ export default function ReelWizardPage() {
                 <Label>Layout</Label>
                 <Select
                   value={form.layout}
-                  onValueChange={(v) =>
-                    update('layout', v as FormData['layout'])
-                  }
+                  onValueChange={(v) => update('layout', v as FormData['layout'])}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fullscreen">
-                      Fullscreen (9:16)
-                    </SelectItem>
-                    <SelectItem value="split-screen">
-                      Split Screen
-                    </SelectItem>
-                    <SelectItem value="picture-in-picture">
-                      Picture-in-Picture
-                    </SelectItem>
+                    <SelectItem value="fullscreen">Fullscreen (9:16)</SelectItem>
+                    <SelectItem value="split-screen">Split Screen</SelectItem>
+                    <SelectItem value="picture-in-picture">Picture-in-Picture</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -482,26 +451,16 @@ export default function ReelWizardPage() {
                 <Label>Video Style</Label>
                 <Select
                   value={form.style}
-                  onValueChange={(v) =>
-                    update('style', v as FormData['style'])
-                  }
+                  onValueChange={(v) => update('style', v as FormData['style'])}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dynamic">
-                      Dynamic - fast cuts, zoom effects
-                    </SelectItem>
-                    <SelectItem value="calm">
-                      Calm - smooth transitions, minimal
-                    </SelectItem>
-                    <SelectItem value="cinematic">
-                      Cinematic - slow zooms, dramatic
-                    </SelectItem>
-                    <SelectItem value="educational">
-                      Educational - clean, structured
-                    </SelectItem>
+                    <SelectItem value="dynamic">Dynamic - fast cuts, zoom effects</SelectItem>
+                    <SelectItem value="calm">Calm - smooth transitions, minimal</SelectItem>
+                    <SelectItem value="cinematic">Cinematic - slow zooms, dramatic</SelectItem>
+                    <SelectItem value="educational">Educational - clean, structured</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -510,20 +469,14 @@ export default function ReelWizardPage() {
                 <Label>TTS Provider</Label>
                 <Select
                   value={form.ttsProvider}
-                  onValueChange={(v) =>
-                    update('ttsProvider', v as FormData['ttsProvider'])
-                  }
+                  onValueChange={(v) => update('ttsProvider', v as FormData['ttsProvider'])}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="edge-tts">
-                      Edge TTS (Free)
-                    </SelectItem>
-                    <SelectItem value="elevenlabs">
-                      ElevenLabs (Pro)
-                    </SelectItem>
+                    <SelectItem value="edge-tts">Edge TTS (Free)</SelectItem>
+                    <SelectItem value="elevenlabs">ElevenLabs (Pro)</SelectItem>
                     <SelectItem value="openai">OpenAI TTS (Pro)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -573,11 +526,7 @@ export default function ReelWizardPage() {
                   strokeWidth={2}
                   stroke="currentColor"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.5 12.75l6 6 9-13.5"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
               </div>
               <h2 className="text-xl font-bold">Reel Ready!</h2>
@@ -605,11 +554,7 @@ export default function ReelWizardPage() {
                   strokeWidth={2}
                   stroke="currentColor"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
               <h2 className="text-xl font-bold">Generation Failed</h2>
@@ -622,11 +567,7 @@ export default function ReelWizardPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <svg
-                className="h-12 w-12 animate-spin text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-12 w-12 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -643,9 +584,7 @@ export default function ReelWizardPage() {
               </svg>
               <div className="text-center">
                 <h2 className="text-xl font-bold">
-                  {job?.status === 'PROCESSING'
-                    ? 'Generating your reel...'
-                    : 'Queued...'}
+                  {job?.status === 'PROCESSING' ? 'Generating your reel...' : 'Queued...'}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {job?.status === 'PROCESSING'
@@ -661,9 +600,7 @@ export default function ReelWizardPage() {
                       style={{ width: `${job.progress}%` }}
                     />
                   </div>
-                  <p className="mt-1 text-center text-xs text-muted-foreground">
-                    {job.progress}%
-                  </p>
+                  <p className="mt-1 text-center text-xs text-muted-foreground">{job.progress}%</p>
                 </div>
               )}
             </div>

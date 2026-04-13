@@ -1,5 +1,6 @@
 import {
   AbsoluteFill,
+  Sequence,
   useCurrentFrame,
   useVideoConfig,
   spring,
@@ -161,13 +162,15 @@ export const BRollCutaway: React.FC<BRollCutawayProps> = ({ segment }) => {
       }}
     >
       {media.type === 'video' && (
-        <OffthreadVideo
-          muted
-          src={resolveMediaUrl(media.url)}
-          style={{ width: '100%', height: '100%', objectFit: fitMode }}
-          startFrom={media.startFrom ? Math.round(media.startFrom * fps) : undefined}
-          endAt={media.endAt ? Math.round(media.endAt * fps) : undefined}
-        />
+        <Sequence from={startFrame} layout="none">
+          <OffthreadVideo
+            muted
+            src={resolveMediaUrl(media.url)}
+            style={{ width: '100%', height: '100%', objectFit: fitMode }}
+            startFrom={media.startFrom ? Math.round(media.startFrom * fps) : undefined}
+            endAt={media.endAt ? Math.round(media.endAt * fps) : undefined}
+          />
+        </Sequence>
       )}
       {media.type === 'image' && (
         <div style={{ width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>

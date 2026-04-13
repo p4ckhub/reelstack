@@ -21,12 +21,45 @@ const REMOTION_PKG_DIR = path.resolve(__dirname, '..');
 
 // Node.js built-in list — all need to be stubbed for browser/Lambda bundle
 const NODE_BUILTINS = [
-  'assert', 'async_hooks', 'buffer', 'child_process', 'cluster', 'console',
-  'constants', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs',
-  'http', 'http2', 'https', 'inspector', 'module', 'net', 'os', 'path',
-  'perf_hooks', 'process', 'punycode', 'querystring', 'readline', 'repl',
-  'stream', 'string_decoder', 'sys', 'timers', 'tls', 'tty', 'url',
-  'util', 'v8', 'vm', 'worker_threads', 'zlib',
+  'assert',
+  'async_hooks',
+  'buffer',
+  'child_process',
+  'cluster',
+  'console',
+  'constants',
+  'crypto',
+  'dgram',
+  'dns',
+  'domain',
+  'events',
+  'fs',
+  'http',
+  'http2',
+  'https',
+  'inspector',
+  'module',
+  'net',
+  'os',
+  'path',
+  'perf_hooks',
+  'process',
+  'punycode',
+  'querystring',
+  'readline',
+  'repl',
+  'stream',
+  'string_decoder',
+  'sys',
+  'timers',
+  'tls',
+  'tty',
+  'url',
+  'util',
+  'v8',
+  'vm',
+  'worker_threads',
+  'zlib',
 ];
 
 // Intercepts node: scheme modules and redirects them to the stub.
@@ -68,6 +101,39 @@ const webpackOverride = (config: any): any => {
   }
   aliasMap['cross-spawn'] = stubPath;
 
+  // Resolve monorepo packages (webpack can't follow bun workspace links)
+  const packagesDir = path.resolve(REMOTION_PKG_DIR, '..');
+  const nodeFs = require('fs');
+  const pkgNames = nodeFs
+    .readdirSync(packagesDir)
+    .filter(
+      (d: string) =>
+        d !== 'modules' &&
+        nodeFs.statSync(path.join(packagesDir, d)).isDirectory() &&
+        nodeFs.existsSync(path.join(packagesDir, d, 'src', 'index.ts'))
+    );
+  for (const pkg of pkgNames) {
+    aliasMap[`@reelstack/${pkg}`] = path.join(packagesDir, pkg, 'src', 'index.ts');
+  }
+  // Sub-path exports (e.g. @reelstack/remotion/components/highlight-modes)
+  aliasMap['@reelstack/remotion'] = path.join(packagesDir, 'remotion', 'src');
+
+  // Resolve private modules (external repo, NOT packages/modules)
+  const extModulesPath = path.resolve(
+    REMOTION_PKG_DIR,
+    '..',
+    '..',
+    '..',
+    'reelstack-modules',
+    'src'
+  );
+  aliasMap['@reelstack/modules$'] = path.join(extModulesPath, 'index.ts');
+  aliasMap['@reelstack/modules'] = extModulesPath;
+
+  // Add monorepo root node_modules so webpack can resolve deps from external modules
+  const monorepoRoot = path.resolve(REMOTION_PKG_DIR, '..', '..');
+  const existingModules = config.resolve?.modules ?? ['node_modules'];
+
   return {
     ...config,
     resolve: {
@@ -76,11 +142,13 @@ const webpackOverride = (config: any): any => {
         ...(config.resolve?.alias ?? {}),
         ...aliasMap,
       },
+      modules: [
+        ...existingModules,
+        path.join(monorepoRoot, 'node_modules'),
+        path.join(REMOTION_PKG_DIR, 'node_modules'),
+      ],
     },
-    plugins: [
-      ...(config.plugins ?? []),
-      new RewriteNodePrefixPlugin(stubPath),
-    ],
+    plugins: [...(config.plugins ?? []), new RewriteNodePrefixPlugin(stubPath)],
   };
 };
 
@@ -97,12 +165,8 @@ async function main() {
   console.log('');
 
   // Dynamic imports to avoid bundling heavy AWS SDK
-  const {
-    deployFunction,
-    deploySite,
-    getFunctions,
-    getOrCreateBucket,
-  } = await import('@remotion/lambda');
+  const { deployFunction, deploySite, getFunctions, getOrCreateBucket } =
+    await import('@remotion/lambda');
 
   // Step 1: Check for existing function or deploy new
   console.log('Step 1: Checking Lambda functions...');
@@ -140,7 +204,8 @@ async function main() {
   console.log('');
   console.log('Step 3: Deploying Remotion site to S3...');
 
-  const entryPoint = path.join(REMOTION_PKG_DIR, 'src', 'index.ts');
+  // Use apps/web entry point to include private modules (highlight modes, scroll-stoppers)
+  const entryPoint = path.resolve(REMOTION_PKG_DIR, '..', '..', 'apps', 'web', 'remotion-entry.ts');
   const { serveUrl, siteName } = await deploySite({
     region: region as any,
     entryPoint,

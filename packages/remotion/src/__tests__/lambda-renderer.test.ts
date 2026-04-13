@@ -10,7 +10,7 @@ describe('LambdaRenderer', () => {
 
   it('throws when env vars are missing', () => {
     expect(() => new LambdaRenderer()).toThrow(
-      'Lambda renderer requires: AWS_REGION, REMOTION_LAMBDA_FUNCTION_NAME, REMOTION_LAMBDA_SERVE_URL',
+      'Lambda renderer requires: AWS_REGION, REMOTION_LAMBDA_FUNCTION_NAME, REMOTION_LAMBDA_SERVE_URL'
     );
   });
 

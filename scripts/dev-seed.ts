@@ -4,7 +4,8 @@
  */
 import crypto from 'node:crypto';
 
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5433/subtitle_burner';
+const DATABASE_URL =
+  process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5433/subtitle_burner';
 const DEV_API_KEY = 'rs_test_devSeedKey00000000000000000001';
 const KEY_PREFIX = DEV_API_KEY.slice(0, 18); // 'rs_test_devSeedKe'
 

@@ -8,18 +8,29 @@ import { fileURLToPath } from 'url';
 
 const log = createLogger('local-renderer');
 
-const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
-const REMOTION_PKG_DIR = path.resolve(__dirname, '../..');
-// Bundle entry — prefer .local.ts (has private compositions) if it exists
-const BUNDLE_ENTRY =
-  process.env.REMOTION_ENTRY ??
-  (() => {
-    const localEntry = path.resolve(REMOTION_PKG_DIR, '../../apps/web/remotion-entry.local.ts');
-    if (fs.existsSync(localEntry)) return localEntry;
-    return path.resolve(REMOTION_PKG_DIR, '../../apps/web/remotion-entry.ts');
-  })();
-const BUNDLE_PUBLIC_DIR = path.resolve(REMOTION_PKG_DIR, 'public');
-const PRIVATE_COMPOSITIONS_DIR = path.resolve(REMOTION_PKG_DIR, '../modules/src/private/remotion');
+// Lazy-evaluated paths — import.meta.dirname is undefined in Next.js turbopack bundles.
+// These are only used when LocalRenderer.render() is actually called (worker process, not build).
+let _remotionPkgDir: string | undefined;
+function getDir(): string {
+  if (!_remotionPkgDir) {
+    const dir = import.meta.dirname ?? (typeof __dirname !== 'undefined' ? __dirname : null);
+    if (!dir) throw new Error('Cannot resolve remotion package directory');
+    _remotionPkgDir = path.resolve(dir, '../..');
+  }
+  return _remotionPkgDir;
+}
+function getBundleEntry(): string {
+  if (process.env.REMOTION_ENTRY) return process.env.REMOTION_ENTRY;
+  const localEntry = path.resolve(getDir(), '../../apps/web/remotion-entry.local.ts');
+  if (fs.existsSync(localEntry)) return localEntry;
+  return path.resolve(getDir(), '../../apps/web/remotion-entry.ts');
+}
+function getBundlePublicDir(): string {
+  return path.resolve(getDir(), 'public');
+}
+function getPrivateCompositionsDir(): string {
+  return path.resolve(getDir(), '../modules/src/private/remotion');
+}
 
 /**
  * Compute a cache key based on the newest source file across all composition directories.
@@ -28,9 +39,9 @@ const PRIVATE_COMPOSITIONS_DIR = path.resolve(REMOTION_PKG_DIR, '../modules/src/
 function computeBundleCacheKey(): string {
   let maxMtime = 0;
   const dirs = [
-    path.resolve(REMOTION_PKG_DIR, 'src'),
-    PRIVATE_COMPOSITIONS_DIR,
-    path.dirname(BUNDLE_ENTRY),
+    path.resolve(getDir(), 'src'),
+    getPrivateCompositionsDir(),
+    path.dirname(getBundleEntry()),
   ];
   for (const dir of dirs) {
     try {
@@ -103,13 +114,13 @@ export class LocalRenderer implements RemotionRenderer {
           [
             'remotion',
             'bundle',
-            BUNDLE_ENTRY,
+            getBundleEntry(),
             '--public-dir',
-            BUNDLE_PUBLIC_DIR,
+            getBundlePublicDir(),
             '--out-dir',
             outDir,
           ],
-          { cwd: REMOTION_PKG_DIR, stdio: 'pipe', timeout: 300_000 }
+          { cwd: getDir(), stdio: 'pipe', timeout: 300_000 }
         );
         writeFileSync(cacheKeyFile, currentCacheKey);
         bundlePath = outDir;
@@ -155,7 +166,7 @@ export class LocalRenderer implements RemotionRenderer {
       log.info({ args: args.join(' ') }, 'Spawning remotion render');
 
       execFileSync('bunx', args, {
-        cwd: REMOTION_PKG_DIR,
+        cwd: getDir(),
         stdio: 'pipe',
         timeout: 600_000, // 10 min max
       });

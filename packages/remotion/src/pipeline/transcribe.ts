@@ -14,6 +14,8 @@ interface TranscribeOptions {
   text?: string;
   /** Audio duration in seconds — required for synthetic timing */
   durationSeconds?: number;
+  /** Preferred provider — skips to that provider first, then falls through */
+  provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic';
 }
 
 const ALLOWED_LANGS = [
@@ -74,37 +76,62 @@ const WHISPER_CPP_MODEL_PREFERENCE = [
   'ggml-tiny.bin',
 ];
 
+type TranscribeResult = { words: TranscriptionWord[]; text: string; duration: number };
+
 /**
  * Server-side transcription with automatic fallback chain:
  * 1. OpenAI Whisper API (OPENAI_API_KEY) — cloud, accurate, costs money
- * 2. whisper.cpp local (whisper-cli binary) — free, fast on Apple Silicon, word-level timestamps
- * 3. Synthetic timing — distributes known words proportionally (no transcription needed)
+ * 2. whisper.cpp local (whisper-cli binary) — free, fast on Apple Silicon
+ * 3. Cloudflare Workers AI (CF_API_TOKEN + CF_ACCOUNT_ID) — free tier, cloud
+ * 4. Synthetic timing — distributes known words proportionally (no transcription)
+ *
+ * Use options.provider to skip directly to a preferred provider.
  */
 export async function transcribeAudio(
   wavBuffer: Buffer,
   options?: TranscribeOptions
-): Promise<{ words: TranscriptionWord[]; text: string; duration: number }> {
+): Promise<TranscribeResult> {
+  const preferred = options?.provider;
+
+  // If a specific provider is requested, try it first then fall through
+  if (preferred === 'cloudflare') {
+    const cf = await transcribeViaCloudflare(wavBuffer, options?.language);
+    if (cf) return cf;
+    log.warn('Cloudflare transcription failed, falling through to other providers');
+  }
+  if (preferred === 'whisper-cpp') {
+    const local = transcribeViaWhisperCpp(wavBuffer, options?.language);
+    if (local) return local;
+    log.warn('whisper.cpp not available, falling through to other providers');
+  }
+
   // 1. OpenAI Whisper API
   const apiKey = options?.apiKey ?? process.env.OPENAI_API_KEY;
-  if (apiKey) {
+  if (apiKey && preferred !== 'cloudflare' && preferred !== 'synthetic') {
     return transcribeViaApi(wavBuffer, apiKey, options);
   }
 
   // 2. whisper.cpp local
-  const whisperResult = transcribeViaWhisperCpp(wavBuffer, options?.language);
-  if (whisperResult) {
-    return whisperResult;
+  if (preferred !== 'cloudflare' && preferred !== 'synthetic') {
+    const whisperResult = transcribeViaWhisperCpp(wavBuffer, options?.language);
+    if (whisperResult) return whisperResult;
   }
 
-  // 3. Synthetic timing from known text
-  log.warn('No API key or whisper-cli available, using synthetic timing');
+  // 3. Cloudflare Workers AI (free tier)
+  if (preferred !== 'synthetic') {
+    const cfResult = await transcribeViaCloudflare(wavBuffer, options?.language);
+    if (cfResult) return cfResult;
+  }
+
+  // 4. Synthetic timing from known text
+  log.warn('No transcription provider available, using synthetic timing');
   if (options?.text && options?.durationSeconds) {
     return syntheticTranscribe(options.text, options.durationSeconds);
   }
 
   throw new Error(
-    'Transcription requires one of: OPENAI_API_KEY, whisper-cli (brew install whisper-cpp), ' +
-      'or known script text for synthetic timing'
+    'Transcription requires one of: OPENAI_API_KEY, whisper-cli, ' +
+      'CF_API_TOKEN+CF_ACCOUNT_ID, or known script text for synthetic timing'
   );
 }
 
@@ -325,6 +352,7 @@ async function transcribeViaApi(
     headers: { Authorization: `Bearer ${apiKey}` },
     body: formData,
     signal: AbortSignal.timeout(120_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {
@@ -351,4 +379,73 @@ interface WhisperApiResponse {
   text: string;
   duration?: number;
   words?: Array<{ word: string; start: number; end: number }>;
+}
+
+// ── Cloudflare Workers AI ────────────────────────────────
+
+async function transcribeViaCloudflare(
+  wavBuffer: Buffer,
+  language?: string
+): Promise<TranscribeResult | null> {
+  const apiToken = process.env.CF_API_TOKEN;
+  const accountId = process.env.CF_ACCOUNT_ID;
+  if (!apiToken || !accountId) return null;
+
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/openai/whisper`;
+
+  try {
+    const formData = new FormData();
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(wavBuffer)], { type: 'audio/wav' }),
+      'audio.wav'
+    );
+
+    log.info({ language, endpoint: url }, 'Cloudflare Whisper request');
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiToken}` },
+      body: formData,
+      signal: AbortSignal.timeout(120_000),
+      redirect: 'error',
+    });
+
+    if (!response.ok) {
+      log.warn({ status: response.status }, 'Cloudflare Whisper failed');
+      return null;
+    }
+
+    const data = (await response.json()) as CloudflareWhisperResponse;
+    if (!data.success) {
+      log.warn({ errors: data.errors }, 'Cloudflare Whisper returned error');
+      return null;
+    }
+
+    const words: TranscriptionWord[] = (data.result.words ?? []).map((w) => ({
+      text: w.word,
+      startTime: w.start,
+      endTime: w.end,
+    }));
+
+    log.info({ wordCount: words.length }, 'Cloudflare Whisper completed');
+
+    return {
+      words,
+      text: data.result.text?.trim() ?? '',
+      duration: words.length > 0 ? words[words.length - 1].endTime : 0,
+    };
+  } catch (err) {
+    log.warn({ error: err instanceof Error ? err.message : 'unknown' }, 'Cloudflare Whisper error');
+    return null;
+  }
+}
+
+interface CloudflareWhisperResponse {
+  success: boolean;
+  errors: Array<{ message: string }>;
+  result: {
+    text: string;
+    words?: Array<{ word: string; start: number; end: number }>;
+  };
 }

@@ -1,67 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const mockAuthenticate = vi.fn();
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-          { status: 401 },
-        );
-      }
-      try {
-        return await handler(req, ctx);
-      } catch (err) {
-        console.error(err);
-        return NextResponse.json(
-          { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-          { status: 500 },
-        );
-      }
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 
 vi.mock('@/lib/api/validation', () => ({
-  getTierLimits: () => Promise.resolve({ maxFileSize: 100 * 1024 * 1024, maxDuration: 120, creditsPerMonth: 30 }),
+  getTierLimits: () =>
+    Promise.resolve({ maxFileSize: 100 * 1024 * 1024, maxDuration: 120, creditsPerMonth: 30 }),
 }));
 
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
 
-const mockCreateReelJob = vi.fn();
-const mockConsumeCredits = vi.fn();
-const mockGetCreditCost = vi.fn();
-const mockUpdateReelJobStatus = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  createReelJob: (...args: unknown[]) => mockCreateReelJob(...args),
-  consumeCredits: (...args: unknown[]) => mockConsumeCredits(...args),
-  getCreditCost: (...args: unknown[]) => mockGetCreditCost(...args),
-  updateReelJobStatus: (...args: unknown[]) => mockUpdateReelJobStatus(...args),
-}));
+import {
+  databaseMockFactory,
+  mockCreateReelJob,
+  mockConsumeCredits,
+  mockGetCreditCost,
+  mockUpdateReelJobStatus,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-const mockEnqueue = vi.fn();
-vi.mock('@reelstack/queue', () => ({
-  createQueue: () => Promise.resolve({ enqueue: mockEnqueue }),
-}));
+import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
+vi.mock('@reelstack/queue', queueMockFactory);
 
 const { POST } = await import('../../v1/reel/generate/route');
 
@@ -149,16 +112,20 @@ describe('POST /api/v1/reel/generate', () => {
     mockCreateReelJob.mockResolvedValue({ id: 'reel-2' });
     mockEnqueue.mockResolvedValue(undefined);
 
-    const response = await POST(makeRequest({
-      script: 'Hello world',
-      assets: [{
-        id: 'v1',
-        url: 'https://example.com/video.mp4',
-        type: 'video',
-        description: 'Talking head',
-        isPrimary: true,
-      }],
-    }));
+    const response = await POST(
+      makeRequest({
+        script: 'Hello world',
+        assets: [
+          {
+            id: 'v1',
+            url: 'https://example.com/video.mp4',
+            type: 'video',
+            description: 'Talking head',
+            isPrimary: true,
+          },
+        ],
+      })
+    );
     expect(response.status).toBe(201);
     const body = await response.json();
     expect(body.data.mode).toBe('compose');
@@ -202,18 +169,24 @@ describe('POST /api/v1/reel/generate', () => {
     mockCreateReelJob.mockResolvedValue({ id: 'reel-5' });
     mockEnqueue.mockResolvedValue(undefined);
 
-    await POST(makeRequest({
-      script: 'Hello world',
-      layout: 'split-screen',
-      style: 'cinematic',
-    }));
+    await POST(
+      makeRequest({
+        script: 'Hello world',
+        layout: 'split-screen',
+        style: 'cinematic',
+      })
+    );
 
     expect(mockCreateReelJob).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'user-1',
         script: 'Hello world',
-        reelConfig: expect.objectContaining({ layout: 'split-screen', style: 'cinematic', mode: 'generate' }),
-      }),
+        reelConfig: expect.objectContaining({
+          layout: 'split-screen',
+          style: 'cinematic',
+          mode: 'generate',
+        }),
+      })
     );
   });
 
@@ -223,15 +196,19 @@ describe('POST /api/v1/reel/generate', () => {
     mockCreateReelJob.mockResolvedValue({ id: 'reel-6' });
     mockEnqueue.mockResolvedValue(undefined);
 
-    await POST(makeRequest({
-      script: 'Hello world',
-      assets: [{ id: 'v1', url: 'https://example.com/v.mp4', type: 'video', description: 'Video' }],
-    }));
+    await POST(
+      makeRequest({
+        script: 'Hello world',
+        assets: [
+          { id: 'v1', url: 'https://example.com/v.mp4', type: 'video', description: 'Video' },
+        ],
+      })
+    );
 
     expect(mockCreateReelJob).toHaveBeenCalledWith(
       expect.objectContaining({
         reelConfig: expect.objectContaining({ mode: 'compose' }),
-      }),
+      })
     );
   });
 });

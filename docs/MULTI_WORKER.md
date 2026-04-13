@@ -30,11 +30,11 @@ docker compose -f docker-compose.prod.yml logs -f reel-worker
 ## Resource Requirements
 
 | Workers | Min RAM | Recommended | Max Concurrent Renders |
-|---------|---------|-------------|----------------------|
-| 1 | 2 GB | 4 GB | 1 |
-| 2 | 4 GB | 6 GB | 2 |
-| 3 | 6 GB | 8 GB | 3 |
-| 5 | 10 GB | 16 GB | 5 |
+| ------- | ------- | ----------- | ---------------------- |
+| 1       | 2 GB    | 4 GB        | 1                      |
+| 2       | 4 GB    | 6 GB        | 2                      |
+| 3       | 6 GB    | 8 GB        | 3                      |
+| 5       | 10 GB   | 16 GB       | 5                      |
 
 Each worker uses ~1-2 GB during Chromium rendering.
 
@@ -44,6 +44,7 @@ Each worker independently caches the Remotion webpack bundle in `/tmp/remotion-b
 First render on a new worker takes ~200s extra for bundling.
 
 To pre-warm bundles:
+
 ```bash
 # After deploy, trigger one render per worker
 for i in $(seq 1 3); do
@@ -55,6 +56,7 @@ done
 ```
 
 Or use `REMOTION_BUNDLE_PATH` to mount a pre-built bundle:
+
 ```yaml
 volumes:
   - ./remotion-bundle:/app/remotion-bundle
@@ -65,6 +67,7 @@ environment:
 ## Monitoring
 
 Check queue depth:
+
 ```bash
 # Via Redis CLI
 docker compose exec redis redis-cli -a $REDIS_PASSWORD LLEN bull:reel-render:wait
@@ -79,6 +82,7 @@ Workers handle SIGTERM gracefully - they finish the current job before stopping.
 Docker Compose sends SIGTERM on `docker compose stop` with a 30s grace period.
 
 For zero-downtime updates:
+
 ```bash
 # Scale up new workers first
 docker compose -f docker-compose.prod.yml up -d --scale reel-worker=4

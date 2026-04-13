@@ -3,13 +3,36 @@ import { createLogger } from '@reelstack/logger';
 const log = createLogger('translate');
 
 const LANGUAGE_NAMES: Record<string, string> = {
-  pl: 'Polish', en: 'English', es: 'Spanish', de: 'German', fr: 'French',
-  it: 'Italian', pt: 'Portuguese', nl: 'Dutch', ru: 'Russian', uk: 'Ukrainian',
-  cs: 'Czech', sk: 'Slovak', ja: 'Japanese', ko: 'Korean', zh: 'Chinese',
-  ar: 'Arabic', hi: 'Hindi', sv: 'Swedish', da: 'Danish', no: 'Norwegian',
-  fi: 'Finnish', hu: 'Hungarian', ro: 'Romanian', bg: 'Bulgarian',
-  hr: 'Croatian', sr: 'Serbian', sl: 'Slovenian', tr: 'Turkish',
-  vi: 'Vietnamese', th: 'Thai',
+  pl: 'Polish',
+  en: 'English',
+  es: 'Spanish',
+  de: 'German',
+  fr: 'French',
+  it: 'Italian',
+  pt: 'Portuguese',
+  nl: 'Dutch',
+  ru: 'Russian',
+  uk: 'Ukrainian',
+  cs: 'Czech',
+  sk: 'Slovak',
+  ja: 'Japanese',
+  ko: 'Korean',
+  zh: 'Chinese',
+  ar: 'Arabic',
+  hi: 'Hindi',
+  sv: 'Swedish',
+  da: 'Danish',
+  no: 'Norwegian',
+  fi: 'Finnish',
+  hu: 'Hungarian',
+  ro: 'Romanian',
+  bg: 'Bulgarian',
+  hr: 'Croatian',
+  sr: 'Serbian',
+  sl: 'Slovenian',
+  tr: 'Turkish',
+  vi: 'Vietnamese',
+  th: 'Thai',
 };
 
 /**
@@ -19,7 +42,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
 export async function translateText(
   text: string,
   sourceLang: string,
-  targetLang: string,
+  targetLang: string
 ): Promise<string> {
   const srcName = LANGUAGE_NAMES[sourceLang] ?? sourceLang;
   const tgtName = LANGUAGE_NAMES[targetLang] ?? targetLang;
@@ -49,7 +72,11 @@ export async function translateText(
   return result;
 }
 
-async function translateViaAnthropic(systemPrompt: string, text: string, apiKey: string): Promise<string> {
+async function translateViaAnthropic(
+  systemPrompt: string,
+  text: string,
+  apiKey: string
+): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -64,6 +91,7 @@ async function translateViaAnthropic(systemPrompt: string, text: string, apiKey:
       messages: [{ role: 'user', content: text }],
     }),
     signal: AbortSignal.timeout(15_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {
@@ -78,7 +106,11 @@ async function translateViaAnthropic(systemPrompt: string, text: string, apiKey:
   return translated.trim();
 }
 
-async function translateViaOpenAI(systemPrompt: string, text: string, apiKey: string): Promise<string> {
+async function translateViaOpenAI(
+  systemPrompt: string,
+  text: string,
+  apiKey: string
+): Promise<string> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -93,6 +125,7 @@ async function translateViaOpenAI(systemPrompt: string, text: string, apiKey: st
       ],
     }),
     signal: AbortSignal.timeout(15_000),
+    redirect: 'error',
   });
 
   if (!response.ok) {

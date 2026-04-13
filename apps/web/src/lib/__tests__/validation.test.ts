@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { databaseMockFactory, mockPrisma } from '@/__test-utils__/database-mock';
 import {
   validateMagicBytes,
   sanitizeSubtitleText,
@@ -8,13 +9,7 @@ import {
 } from '../api/validation';
 
 // Mock DB — getTierLimits falls back to TIER_DEFAULTS when findUnique returns null
-vi.mock('@reelstack/database', () => ({
-  prisma: {
-    tierConfig: {
-      findUnique: vi.fn().mockResolvedValue(null),
-    },
-  },
-}));
+vi.mock('@reelstack/database', databaseMockFactory);
 
 describe('validateMagicBytes', () => {
   it('accepts valid MP4 (ftyp)', () => {
@@ -74,8 +69,7 @@ describe('getTierLimits (DB fallback)', () => {
   });
 
   it('falls back to FREE defaults when DB returns null', async () => {
-    const { prisma } = await import('@reelstack/database');
-    vi.mocked(prisma.tierConfig.findUnique).mockResolvedValueOnce(null);
+    mockPrisma.tierConfig.findUnique.mockResolvedValueOnce(null);
 
     const limits = await getTierLimits('FREE');
     expect(limits.maxFileSize).toBe(100 * 1024 * 1024);
@@ -83,8 +77,7 @@ describe('getTierLimits (DB fallback)', () => {
   });
 
   it('uses DB value when TierConfig row exists', async () => {
-    const { prisma } = await import('@reelstack/database');
-    vi.mocked(prisma.tierConfig.findUnique).mockResolvedValueOnce({
+    mockPrisma.tierConfig.findUnique.mockResolvedValueOnce({
       tier: 'FREE',
       productSlug: 'reelstack',
       creditsPerMonth: 10,
@@ -101,8 +94,7 @@ describe('getTierLimits (DB fallback)', () => {
   });
 
   it('returns Infinity maxDuration when maxDurationSec is -1', async () => {
-    const { prisma } = await import('@reelstack/database');
-    vi.mocked(prisma.tierConfig.findUnique).mockResolvedValueOnce({
+    mockPrisma.tierConfig.findUnique.mockResolvedValueOnce({
       tier: 'AGENCY',
       productSlug: 'reelstack',
       creditsPerMonth: 5000,
@@ -117,8 +109,7 @@ describe('getTierLimits (DB fallback)', () => {
   });
 
   it('falls back to defaults when DB throws', async () => {
-    const { prisma } = await import('@reelstack/database');
-    vi.mocked(prisma.tierConfig.findUnique).mockRejectedValueOnce(new Error('DB down'));
+    mockPrisma.tierConfig.findUnique.mockRejectedValueOnce(new Error('DB down'));
 
     const limits = await getTierLimits('PRO');
     expect(limits.creditsPerMonth).toBe(1000);

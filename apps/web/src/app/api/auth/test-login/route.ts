@@ -31,9 +31,7 @@ export async function POST(req: NextRequest) {
     });
 
     const cookieName =
-      env === 'production'
-        ? '__Secure-authjs.session-token'
-        : 'authjs.session-token';
+      env === 'production' ? '__Secure-authjs.session-token' : 'authjs.session-token';
 
     // Create JWT matching NextAuth's format (salt = cookie name in Auth.js v5)
     const token = await encode({
@@ -61,9 +59,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     log.error({ err: error }, 'Test login error');
-    return NextResponse.json(
-      { error: 'Internal error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

@@ -6,6 +6,8 @@
  */
 import { randomUUID } from 'crypto';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { createStorage } from '@reelstack/storage';
 import { createLogger } from '@reelstack/logger';
 import type { GeneratedAsset } from '../types';
@@ -17,20 +19,17 @@ const defaultLog = createLogger('asset-persistence');
  * These URLs don't need re-uploading since they won't expire unexpectedly.
  */
 export function isOwnStorageUrl(url: string): boolean {
-  const minioEndpoint = process.env.MINIO_ENDPOINT || 'localhost';
-  const minioPort = process.env.MINIO_PORT || '9000';
+  const minioEndpoint = process.env.MINIO_ENDPOINT;
+  const minioPort = process.env.MINIO_PORT ?? '9000';
   try {
     const parsed = new URL(url);
     // MinIO URLs (local or custom endpoint)
-    if (
-      parsed.hostname === minioEndpoint ||
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1'
-    ) {
-      return true;
+    if (minioEndpoint) {
+      if (parsed.hostname === minioEndpoint) return true;
+      if (parsed.host === `${minioEndpoint}:${minioPort}`) return true;
     }
-    // MinIO with port in URL
-    if (parsed.host === `${minioEndpoint}:${minioPort}`) {
+    // Local MinIO
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
       return true;
     }
     // R2 URLs
@@ -72,14 +71,29 @@ export async function persistAssetsToStorage(
         // Handle local file paths (e.g. Veo 3.1 returns /var/folders/... temp files)
         if (asset.url.startsWith('/') || asset.url.startsWith('file://')) {
           const filePath = asset.url.startsWith('file://') ? asset.url.slice(7) : asset.url;
-          if (!fs.existsSync(filePath)) {
+          // Path traversal guard: resolve and verify within tmpdir
+          const resolved = path.resolve(filePath);
+          const tmpRoot = path.resolve(os.tmpdir());
+          const isSafePath =
+            resolved.startsWith(tmpRoot) ||
+            resolved.startsWith('/tmp/') ||
+            resolved.startsWith('/private/tmp/');
+          if (!isSafePath) {
             log.warn(
-              { path: filePath, shotId: asset.shotId },
+              { path: filePath, resolved, shotId: asset.shotId },
+              'Asset file path outside tmpdir, skipping for security'
+            );
+            return;
+          }
+          try {
+            buffer = fs.readFileSync(resolved);
+          } catch (err) {
+            log.warn(
+              { path: resolved, shotId: asset.shotId, error: String(err) },
               'Local asset file not found, keeping original path'
             );
             return;
           }
-          buffer = fs.readFileSync(filePath);
         } else {
           const response = await fetch(asset.url, {
             signal: AbortSignal.timeout(60_000),

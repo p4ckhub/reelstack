@@ -1,5 +1,7 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, styles = ctx.styles, brandName = ctx.brandName;
+  var params = ctx.params,
+    styles = ctx.styles,
+    brandName = ctx.brandName;
   var brandTagline = styles.getPropertyValue('--brand-tagline').trim().replace(/"/g, '');
 
   document.getElementById('footerName').textContent = brandName;
@@ -13,7 +15,16 @@ initTemplate(function (ctx) {
   if (attr) document.getElementById('attrText').textContent = '— ' + attr;
   if (num) document.getElementById('seriesNum').textContent = '#' + num;
 
-  autoSizeText(document.getElementById('quoteText'), [
-    [40, 5.5], [80, 4.8], [120, 4.2], [180, 3.6], [250, 3.0], [Infinity, 2.6]
-  ], 0.5);
+  autoSizeText(
+    document.getElementById('quoteText'),
+    [
+      [40, 5.5],
+      [80, 4.8],
+      [120, 4.2],
+      [180, 3.6],
+      [250, 3.0],
+      [Infinity, 2.6],
+    ],
+    0.5
+  );
 });

@@ -1,65 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
-const mockAuthenticate = vi.fn();
-
-vi.mock('@/lib/auth', () => ({
-  auth: vi.fn(),
-}));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Invalid or missing authentication' } },
-          { status: 401 }
-        );
-      }
-      return handler(req, ctx);
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 19 }),
 }));
 
-const mockGetTemplateById = vi.fn();
-const mockUpdateTemplate = vi.fn();
-const mockDeleteTemplate = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getTemplateById: (...args: unknown[]) => mockGetTemplateById(...args),
-  updateTemplate: (...args: unknown[]) => mockUpdateTemplate(...args),
-  deleteTemplate: (...args: unknown[]) => mockDeleteTemplate(...args),
-}));
+import {
+  databaseMockFactory,
+  mockGetTemplateById,
+  mockUpdateTemplate,
+  mockDeleteTemplate,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-vi.mock('@reelstack/core', () => ({
-  sanitizeStyle: (s: unknown) => s,
-  BUILT_IN_TEMPLATES: [
-    {
-      id: 'built-in-1',
-      name: 'Default',
-      description: 'Default template',
-      style: { fontSize: 24 },
-      category: 'minimal',
-      isBuiltIn: true,
-      isPublic: true,
-    },
-  ],
-}));
+import { coreMockFactory } from '@/__test-utils__/core-mock';
+vi.mock('@reelstack/core', coreMockFactory);
 
 const { GET, PATCH, DELETE } = await import('../../v1/templates/[id]/route');
 
@@ -81,13 +39,17 @@ describe('GET /api/v1/templates/[id]', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuthenticate.mockResolvedValue(null);
-    const response = await GET(new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(401);
   });
 
   it('returns built-in template by id', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
-    const response = await GET(new Request('http://localhost/api/v1/templates/built-in-1') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/built-in-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data.id).toBe('built-in-1');
@@ -107,7 +69,9 @@ describe('GET /api/v1/templates/[id]', () => {
       updatedAt: new Date('2024-01-01'),
     });
 
-    const response = await GET(new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data.id).toBe('tmpl-1');
@@ -117,7 +81,9 @@ describe('GET /api/v1/templates/[id]', () => {
   it('returns 404 when template not found', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetTemplateById.mockResolvedValue(null);
-    const response = await GET(new Request('http://localhost/api/v1/templates/nonexistent') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates/nonexistent') as unknown as NextRequest
+    );
     expect(response.status).toBe(404);
     const body = await response.json();
     expect(body.error.code).toBe('NOT_FOUND');
@@ -187,13 +153,17 @@ describe('DELETE /api/v1/templates/[id]', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuthenticate.mockResolvedValue(null);
-    const response = await DELETE(new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest);
+    const response = await DELETE(
+      new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(401);
   });
 
   it('returns 403 when trying to delete built-in template', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
-    const response = await DELETE(new Request('http://localhost/api/v1/templates/built-in-1') as unknown as NextRequest);
+    const response = await DELETE(
+      new Request('http://localhost/api/v1/templates/built-in-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(403);
     const body = await response.json();
     expect(body.error.code).toBe('FORBIDDEN');
@@ -202,14 +172,18 @@ describe('DELETE /api/v1/templates/[id]', () => {
   it('returns 404 when template not found', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockDeleteTemplate.mockResolvedValue({ count: 0 });
-    const response = await DELETE(new Request('http://localhost/api/v1/templates/nonexistent') as unknown as NextRequest);
+    const response = await DELETE(
+      new Request('http://localhost/api/v1/templates/nonexistent') as unknown as NextRequest
+    );
     expect(response.status).toBe(404);
   });
 
   it('deletes template and returns success', async () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockDeleteTemplate.mockResolvedValue({ count: 1 });
-    const response = await DELETE(new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest);
+    const response = await DELETE(
+      new Request('http://localhost/api/v1/templates/tmpl-1') as unknown as NextRequest
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data.deleted).toBe(true);

@@ -70,9 +70,7 @@ export function sanitizeStyle(style: Partial<SubtitleStyle>): SubtitleStyle {
       : base.outlineColor;
 
   const shadowColor =
-    style.shadowColor &&
-    isValidHexColor(style.shadowColor) &&
-    !hasDangerousCss(style.shadowColor)
+    style.shadowColor && isValidHexColor(style.shadowColor) && !hasDangerousCss(style.shadowColor)
       ? style.shadowColor
       : base.shadowColor;
 
@@ -244,7 +242,11 @@ export class TemplateEngine {
   updateTemplate(
     templates: readonly SubtitleTemplate[],
     id: string,
-    patch: Partial<Pick<SubtitleTemplate, 'name' | 'description' | 'category' | 'isPublic'> & { style: Partial<SubtitleStyle> }>
+    patch: Partial<
+      Pick<SubtitleTemplate, 'name' | 'description' | 'category' | 'isPublic'> & {
+        style: Partial<SubtitleStyle>;
+      }
+    >
   ): readonly SubtitleTemplate[] {
     return templates.map((t) => {
       if (t.id !== id || t.isBuiltIn) return t;
@@ -260,10 +262,7 @@ export class TemplateEngine {
     });
   }
 
-  removeTemplate(
-    templates: readonly SubtitleTemplate[],
-    id: string
-  ): readonly SubtitleTemplate[] {
+  removeTemplate(templates: readonly SubtitleTemplate[], id: string): readonly SubtitleTemplate[] {
     return templates.filter((t) => t.id !== id || t.isBuiltIn);
   }
 
@@ -271,10 +270,7 @@ export class TemplateEngine {
     return sanitizeStyle(template.style);
   }
 
-  mergeStyleOverrides(
-    base: SubtitleStyle,
-    overrides: Partial<SubtitleStyle>
-  ): SubtitleStyle {
+  mergeStyleOverrides(base: SubtitleStyle, overrides: Partial<SubtitleStyle>): SubtitleStyle {
     return sanitizeStyle({ ...base, ...overrides });
   }
 
@@ -282,10 +278,7 @@ export class TemplateEngine {
     templates: readonly SubtitleTemplate[],
     id: string
   ): SubtitleTemplate | undefined {
-    return (
-      templates.find((t) => t.id === id) ??
-      BUILT_IN_TEMPLATES.find((t) => t.id === id)
-    );
+    return templates.find((t) => t.id === id) ?? BUILT_IN_TEMPLATES.find((t) => t.id === id);
   }
 }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ── Mocks (must be before imports) ──────────────────────────────
 
@@ -9,14 +9,20 @@ vi.mock('@reelstack/agent', () => ({
   resolvePresetConfig: vi.fn(),
   createLogger: () => ({
     info: vi.fn(),
-    child: () => ({ info: vi.fn() }),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
   }),
 }));
 
 vi.mock('@reelstack/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
-    child: () => ({ info: vi.fn() }),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
   }),
 }));
 
@@ -33,6 +39,7 @@ vi.mock('@reelstack/transcription', () => ({
 
 vi.mock('child_process', () => ({
   execFileSync: vi.fn(),
+  execSync: vi.fn(),
 }));
 
 // ── Imports ─────────────────────────────────────────────────────
@@ -68,20 +75,24 @@ const mockRenderResult = {
 // ── Setup ───────────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
 
   // Default renderVideo mock — all paths end here
-  vi.mocked(renderVideo).mockResolvedValue(mockRenderResult);
+  (renderVideo as any).mockResolvedValue(mockRenderResult);
 
   // resolvePresetConfig default
-  vi.mocked(resolvePresetConfig).mockReturnValue({
-    animationStyle: 'word-highlight',
+  (resolvePresetConfig as any).mockReturnValue({
+    animationStyle: 'word-highlight' as const,
     maxWordsPerCue: 6,
     maxDurationPerCue: 3,
   });
 });
 
 // ── Tests ───────────────────────────────────────────────────────
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('produceCaptions', () => {
   // ── Path A: cues provided, no script ─────────────────────────
@@ -100,7 +111,7 @@ describe('produceCaptions', () => {
 
     // Should call renderVideo with props containing the provided cues
     expect(renderVideo).toHaveBeenCalledOnce();
-    const renderArgs = vi.mocked(renderVideo).mock.calls[0]!;
+    const renderArgs = (renderVideo as any).mock.calls[0]!;
     const props = renderArgs[0] as Record<string, unknown>;
     expect(props.compositionId).toBe('VideoClip');
     expect(props.cues).toEqual(sampleCues);
@@ -117,14 +128,14 @@ describe('produceCaptions', () => {
   it('with script runs TTS pipeline', async () => {
     const ttsCues = [{ id: 'tts-1', text: 'Generated caption', startTime: 0, endTime: 3 }];
 
-    vi.mocked(runTTSPipeline).mockResolvedValue({
+    (runTTSPipeline as any).mockResolvedValue({
       voiceoverPath: '/tmp/voiceover.mp3',
       audioDuration: 3,
       transcriptionWords: [],
       cues: ttsCues,
       steps: [],
     });
-    vi.mocked(uploadVoiceover).mockResolvedValue('https://r2.example.com/voiceover.mp3');
+    (uploadVoiceover as any).mockResolvedValue('https://r2.example.com/voiceover.mp3');
 
     const result = await produceCaptions({
       videoUrl: 'https://example.com/video.mp4',
@@ -134,7 +145,7 @@ describe('produceCaptions', () => {
 
     // Should call TTS pipeline
     expect(runTTSPipeline).toHaveBeenCalledOnce();
-    const ttsArgs = vi.mocked(runTTSPipeline).mock.calls[0]!;
+    const ttsArgs = (runTTSPipeline as any).mock.calls[0]!;
     expect(ttsArgs[0]).toMatchObject({
       script: 'Generated caption',
       tts: { provider: 'edge-tts', voice: 'en-US-AriaNeural' },
@@ -147,7 +158,7 @@ describe('produceCaptions', () => {
     expect(execFileSync).not.toHaveBeenCalled();
 
     // Render should include voiceoverUrl
-    const renderProps = vi.mocked(renderVideo).mock.calls[0]![0] as Record<string, unknown>;
+    const renderProps = (renderVideo as any).mock.calls[0]![0] as Record<string, unknown>;
     expect(renderProps.voiceoverUrl).toBe('https://r2.example.com/voiceover.mp3');
     expect(renderProps.cues).toEqual(ttsCues);
 
@@ -180,18 +191,18 @@ describe('produceCaptions', () => {
     const rmSyncSpy = vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 
     // Mock ffmpeg (execFileSync) — audio extraction
-    vi.mocked(execFileSync).mockReturnValue(Buffer.alloc(0));
+    (execFileSync as any).mockReturnValue(Buffer.alloc(0));
 
     // Mock audio pipeline functions
-    vi.mocked(getAudioDuration).mockReturnValue(10);
-    vi.mocked(normalizeAudioForWhisper).mockReturnValue(fakeAudioBuffer);
+    (getAudioDuration as any).mockReturnValue(10);
+    (normalizeAudioForWhisper as any).mockReturnValue(fakeAudioBuffer);
 
     const whisperWords = [
       { text: 'Hello', startTime: 0.5, endTime: 1.0 },
       { text: 'world', startTime: 1.0, endTime: 1.5 },
       { text: 'testing', startTime: 2.0, endTime: 2.8 },
     ];
-    vi.mocked(transcribeAudio).mockResolvedValue({
+    (transcribeAudio as any).mockResolvedValue({
       words: whisperWords,
       text: 'Hello world testing',
       duration: 10,
@@ -216,20 +227,20 @@ describe('produceCaptions', () => {
         words: [{ text: 'testing', startTime: 2.12, endTime: 2.92 }],
       },
     ];
-    vi.mocked(groupWordsIntoCues).mockReturnValue(transcribedCues);
+    (groupWordsIntoCues as any).mockReturnValue(transcribedCues);
 
     const result = await produceCaptions({
       videoUrl: 'https://example.com/video.mp4',
       // No cues, no script → transcribe mode
       highlightMode: 'glow',
-      whisper: { provider: 'openrouter' },
+      whisper: { provider: 'cloudflare' },
     });
 
     // 1. Should download the video
     expect(fetchSpy).toHaveBeenCalledWith(
       'https://example.com/video.mp4',
       expect.objectContaining({
-        redirect: 'follow',
+        redirect: 'error',
       })
     );
 
@@ -263,13 +274,13 @@ describe('produceCaptions', () => {
 
     // 7. Should group words into cues (with Whisper offset applied)
     expect(groupWordsIntoCues).toHaveBeenCalledOnce();
-    const groupArgs = vi.mocked(groupWordsIntoCues).mock.calls[0]!;
+    const groupArgs = (groupWordsIntoCues as any).mock.calls[0]!;
     // Verify Whisper offset was applied (0.12s added to each word)
     expect(groupArgs[0]![0]!.startTime).toBeCloseTo(0.62, 2);
     expect(groupArgs[0]![0]!.endTime).toBeCloseTo(1.12, 2);
 
     // 8. No voiceoverUrl in transcribe mode (keeps original audio)
-    const renderProps = vi.mocked(renderVideo).mock.calls[0]![0] as Record<string, unknown>;
+    const renderProps = (renderVideo as any).mock.calls[0]![0] as Record<string, unknown>;
     expect(renderProps.voiceoverUrl).toBeUndefined();
     expect(renderProps.cues).toEqual(transcribedCues);
     expect(renderProps.highlightMode).toBe('glow');
@@ -295,11 +306,11 @@ describe('produceCaptions', () => {
     vi.spyOn(fs, 'mkdtempSync').mockReturnValue('/tmp/reelstack-captions-local');
     vi.spyOn(fs, 'rmSync').mockImplementation(() => {});
 
-    vi.mocked(execFileSync).mockReturnValue(Buffer.alloc(0));
-    vi.mocked(getAudioDuration).mockReturnValue(5);
-    vi.mocked(normalizeAudioForWhisper).mockReturnValue(fakeAudioBuffer);
-    vi.mocked(transcribeAudio).mockResolvedValue({ words: [], text: '', duration: 0 });
-    vi.mocked(groupWordsIntoCues).mockReturnValue([]);
+    (execFileSync as any).mockReturnValue(Buffer.alloc(0));
+    (getAudioDuration as any).mockReturnValue(5);
+    (normalizeAudioForWhisper as any).mockReturnValue(fakeAudioBuffer);
+    (transcribeAudio as any).mockResolvedValue({ words: [], text: '', duration: 0 });
+    (groupWordsIntoCues as any).mockReturnValue([]);
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 

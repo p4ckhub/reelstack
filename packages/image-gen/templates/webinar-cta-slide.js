@@ -20,7 +20,14 @@ initTemplate(function (ctx) {
     el.style.display = 'block';
   }
 
-  autoSizeText(document.getElementById('title'), [
-    [30, 4.5], [60, 3.5], [100, 2.8], [Infinity, 2.2]
-  ], 0.25);
+  autoSizeText(
+    document.getElementById('title'),
+    [
+      [30, 4.5],
+      [60, 3.5],
+      [100, 2.8],
+      [Infinity, 2.2],
+    ],
+    0.25
+  );
 });

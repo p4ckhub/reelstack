@@ -1,34 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import crypto from 'crypto';
 import type { NextRequest } from 'next/server';
+import {
+  databaseMockFactory,
+  mockGetUserByEmail,
+  mockAddTokens,
+  mockUpdateUserTier,
+  mockLinkSellfCustomer,
+  mockGetUserBySellfCustomerId,
+  mockPrisma,
+} from '@/__test-utils__/database-mock';
 
-const mockGetUserByEmail = vi.fn();
-const mockAddTokens = vi.fn();
-const mockUpdateUserTier = vi.fn();
-const mockLinkSellfCustomer = vi.fn();
-const mockGetUserBySellfCustomerId = vi.fn();
-const mockWebhookEventCreate = vi.fn();
-
-vi.mock('@reelstack/database', () => ({
-  getUserByEmail: (...args: unknown[]) => mockGetUserByEmail(...args),
-  addTokens: (...args: unknown[]) => mockAddTokens(...args),
-  updateUserTier: (...args: unknown[]) => mockUpdateUserTier(...args),
-  linkSellfCustomer: (...args: unknown[]) => mockLinkSellfCustomer(...args),
-  getUserBySellfCustomerId: (...args: unknown[]) => mockGetUserBySellfCustomerId(...args),
-  createAuditLog: vi.fn().mockResolvedValue({}),
-  prisma: {
-    webhookEvent: {
-      create: (...args: unknown[]) => mockWebhookEventCreate(...args),
-    },
-  },
-}));
+vi.mock('@reelstack/database', databaseMockFactory);
 
 const WEBHOOK_SECRET = 'test-webhook-secret';
 
-vi.stubEnv('SELLF_WEBHOOK_SECRET', WEBHOOK_SECRET);
-vi.stubEnv('SELLF_PRODUCT_PRO', 'prod_pro');
-vi.stubEnv('SELLF_PRODUCT_10_TOKENS', 'prod_10t');
-vi.stubEnv('SELLF_PRODUCT_50_TOKENS', 'prod_50t');
+const originalEnv = { ...process.env };
+process.env.SELLF_WEBHOOK_SECRET = WEBHOOK_SECRET;
+process.env.SELLF_PRODUCT_PRO = 'prod_pro';
+process.env.SELLF_PRODUCT_10_TOKENS = 'prod_10t';
+process.env.SELLF_PRODUCT_50_TOKENS = 'prod_50t';
 
 const { POST } = await import('../../webhooks/sellf/route');
 
@@ -42,7 +33,9 @@ function makeRequest(body: object, signature?: string): NextRequest {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(signature !== undefined ? { 'x-sellf-signature': signature } : { 'x-sellf-signature': sign(rawBody) }),
+      ...(signature !== undefined
+        ? { 'x-sellf-signature': signature }
+        : { 'x-sellf-signature': sign(rawBody) }),
     },
     body: rawBody,
   }) as unknown as NextRequest;
@@ -50,20 +43,23 @@ function makeRequest(body: object, signature?: string): NextRequest {
 
 const mockUser = { id: 'user-1', email: 'test@test.com', tier: 'FREE' };
 
+afterAll(() => {
+  process.env = originalEnv;
+});
+
 describe('POST /api/webhooks/sellf', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLinkSellfCustomer.mockResolvedValue({});
-    mockWebhookEventCreate.mockResolvedValue({});
+    mockPrisma.webhookEvent.create.mockResolvedValue({});
   });
 
   // ── Auth ──────────────────────────────────────
 
   it('returns 401 for invalid signature', async () => {
-    const response = await POST(makeRequest(
-      { email: 'a@b.com', product: 'prod_pro' },
-      'invalid-signature',
-    ));
+    const response = await POST(
+      makeRequest({ email: 'a@b.com', product: 'prod_pro' }, 'invalid-signature')
+    );
     expect(response.status).toBe(401);
     const body = await response.json();
     expect(body.error.code).toBe('UNAUTHORIZED');
@@ -144,7 +140,12 @@ describe('POST /api/webhooks/sellf', () => {
     };
     const response = await POST(makeRequest(payload));
     expect(response.status).toBe(200);
-    expect(mockAddTokens).toHaveBeenCalledWith('user-1', 10, 'purchase', 'purchase.completed:cs_xyz');
+    expect(mockAddTokens).toHaveBeenCalledWith(
+      'user-1',
+      10,
+      'purchase',
+      'purchase.completed:cs_xyz'
+    );
   });
 
   it('ignores non-completed Sellf events', async () => {
@@ -219,7 +220,7 @@ describe('POST /api/webhooks/sellf', () => {
 
   it('returns 200 with duplicate:true for already-processed event', async () => {
     const error = Object.assign(new Error('Unique constraint'), { code: 'P2002' });
-    mockWebhookEventCreate.mockRejectedValue(error);
+    mockPrisma.webhookEvent.create.mockRejectedValue(error);
 
     const payload = { email: 'test@test.com', product: 'prod_pro', reference: 'dup-ref' };
     const response = await POST(makeRequest(payload));

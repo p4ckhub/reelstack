@@ -1,4 +1,4 @@
-import { useCurrentFrame, useVideoConfig, interpolate, Easing } from 'remotion';
+import { useCurrentFrame, useVideoConfig } from 'remotion';
 
 interface Segment {
   startTime: number;

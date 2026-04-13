@@ -1,64 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
-const mockAuthenticate = vi.fn();
-
-vi.mock('@/lib/auth', () => ({
-  auth: vi.fn(),
-}));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Invalid or missing authentication' } },
-          { status: 401 }
-        );
-      }
-      return handler(req, ctx);
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 19 }),
 }));
 
-const mockGetTemplatesByUser = vi.fn();
-const mockCreateTemplate = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getTemplatesByUser: (...args: unknown[]) => mockGetTemplatesByUser(...args),
-  createTemplate: (...args: unknown[]) => mockCreateTemplate(...args),
-}));
+import {
+  databaseMockFactory,
+  mockGetTemplatesByUser,
+  mockCreateTemplate,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
-vi.mock('@reelstack/core', () => ({
-  sanitizeStyle: (s: unknown) => s,
-  BUILT_IN_TEMPLATES: [
-    {
-      id: 'built-in-1',
-      name: 'Default',
-      description: 'Default template',
-      style: { fontSize: 24 },
-      category: 'minimal',
-      isBuiltIn: true,
-      isPublic: true,
-      usageCount: 100,
-    },
-  ],
-}));
+import { coreMockFactory } from '@/__test-utils__/core-mock';
+vi.mock('@reelstack/core', coreMockFactory);
 
 const { GET, POST } = await import('../../v1/templates/route');
 
@@ -80,7 +38,9 @@ describe('GET /api/v1/templates', () => {
 
   it('returns 401 when not authenticated', async () => {
     mockAuthenticate.mockResolvedValue(null);
-    const response = await GET(new Request('http://localhost/api/v1/templates') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates') as unknown as NextRequest
+    );
     expect(response.status).toBe(401);
   });
 
@@ -100,7 +60,9 @@ describe('GET /api/v1/templates', () => {
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockGetTemplatesByUser.mockResolvedValue(userTemplates);
 
-    const response = await GET(new Request('http://localhost/api/v1/templates') as unknown as NextRequest);
+    const response = await GET(
+      new Request('http://localhost/api/v1/templates') as unknown as NextRequest
+    );
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toHaveLength(2);

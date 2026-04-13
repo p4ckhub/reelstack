@@ -1,16 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
-vi.mock('../render/local-renderer', () => ({
-  LocalRenderer: vi.fn(),
-}));
-
-vi.mock('../render/lambda-renderer', () => ({
-  LambdaRenderer: vi.fn(),
-}));
-
-const { createRenderer } = await import('../render/index');
-const { LocalRenderer } = await import('../render/local-renderer');
-const { LambdaRenderer } = await import('../render/lambda-renderer');
+import { describe, it, expect, afterEach } from 'vitest';
+import { createRenderer } from '../render/index';
 
 describe('createRenderer', () => {
   const originalEnv = process.env.REMOTION_RENDERER;
@@ -26,18 +15,28 @@ describe('createRenderer', () => {
   it('returns LocalRenderer by default', () => {
     delete process.env.REMOTION_RENDERER;
     const renderer = createRenderer();
-    expect(renderer).toBeInstanceOf(LocalRenderer);
+    expect(renderer.constructor.name).toBe('LocalRenderer');
   });
 
   it('returns LocalRenderer when REMOTION_RENDERER=local', () => {
     process.env.REMOTION_RENDERER = 'local';
     const renderer = createRenderer();
-    expect(renderer).toBeInstanceOf(LocalRenderer);
+    expect(renderer.constructor.name).toBe('LocalRenderer');
   });
 
   it('returns LambdaRenderer when REMOTION_RENDERER=lambda', () => {
     process.env.REMOTION_RENDERER = 'lambda';
-    const renderer = createRenderer();
-    expect(renderer).toBeInstanceOf(LambdaRenderer);
+    // LambdaRenderer constructor requires these env vars
+    process.env.AWS_REGION = 'eu-central-1';
+    process.env.REMOTION_LAMBDA_FUNCTION_NAME = 'test-function';
+    process.env.REMOTION_LAMBDA_SERVE_URL = 'https://test-serve-url.example.com';
+    try {
+      const renderer = createRenderer();
+      expect(renderer.constructor.name).toBe('LambdaRenderer');
+    } finally {
+      delete process.env.AWS_REGION;
+      delete process.env.REMOTION_LAMBDA_FUNCTION_NAME;
+      delete process.env.REMOTION_LAMBDA_SERVE_URL;
+    }
   });
 });

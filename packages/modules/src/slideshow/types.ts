@@ -31,7 +31,7 @@ export interface SlideshowRequest {
     language?: string;
   };
   whisper?: {
-    provider?: 'openrouter' | 'cloudflare' | 'ollama';
+    provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic';
     apiKey?: string;
   };
   brandPreset?: BrandPreset;

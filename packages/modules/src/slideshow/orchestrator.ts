@@ -288,15 +288,11 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
   // Group combined words into cues
   // Slideshow uses larger cue groups than default (3) to avoid
   // splitting phrases like "Tap the camera icon." into two cues.
-  const cues = groupWordsIntoCues(
-    allWords,
-    {
-      maxWordsPerCue: Math.max(presetConfig.maxWordsPerCue, 6),
-      maxDurationPerCue: Math.max(presetConfig.maxDurationPerCue, 4),
-      breakOnPunctuation: true,
-    },
-    presetConfig.animationStyle
-  );
+  const cues = groupWordsIntoCues(allWords, {
+    maxWordsPerCue: Math.max(presetConfig.maxWordsPerCue, 6),
+    maxDurationPerCue: Math.max(presetConfig.maxDurationPerCue, 4),
+    breakOnPunctuation: true,
+  });
 
   const formattedCues = cues.map((c) => ({
     id: c.id,
@@ -304,7 +300,6 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     startTime: c.startTime,
     endTime: c.endTime,
     words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
-    animationStyle: c.animationStyle,
   }));
 
   // ── 5. UPLOAD VOICEOVER ────────────────────────────────────

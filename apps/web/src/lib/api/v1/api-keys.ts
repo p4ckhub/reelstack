@@ -32,10 +32,7 @@ export function hashApiKey(key: string): string {
  * Timing-safe comparison of API key hashes.
  * Prevents timing attacks (security checklist requirement).
  */
-export function verifyApiKeyHash(
-  candidateHash: string,
-  storedHash: string
-): boolean {
+export function verifyApiKeyHash(candidateHash: string, storedHash: string): boolean {
   if (candidateHash.length !== storedHash.length) return false;
   const a = Buffer.from(candidateHash, 'utf8');
   const b = Buffer.from(storedHash, 'utf8');

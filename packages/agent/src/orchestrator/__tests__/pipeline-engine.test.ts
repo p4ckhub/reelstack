@@ -10,30 +10,17 @@ import type {
 
 // ── Storage mock ──────────────────────────────────────────────
 
-const mockUpload = vi.fn().mockResolvedValue('uploaded-key');
-const mockDownload = vi.fn<(path: string) => Promise<Buffer>>();
-const mockDelete = vi.fn();
-const mockGetSignedUrl = vi.fn().mockResolvedValue('https://signed.url');
+import {
+  storageMockFactory,
+  mockUpload,
+  mockGetSignedUrl,
+  mockDownload,
+  mockDelete,
+} from '../../__test-utils__/storage-mock';
 
-vi.mock('@reelstack/storage', () => ({
-  createStorage: () =>
-    Promise.resolve({
-      upload: (...args: unknown[]) => mockUpload(...args),
-      download: (...args: unknown[]) => mockDownload(...(args as [string])),
-      getSignedUrl: (...args: unknown[]) => mockGetSignedUrl(...args),
-      delete: (...args: unknown[]) => mockDelete(...args),
-    }),
-}));
-
-vi.mock('@reelstack/logger', () => ({
-  createLogger: () => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    child: vi.fn().mockReturnThis(),
-  }),
-}));
+vi.mock('@reelstack/storage', storageMockFactory);
+mockUpload.mockResolvedValue('uploaded-key');
+mockGetSignedUrl.mockResolvedValue('https://signed.url');
 
 import { PipelineEngine } from '../pipeline-engine';
 

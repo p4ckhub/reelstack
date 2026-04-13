@@ -26,5 +26,5 @@ export const GET = withAuth(
       reelId: job.id,
       publishStatus: job.publishStatus ?? null,
     });
-  },
+  }
 );

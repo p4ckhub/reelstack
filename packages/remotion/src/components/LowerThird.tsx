@@ -32,12 +32,10 @@ export const LowerThird: React.FC<LowerThirdProps> = ({ segment }) => {
 
   // Exit fade (last 0.4s)
   const exitDuration = Math.round(0.4 * fps);
-  const exitOpacity = interpolate(
-    frame,
-    [endFrame - exitDuration, endFrame],
-    [1, 0],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const exitOpacity = interpolate(frame, [endFrame - exitDuration, endFrame], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   const translateX = (1 - slideProgress) * -120;
 
@@ -47,9 +45,10 @@ export const LowerThird: React.FC<LowerThirdProps> = ({ segment }) => {
         position: 'absolute',
         bottom: '12%',
         left: position === 'left' ? '5%' : '50%',
-        transform: position === 'center'
-          ? `translateX(calc(-50% + ${translateX}%))`
-          : `translateX(${translateX}%)`,
+        transform:
+          position === 'center'
+            ? `translateX(calc(-50% + ${translateX}%))`
+            : `translateX(${translateX}%)`,
         display: 'flex',
         alignItems: 'stretch',
         opacity: exitOpacity,

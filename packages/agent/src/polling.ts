@@ -30,7 +30,7 @@ const DEFAULTS: Required<PollOptions> = {
 export async function pollUntilDone(
   tool: ProductionTool,
   jobId: string,
-  options?: PollOptions,
+  options?: PollOptions
 ): Promise<AssetGenerationStatus> {
   if (!tool.poll) {
     throw new GenerationError(`Tool ${tool.id} does not support polling`, tool.id);
@@ -60,7 +60,7 @@ export async function pollUntilDone(
 
   throw new GenerationError(
     `Polling timed out (${pollCount} polls, ${cappedTimeout}ms) for job ${jobId}`,
-    tool.id,
+    tool.id
   );
 }
 

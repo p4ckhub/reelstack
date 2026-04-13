@@ -1,5 +1,6 @@
 initTemplate(function (ctx) {
-  var params = ctx.params, brandName = ctx.brandName;
+  var params = ctx.params,
+    brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
   var title = params.get('title');
@@ -19,7 +20,14 @@ initTemplate(function (ctx) {
     el.style.display = 'block';
   }
 
-  autoSizeText(document.getElementById('title'), [
-    [30, 6.5], [50, 5.5], [80, 4.5], [Infinity, 3.5]
-  ], 0.4);
+  autoSizeText(
+    document.getElementById('title'),
+    [
+      [30, 6.5],
+      [50, 5.5],
+      [80, 4.5],
+      [Infinity, 3.5],
+    ],
+    0.4
+  );
 });

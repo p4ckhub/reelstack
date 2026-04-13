@@ -15,30 +15,32 @@ export const createApiKeySchema = z.object({
 // ==========================================
 
 /** Validates known SubtitleStyle fields while allowing extra keys via .passthrough() */
-const styleSchema = z.object({
-  fontFamily: z.string().optional(),
-  fontSize: z.number().optional(),
-  fontColor: z.string().max(20).optional(),
-  fontWeight: z.enum(['normal', 'bold']).optional(),
-  fontStyle: z.enum(['normal', 'italic']).optional(),
-  backgroundColor: z.string().max(20).optional(),
-  backgroundOpacity: z.number().min(0).max(1).optional(),
-  outlineColor: z.string().max(20).optional(),
-  outlineWidth: z.number().optional(),
-  shadowColor: z.string().max(20).optional(),
-  shadowBlur: z.number().optional(),
-  position: z.number().min(0).max(100).optional(),
-  alignment: z.enum(['left', 'center', 'right']).optional(),
-  lineHeight: z.number().optional(),
-  padding: z.number().optional(),
-  highlightColor: z.string().max(20).optional(),
-  upcomingColor: z.string().max(20).optional(),
-  highlightMode: z.enum(['text', 'pill']).optional(),
-  textTransform: z.enum(['none', 'uppercase']).optional(),
-  pillColor: z.string().max(20).optional(),
-  pillBorderRadius: z.number().optional(),
-  pillPadding: z.number().optional(),
-}).passthrough();
+const styleSchema = z
+  .object({
+    fontFamily: z.string().optional(),
+    fontSize: z.number().optional(),
+    fontColor: z.string().max(20).optional(),
+    fontWeight: z.enum(['normal', 'bold']).optional(),
+    fontStyle: z.enum(['normal', 'italic']).optional(),
+    backgroundColor: z.string().max(20).optional(),
+    backgroundOpacity: z.number().min(0).max(1).optional(),
+    outlineColor: z.string().max(20).optional(),
+    outlineWidth: z.number().optional(),
+    shadowColor: z.string().max(20).optional(),
+    shadowBlur: z.number().optional(),
+    position: z.number().min(0).max(100).optional(),
+    alignment: z.enum(['left', 'center', 'right']).optional(),
+    lineHeight: z.number().optional(),
+    padding: z.number().optional(),
+    highlightColor: z.string().max(20).optional(),
+    upcomingColor: z.string().max(20).optional(),
+    highlightMode: z.enum(['text', 'pill']).optional(),
+    textTransform: z.enum(['none', 'uppercase']).optional(),
+    pillColor: z.string().max(20).optional(),
+    pillBorderRadius: z.number().optional(),
+    pillPadding: z.number().optional(),
+  })
+  .passthrough();
 
 export const createTemplateSchema = z.object({
   name: z.string().min(1).max(100),
@@ -61,11 +63,13 @@ export const updateTemplateSchema = z.object({
 // ==========================================
 
 export const updatePreferencesSchema = z.object({
-  brandPreset: z.object({
-    highlightColor: z.string().max(20).optional(),
-    backgroundColor: z.string().max(20).optional(),
-    captionPreset: z.string().max(50).optional(),
-  }).optional(),
+  brandPreset: z
+    .object({
+      highlightColor: z.string().max(20).optional(),
+      backgroundColor: z.string().max(20).optional(),
+      captionPreset: z.string().max(50).optional(),
+    })
+    .optional(),
   defaultLayout: z.enum(['fullscreen', 'split-screen', 'picture-in-picture']).optional(),
   defaultTtsProvider: z.enum(['edge-tts', 'elevenlabs', 'openai']).optional(),
   defaultTtsVoice: z.string().max(100).optional(),

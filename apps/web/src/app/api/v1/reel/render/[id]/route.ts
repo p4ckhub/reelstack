@@ -36,5 +36,5 @@ export const GET = withAuth(
       startedAt: job.startedAt,
       completedAt: job.completedAt,
     });
-  },
+  }
 );

@@ -38,7 +38,7 @@ export function useProjectSync(projectId: string) {
               height: video.height ?? 1080,
               duration: video.duration ?? 0,
             },
-            video.url,
+            video.url
           );
         }
 
@@ -74,7 +74,7 @@ export function useProjectSync(projectId: string) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cues, style }),
-      }).catch(err => console.warn('[use-project-sync] auto-save failed:', err));
+      }).catch((err) => console.warn('[use-project-sync] auto-save failed:', err));
     }, 2000);
 
     return () => {

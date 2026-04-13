@@ -43,7 +43,7 @@ export async function renderImage(
   template: string,
   width: number,
   height: number,
-  params: Record<string, string>,
+  params: Record<string, string>
 ): Promise<Buffer> {
   const { chromium } = await import('playwright');
   const templatePath = validateTemplate(template);
@@ -73,7 +73,7 @@ export async function renderImages(
   brandCssPath: string,
   template: string,
   sizes: Array<{ name: string; width: number; height: number }>,
-  params: Record<string, string>,
+  params: Record<string, string>
 ): Promise<RenderResult[]> {
   const { chromium } = await import('playwright');
   const templatePath = validateTemplate(template);
@@ -106,7 +106,7 @@ export async function renderImages(
  */
 export async function render(
   params: RenderParams,
-  brandsDir = DEFAULT_BRANDS_DIR,
+  brandsDir = DEFAULT_BRANDS_DIR
 ): Promise<RenderResult[]> {
   const brandCssPath = validateBrand(params.brand, brandsDir);
   const sizes = parseSize(params.size);
@@ -127,7 +127,7 @@ export async function render(
 export async function renderToFile(
   params: RenderParams,
   outputPath: string,
-  brandsDir = DEFAULT_BRANDS_DIR,
+  brandsDir = DEFAULT_BRANDS_DIR
 ): Promise<number> {
   const results = await render(params, brandsDir);
   if (results.length !== 1) {

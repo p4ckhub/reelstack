@@ -3,25 +3,8 @@ import type { PipelineContext, PipelineDefinition } from '../pipeline-engine';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-vi.mock('@reelstack/logger', () => ({
-  createLogger: () => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    child: vi.fn().mockReturnThis(),
-  }),
-}));
-
-vi.mock('@reelstack/storage', () => ({
-  createStorage: () =>
-    Promise.resolve({
-      upload: vi.fn().mockResolvedValue('key'),
-      download: vi.fn(),
-      getSignedUrl: vi.fn().mockResolvedValue('https://signed.url'),
-      delete: vi.fn(),
-    }),
-}));
+import { storageMockFactory } from '../../__test-utils__/storage-mock';
+vi.mock('@reelstack/storage', storageMockFactory);
 
 // ── Import under test ────────────────────────────────────────
 

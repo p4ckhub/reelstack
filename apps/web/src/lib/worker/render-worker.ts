@@ -1,8 +1,5 @@
 import { createStorage } from '@reelstack/storage';
-import {
-  getReelJobInternal,
-  updateReelJobStatus,
-} from '@reelstack/database';
+import { getReelJobInternal, updateReelJobStatus } from '@reelstack/database';
 import { createLogger } from '@reelstack/logger';
 import { generateASS } from '@reelstack/ffmpeg';
 import type { SubtitleCue, SubtitleStyle } from '@reelstack/types';
@@ -33,7 +30,7 @@ export async function processRenderJob(jobId: string): Promise<void> {
   try {
     // Get subtitles from reelConfig
     const reelConfig = job.reelConfig as Record<string, unknown> | null;
-    const cues = ((reelConfig?.cues as SubtitleCue[]) ?? []);
+    const cues = (reelConfig?.cues as SubtitleCue[]) ?? [];
     const style = (reelConfig?.style ?? null) as SubtitleStyle | null;
     const videoFilePath = reelConfig?.videoFilePath as string | undefined;
 
@@ -61,7 +58,9 @@ export async function processRenderJob(jobId: string): Promise<void> {
 
     // Run FFmpeg
     const progress = await runFFmpeg(inputPath, assPath, outputPath, (p) => {
-      updateReelJobStatus(jobId, { progress: 10 + Math.round(p * 80) }).catch(err => log.warn({ jobId, err }, 'Progress update failed'));
+      updateReelJobStatus(jobId, { progress: 10 + Math.round(p * 80) }).catch((err) =>
+        log.warn({ jobId, err }, 'Progress update failed')
+      );
     });
 
     if (!progress) {
@@ -91,11 +90,7 @@ export async function processRenderJob(jobId: string): Promise<void> {
     throw err;
   } finally {
     // Cleanup temp files
-    await Promise.allSettled([
-      unlink(inputPath),
-      unlink(assPath),
-      unlink(outputPath),
-    ]);
+    await Promise.allSettled([unlink(inputPath), unlink(assPath), unlink(outputPath)]);
   }
 }
 
@@ -103,18 +98,25 @@ function runFFmpeg(
   inputPath: string,
   assPath: string,
   outputPath: string,
-  onProgress: (fraction: number) => void,
+  onProgress: (fraction: number) => void
 ): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const args = [
-      '-i', inputPath,
-      '-vf', `ass=${assPath}`,
-      '-c:v', 'libx264',
-      '-preset', 'fast',
-      '-crf', '23',
-      '-c:a', 'copy',
+      '-i',
+      inputPath,
+      '-vf',
+      `ass=${assPath}`,
+      '-c:v',
+      'libx264',
+      '-preset',
+      'fast',
+      '-crf',
+      '23',
+      '-c:a',
+      'copy',
       '-y',
-      '-progress', 'pipe:1',
+      '-progress',
+      'pipe:1',
       outputPath,
     ];
 

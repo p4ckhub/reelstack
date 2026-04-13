@@ -18,7 +18,9 @@ export function createProvider(config: ProviderConfig): TranscriptionProvider {
     case 'ollama':
       return new OllamaProvider(config);
     default:
-      throw new Error(`Unknown transcription provider: ${(config as { provider: string }).provider}`);
+      throw new Error(
+        `Unknown transcription provider: ${(config as { provider: string }).provider}`
+      );
   }
 }
 

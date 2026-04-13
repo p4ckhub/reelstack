@@ -50,14 +50,14 @@ docker compose -f docker-compose.prod.yml exec web \
 
 ## Services
 
-| Service | Port | Description |
-|---------|------|-------------|
-| nginx | 80 | Reverse proxy + rate limiting |
-| web | 3000 (internal) | Next.js app |
-| worker | — | BullMQ render worker (FFmpeg) |
-| postgres | 5432 (internal) | PostgreSQL database |
-| redis | 6379 (internal) | BullMQ job queue |
-| minio | 9000/9001 (internal) | Object storage |
+| Service  | Port                 | Description                   |
+| -------- | -------------------- | ----------------------------- |
+| nginx    | 80                   | Reverse proxy + rate limiting |
+| web      | 3000 (internal)      | Next.js app                   |
+| worker   | —                    | BullMQ render worker (FFmpeg) |
+| postgres | 5432 (internal)      | PostgreSQL database           |
+| redis    | 6379 (internal)      | BullMQ job queue              |
+| minio    | 9000/9001 (internal) | Object storage                |
 
 ## SSL with Let's Encrypt
 

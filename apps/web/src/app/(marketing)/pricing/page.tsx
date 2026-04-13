@@ -144,7 +144,9 @@ export default function PricingPage() {
         <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
           {tokenPacks.map((pack) => (
             <div key={pack.tokens} className="rounded-lg border p-5 text-center">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{pack.label}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {pack.label}
+              </p>
               <p className="mt-2 text-3xl font-bold">{pack.tokens}</p>
               <p className="text-xs text-muted-foreground">renders</p>
               <p className="mt-3 text-lg font-semibold">{pack.price}</p>

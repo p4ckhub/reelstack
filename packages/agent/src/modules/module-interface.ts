@@ -10,7 +10,7 @@
  * Module provides: orchestrator logic, generators, composition + schema.
  */
 
-import type { BrandPreset } from '../types';
+import type { BrandPreset, WhisperConfig } from '../types';
 
 /** Progress callback passed to module orchestrators */
 export type ProgressCallback = (step: string) => void;
@@ -24,10 +24,7 @@ export interface BaseModuleRequest {
     voice?: string;
     language?: string;
   };
-  whisper?: {
-    provider?: 'openrouter' | 'cloudflare' | 'ollama';
-    apiKey?: string;
-  };
+  whisper?: WhisperConfig;
   brandPreset?: BrandPreset;
   musicUrl?: string;
   musicVolume?: number;
@@ -87,6 +84,6 @@ export interface ReelModule {
    */
   orchestrate: (
     baseRequest: BaseModuleRequest,
-    moduleConfig: Record<string, unknown>,
+    moduleConfig: Record<string, unknown>
   ) => Promise<ModuleResult>;
 }

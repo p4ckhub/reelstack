@@ -1,6 +1,7 @@
 import type { ProductionTool } from './tool-interface';
 import type { AssetType, ToolManifest, ToolManifestEntry } from '../types';
 import { createLogger } from '@reelstack/logger';
+import { setToolRegistryRef } from '../config/pricing';
 
 const log = createLogger('tool-registry');
 
@@ -13,6 +14,8 @@ export class ToolRegistry {
 
   register(tool: ProductionTool): void {
     this.tools.set(tool.id, tool);
+    // Let pricing module resolve tool-declared pricing
+    setToolRegistryRef(this);
   }
 
   /** Run healthCheck on all registered tools, mark available/unavailable */
@@ -40,7 +43,7 @@ export class ToolRegistry {
     return [...this.tools.values()].filter(
       (tool) =>
         this.availability.get(tool.id) === true &&
-        tool.capabilities.some((c) => c.assetType === assetType),
+        tool.capabilities.some((c) => c.assetType === assetType)
     );
   }
 
@@ -72,9 +75,10 @@ export class ToolRegistry {
     }));
 
     const available = tools.filter((t) => t.available);
-    const summary = available.length === 0
-      ? 'No production tools available. Only stock footage from Pexels can be used.'
-      : `Available tools: ${available.map((t) => `${t.name} (${t.capabilities.map((c) => c.assetType).join(', ')})`).join('; ')}`;
+    const summary =
+      available.length === 0
+        ? 'No production tools available. Only stock footage from Pexels can be used.'
+        : `Available tools: ${available.map((t) => `${t.name} (${t.capabilities.map((c) => c.assetType).join(', ')})`).join('; ')}`;
 
     return { tools, summary };
   }

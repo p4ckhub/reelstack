@@ -10,7 +10,7 @@ export function computeLoopStyle(
   loop: LoopAnimation,
   frame: number,
   fps: number,
-  segmentId: string,
+  segmentId: string
 ): CSSProperties {
   if (loop === 'none') return {};
 
@@ -34,7 +34,9 @@ export function computeLoopStyle(
 
     case 'neon-pulse': {
       const glow = 0.7 + 0.3 * Math.sin(t * Math.PI * 3);
-      const hexAlpha = Math.round(glow * 255).toString(16).padStart(2, '0');
+      const hexAlpha = Math.round(glow * 255)
+        .toString(16)
+        .padStart(2, '0');
       return {
         textShadow: `0 0 10px #ffffff, 0 0 30px #ffffff${hexAlpha}, 0 0 60px #ffffff${hexAlpha}`,
       };

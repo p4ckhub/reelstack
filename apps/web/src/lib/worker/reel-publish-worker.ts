@@ -1,7 +1,4 @@
-import {
-  getReelJobInternal,
-  updateReelJobStatus,
-} from '@reelstack/database';
+import { getReelJobInternal, updateReelJobStatus } from '@reelstack/database';
 import { createPublisher } from '@reelstack/publisher';
 import type { Platform } from '@reelstack/publisher';
 import type { PublishStatus } from '@reelstack/types';
@@ -13,7 +10,7 @@ export async function processReelPublishJob(
     caption: string;
     hashtags?: string[];
     scheduleDate?: string;
-  },
+  }
 ): Promise<void> {
   const job = await getReelJobInternal(jobId);
   if (!job) throw new Error(`Reel job ${jobId} not found`);

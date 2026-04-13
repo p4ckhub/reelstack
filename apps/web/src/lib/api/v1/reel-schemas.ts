@@ -1,90 +1,5 @@
 import { z } from 'zod';
-
-/**
- * Validates callback URLs. Only HTTPS allowed in production (prevents SSRF to internal services).
- * HTTP allowed in development for local testing.
- */
-/**
- * Check if a hostname is a private/internal IP (IPv4 or IPv6).
- * Blocks: loopback, private ranges, link-local, IPv4-mapped IPv6.
- */
-function isPrivateHost(hostname: string): boolean {
-  // Strip IPv6 brackets
-  const host = hostname.replace(/^\[|\]$/g, '');
-
-  // Block known internal hostnames
-  const blocked = [
-    'localhost',
-    'metadata.google.internal',
-    'metadata.google',
-    'kubernetes.default',
-  ];
-  if (blocked.some((b) => host === b || host.endsWith(`.${b}`))) return true;
-
-  // IPv6 checks (::1, fe80::, fc00::, fd00::, ::ffff:x.x.x.x mapped)
-  if (host.includes(':')) {
-    // Loopback
-    if (host === '::1' || host === '::') return true;
-    // Link-local (fe80::)
-    if (host.toLowerCase().startsWith('fe80:')) return true;
-    // Unique local (fc00::/7 = fc00:: and fd00::)
-    if (/^f[cd]/i.test(host)) return true;
-    // IPv4-mapped IPv6 (::ffff:x.x.x.x) - extract IPv4 and check
-    const v4Match = host.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
-    if (v4Match) return isPrivateIPv4(v4Match[1]);
-    // IPv4-mapped IPv6 in hex form (::ffff:7f00:1) - URL parser converts dotted to hex
-    const v4HexMatch = host.match(/::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
-    if (v4HexMatch) {
-      const hi = parseInt(v4HexMatch[1], 16);
-      const lo = parseInt(v4HexMatch[2], 16);
-      const ip = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
-      return isPrivateIPv4(ip);
-    }
-    // Any other IPv6 with embedded IPv4
-    const embeddedV4 = host.match(/(\d+\.\d+\.\d+\.\d+)$/);
-    if (embeddedV4) return isPrivateIPv4(embeddedV4[1]);
-    return false;
-  }
-
-  // IPv4 checks
-  return isPrivateIPv4(host);
-}
-
-function isPrivateIPv4(ip: string): boolean {
-  const parts = ip.split('.').map(Number);
-  if (parts.length === 1) {
-    // Single decimal/hex number (e.g. 2130706433 = 127.0.0.1, 0x7f000001)
-    const num = Number(ip);
-    if (isNaN(num) || num < 0 || num > 0xffffffff) return false;
-    const a = (num >>> 24) & 0xff;
-    const b = (num >>> 16) & 0xff;
-    return checkPrivateOctets(a, b);
-  }
-  if (parts.length !== 4 || parts.some((p) => isNaN(p) || p < 0 || p > 255)) return false;
-  return checkPrivateOctets(parts[0], parts[1]);
-}
-
-function checkPrivateOctets(a: number, b: number): boolean {
-  if (a === 127) return true; // 127.0.0.0/8
-  if (a === 10) return true; // 10.0.0.0/8
-  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
-  if (a === 192 && b === 168) return true; // 192.168.0.0/16
-  if (a === 169 && b === 254) return true; // 169.254.0.0/16
-  if (a === 0) return true; // 0.0.0.0/8
-  return false;
-}
-
-function isPublicHttpUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-    if (parsed.username || parsed.password) return false;
-    if (isPrivateHost(parsed.hostname)) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { isPublicUrl, isPrivateHost } from '@reelstack/agent';
 
 const callbackUrlSchema = z
   .string()
@@ -110,7 +25,14 @@ const assetUrlSchema = z
   .string()
   .url()
   .max(2048)
-  .refine(isPublicHttpUrl, { message: 'Asset URL must be a valid public HTTP(S) URL' });
+  .refine(isPublicUrl, { message: 'Asset URL must be a valid public HTTP(S) URL' });
+
+/** Reusable URL schema with SSRF protection for optional URL fields */
+const publicUrlSchema = z
+  .string()
+  .url()
+  .max(2048)
+  .refine(isPublicUrl, { message: 'URL must be a valid public HTTP(S) URL' });
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -120,18 +42,24 @@ const brandPresetSchema = z
     captionPreset: z
       .enum(['tiktok', 'mrbeast', 'cinematic', 'minimal', 'neon', 'classic'])
       .optional(),
-    // Template ID (e.g. "builtin-neon") - overrides preset style
-    captionTemplate: z.string().optional(),
     // Animation style override
     animationStyle: z
-      .enum(['none', 'word-highlight', 'word-by-word', 'karaoke', 'bounce', 'typewriter'])
+      .enum([
+        'none',
+        'word-highlight',
+        'word-by-word',
+        'karaoke',
+        'bounce',
+        'typewriter',
+        'snap-pop',
+      ])
       .optional(),
     // Word grouping overrides
     maxWordsPerCue: z.number().min(1).max(10).optional(),
     maxDurationPerCue: z.number().min(0.5).max(10).optional(),
     textTransform: z.enum(['none', 'uppercase']).optional(),
     // Music
-    musicUrl: z.string().url().optional(),
+    musicUrl: publicUrlSchema.optional(),
     musicVolume: z.number().min(0).max(1).optional(),
     // Layout & display
     layout: z
@@ -166,7 +94,7 @@ const ttsSchema = z
 
 const whisperSchema = z
   .object({
-    provider: z.enum(['openrouter', 'cloudflare', 'ollama']).optional(),
+    provider: z.enum(['openai', 'cloudflare', 'whisper-cpp', 'synthetic']).optional(),
     apiKey: z.string().optional(),
   })
   .optional();
@@ -288,7 +216,13 @@ export const generateReelSchema = z
       })
       .optional(),
     /** n8n workflow URL or ID (n8n-explainer mode) */
-    workflowUrl: z.string().max(500).optional(),
+    workflowUrl: z
+      .string()
+      .max(500)
+      .refine((v) => !v.startsWith('http') || isPublicUrl(v), {
+        message: 'Workflow URL must be a valid public HTTP(S) URL',
+      })
+      .optional(),
     /** Topic for AI generation (ai-tips, presenter-explainer modes) */
     topic: z.string().min(1).max(1000).optional(),
     /** Language for script generation (default: from tts.language or 'pl') */
@@ -296,7 +230,7 @@ export const generateReelSchema = z
     /** Persona for presenter-explainer mode (e.g. "senior developer", "tech reviewer") */
     persona: z.string().max(500).optional(),
     /** Pre-generated avatar video URL (presenter-explainer — skip avatar generation) */
-    avatarVideoUrl: z.string().url().max(2000).optional(),
+    avatarVideoUrl: publicUrlSchema.optional(),
     /** Loop avatar video for animated characters (presenter-explainer) */
     avatarLoop: z.boolean().optional(),
     /** Duration of avatar clip in seconds (for loop timing, presenter-explainer) */
@@ -324,7 +258,7 @@ export const generateReelSchema = z
     /** Caption highlight mode (text = karaoke phrase, single-word = one word at a time, pill = colored pill) */
     highlightMode: z.string().max(30).optional(),
     /** Video URL for captions mode (existing video to overlay captions on) */
-    videoUrl: z.string().url().max(2048).optional(),
+    videoUrl: publicUrlSchema.optional(),
     /** Pre-computed subtitle cues for captions mode (skips TTS and transcription) */
     cues: z.array(cueSchema).min(1).max(500).optional(),
     /** Number of slides for slideshow LLM generation */
@@ -334,13 +268,15 @@ export const generateReelSchema = z
     /** Target duration in seconds */
     targetDuration: z.number().positive().max(600).optional(),
     /** Background music URL */
-    musicUrl: z.string().url().max(2048).optional(),
+    musicUrl: publicUrlSchema.optional(),
     /** Background music volume (0 = mute, 1 = full) */
     musicVolume: z.number().min(0).max(1).optional(),
     /** Reel variant / visual style */
     variant: z.enum(['multi-object', 'single-object', 'cutaway-demo']).optional(),
     /** Montage profile ID (auto-selected from script if not provided) */
     montageProfile: z.string().max(50).optional(),
+    /** Preferred tool IDs — planner will strongly favor these tools (e.g. ["heygen-agent"] for Video Agent) */
+    preferredToolIds: z.array(z.string().max(50)).max(10).optional(),
     callbackUrl: callbackUrlSchema.optional(),
   })
   .refine(

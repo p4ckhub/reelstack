@@ -42,12 +42,10 @@ export const HighlightBox: React.FC<HighlightBoxProps> = ({ segment }) => {
 
   // Exit fade
   const exitDuration = Math.round(0.3 * fps);
-  const exitOpacity = interpolate(
-    frame,
-    [endFrame - exitDuration, endFrame],
-    [1, 0],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const exitOpacity = interpolate(frame, [endFrame - exitDuration, endFrame], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <div

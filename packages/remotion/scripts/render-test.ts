@@ -46,14 +46,11 @@ console.log(`Props: ${PROPS_PATH}`);
 console.log(`Output: ${OUTPUT_PATH}`);
 
 try {
-  execSync(
-    `bunx remotion render Reel "${OUTPUT_PATH}" --props="${PROPS_PATH}"`,
-    {
-      cwd: path.resolve(__dirname, '..'),
-      stdio: 'inherit',
-      env: { ...process.env, NODE_ENV: 'production' },
-    },
-  );
+  execSync(`bunx remotion render Reel "${OUTPUT_PATH}" --props="${PROPS_PATH}"`, {
+    cwd: path.resolve(__dirname, '..'),
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' },
+  });
   console.log(`\nDone! Output: ${OUTPUT_PATH}`);
 
   // Print file info

@@ -31,7 +31,11 @@ export const TextCardOverlay: React.FC<TextCardOverlayProps> = ({ config, startF
   const bgStyle: React.CSSProperties = isGradient
     ? { background }
     : isUrl
-      ? { backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+      ? {
+          backgroundImage: `url(${background})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }
       : { backgroundColor: background };
 
   return (
@@ -40,7 +44,8 @@ export const TextCardOverlay: React.FC<TextCardOverlayProps> = ({ config, startF
         ...bgStyle,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start',
+        alignItems:
+          textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start',
         justifyContent: 'center',
         padding: '10%',
         opacity: entryProgress,

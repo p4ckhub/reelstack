@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
+import { useCurrentFrame, useVideoConfig } from 'remotion';
 import type React from 'react';
 
 // ── Registry (public API — private modules register presets) ──

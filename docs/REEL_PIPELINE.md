@@ -53,11 +53,11 @@ Script Text
 
 Supported providers:
 
-| Provider | Quality | Cost | Config |
-|----------|---------|------|--------|
-| Edge TTS | Good | Free | `provider: 'edge-tts'` |
+| Provider   | Quality   | Cost | Config                   |
+| ---------- | --------- | ---- | ------------------------ |
+| Edge TTS   | Good      | Free | `provider: 'edge-tts'`   |
 | ElevenLabs | Excellent | Paid | `provider: 'elevenlabs'` |
-| OpenAI TTS | Excellent | Paid | `provider: 'openai'` |
+| OpenAI TTS | Excellent | Paid | `provider: 'openai'`     |
 
 ```typescript
 import { createTTSProvider } from '@reelstack/tts';
@@ -85,7 +85,7 @@ import { normalizeAudioForWhisper } from '@reelstack/transcription';
 
 const wavBuffer = normalizeAudioForWhisper(
   ttsResult.audioBuffer,
-  ttsResult.format, // 'mp3' | 'wav'
+  ttsResult.format // 'mp3' | 'wav'
 );
 ```
 
@@ -100,7 +100,7 @@ import { transcribeAudio } from '@reelstack/transcription';
 
 const transcription = await transcribeAudio(wavBuffer, {
   language: 'en',
-  text: scriptText,         // hint for better accuracy
+  text: scriptText, // hint for better accuracy
   durationSeconds: duration,
 });
 // transcription.words: Array<{ text: string, startTime: number, endTime: number }>
@@ -109,6 +109,7 @@ const transcription = await transcribeAudio(wavBuffer, {
 ### Token Merging
 
 whisper.cpp outputs BPE sub-word tokens, not complete words. The transcriber merges them:
+
 - Leading space = new word boundary
 - `" C" + "ze" + "ść"` → `"Cześć"`
 - Punctuation appends to previous word
@@ -120,25 +121,30 @@ Groups individual word timestamps into caption cues suitable for display:
 ```typescript
 import { groupWordsIntoCues } from '@reelstack/transcription';
 
-const cues = groupWordsIntoCues(transcription.words, {
-  maxWordsPerCue: 5,
-  maxDurationPerCue: 2.5,
-  breakOnPunctuation: true,
-}, 'karaoke'); // animation style
+const cues = groupWordsIntoCues(
+  transcription.words,
+  {
+    maxWordsPerCue: 5,
+    maxDurationPerCue: 2.5,
+    breakOnPunctuation: true,
+  },
+  'karaoke'
+); // animation style
 ```
 
 Each cue contains:
+
 ```typescript
 {
   id: string;
-  text: string;          // "Deploy faster"
-  startTime: number;     // 0.5
-  endTime: number;       // 2.5
+  text: string; // "Deploy faster"
+  startTime: number; // 0.5
+  endTime: number; // 2.5
   animationStyle: 'karaoke';
   words: [
     { text: 'Deploy', startTime: 0.5, endTime: 1.5 },
     { text: 'faster', startTime: 1.5, endTime: 2.5 },
-  ]
+  ];
 }
 ```
 
@@ -161,12 +167,24 @@ const props: ReelProps = {
     position: 80,
     // ...
   },
-  bRollSegments: [/* text cards, color B-roll, etc. */],
-  lowerThirds: [/* name tags */],
-  ctaSegments: [/* call-to-action buttons */],
-  counters: [/* animated numbers */],
-  zoomSegments: [/* punch-in zoom effects */],
-  highlights: [/* highlight boxes */],
+  bRollSegments: [
+    /* text cards, color B-roll, etc. */
+  ],
+  lowerThirds: [
+    /* name tags */
+  ],
+  ctaSegments: [
+    /* call-to-action buttons */
+  ],
+  counters: [
+    /* animated numbers */
+  ],
+  zoomSegments: [
+    /* punch-in zoom effects */
+  ],
+  highlights: [
+    /* highlight boxes */
+  ],
   showProgressBar: true,
   backgroundColor: '#0E0E12',
 };
@@ -180,7 +198,7 @@ import { createRenderer } from '@reelstack/remotion/render';
 const renderer = createRenderer();
 const result = await renderer.render(props, {
   outputPath: '/tmp/output.mp4',
-  compositionId: 'Reel',        // or 'YouTubeLongForm'
+  compositionId: 'Reel', // or 'YouTubeLongForm'
 });
 // result.durationMs, result.sizeBytes
 ```
@@ -210,6 +228,7 @@ curl -X POST https://your-domain.com/api/v1/reel/create \
 ```
 
 Response:
+
 ```json
 {
   "data": {
@@ -229,6 +248,7 @@ curl https://your-domain.com/api/v1/reel/render/abc-123 \
 ```
 
 Response:
+
 ```json
 {
   "data": {
@@ -269,12 +289,12 @@ npx tsx scripts/demo-reel-with-voice.ts
 
 ## Packages
 
-| Package | Role |
-|---------|------|
-| `@reelstack/tts` | Text-to-speech providers |
+| Package                    | Role                                |
+| -------------------------- | ----------------------------------- |
+| `@reelstack/tts`           | Text-to-speech providers            |
 | `@reelstack/transcription` | whisper.cpp wrapper + word grouping |
-| `@reelstack/remotion` | Remotion compositions + components |
-| `@reelstack/core` | Shared templates + utilities |
-| `@reelstack/queue` | Job queue (BullMQ/Redis) |
-| `@reelstack/database` | Prisma schema + helpers |
-| `@reelstack/types` | Shared TypeScript types |
+| `@reelstack/remotion`      | Remotion compositions + components  |
+| `@reelstack/core`          | Shared templates + utilities        |
+| `@reelstack/queue`         | Job queue (BullMQ/Redis)            |
+| `@reelstack/database`      | Prisma schema + helpers             |
+| `@reelstack/types`         | Shared TypeScript types             |

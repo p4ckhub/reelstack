@@ -24,7 +24,7 @@ export const POST = withAuth(
       return errorResponse(
         'VALIDATION_ERROR',
         parsed.error.issues.map((i) => i.message).join(', '),
-        400,
+        400
       );
     }
 
@@ -44,16 +44,18 @@ export const POST = withAuth(
     try {
       const queue = await createQueue();
       await Promise.race([
-        queue.enqueue(job.id, {
-          jobId: job.id,
-          platforms: parsed.data.platforms,
-          caption: parsed.data.caption,
-          hashtags: parsed.data.hashtags,
-          scheduleDate: parsed.data.scheduleDate,
-        }, 'reel-publish'),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Queue timeout')), 15_000),
+        queue.enqueue(
+          job.id,
+          {
+            jobId: job.id,
+            platforms: parsed.data.platforms,
+            caption: parsed.data.caption,
+            hashtags: parsed.data.hashtags,
+            scheduleDate: parsed.data.scheduleDate,
+          },
+          'reel-publish'
         ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Queue timeout')), 15_000)),
       ]);
     } catch {
       return errorResponse('SERVICE_UNAVAILABLE', 'Publish queue unavailable', 503);
@@ -66,7 +68,7 @@ export const POST = withAuth(
         status: 'queued',
         pollUrl: `/api/v1/reel/publish/${job.id}`,
       },
-      201,
+      201
     );
-  },
+  }
 );

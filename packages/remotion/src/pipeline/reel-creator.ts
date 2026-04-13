@@ -13,7 +13,14 @@ import { transcribeAudio } from './transcribe';
 import { direct } from '../director';
 import { createRenderer } from '../render';
 
-const REMOTION_PKG_DIR = path.resolve(import.meta.dirname, '../..');
+function getRemotionPkgDir(): string {
+  const dir = import.meta.dirname ?? __dirname;
+  if (!dir)
+    throw new Error(
+      'Cannot resolve remotion package directory (no __dirname or import.meta.dirname)'
+    );
+  return path.resolve(dir, '../..');
+}
 
 /**
  * Creates a reel from a text script:
@@ -92,15 +99,11 @@ export async function createReel(
     onStep?.('Grouping into subtitle cues...');
     const groupStart = performance.now();
 
-    const cues = groupWordsIntoCues(
-      transcription.words,
-      {
-        maxWordsPerCue: 6,
-        maxDurationPerCue: 3,
-        breakOnPunctuation: true,
-      },
-      'karaoke'
-    );
+    const cues = groupWordsIntoCues(transcription.words, {
+      maxWordsPerCue: 6,
+      maxDurationPerCue: 3,
+      breakOnPunctuation: true,
+    });
 
     steps.push({
       name: 'Word grouping',
@@ -138,7 +141,7 @@ export async function createReel(
 
     // Copy voiceover to public/ so Remotion can access it via staticFile()
     const voiceoverFilename = `voiceover-${randomUUID()}.mp3`;
-    voiceoverPublicPath = path.join(REMOTION_PKG_DIR, 'public', voiceoverFilename);
+    voiceoverPublicPath = path.join(getRemotionPkgDir(), 'public', voiceoverFilename);
     fs.copyFileSync(voiceoverPath, voiceoverPublicPath);
 
     // Also copy to the cached bundle dir (if it already exists), because
@@ -153,6 +156,7 @@ export async function createReel(
       layout: request.layout,
       primaryVideoUrl: request.primaryVideoUrl,
       primaryVideoObjectPosition: 'center',
+      primaryVideoTransparent: false,
       secondaryVideoUrl: request.secondaryVideoUrl,
       voiceoverUrl: voiceoverFilename,
       pipSegments: [],
@@ -198,7 +202,6 @@ export async function createReel(
           startTime: w.startTime,
           endTime: w.endTime,
         })),
-        animationStyle: c.animationStyle,
       })),
       captionStyle: {
         fontFamily: request.brandPreset?.captionTemplate?.fontFamily ?? 'Outfit, sans-serif',

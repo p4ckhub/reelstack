@@ -7,6 +7,8 @@ import type {
   AssetGenerationStatus,
 } from '../types';
 import { createLogger } from '@reelstack/logger';
+import { addCost } from '../context';
+import { calculateToolCost } from '../config/pricing';
 import {
   NANOBANANA_GUIDELINES,
   IDEOGRAM_GUIDELINES,
@@ -83,6 +85,7 @@ class FalTool implements ProductionTool {
         },
         body: JSON.stringify(this.buildInput(request)),
         signal: AbortSignal.timeout(30_000),
+        redirect: 'error',
       });
 
       if (!res.ok) {
@@ -139,6 +142,7 @@ class FalTool implements ProductionTool {
         {
           headers: { Authorization: `Key ${this.apiKey}` },
           signal: AbortSignal.timeout(10_000),
+          redirect: 'error',
         }
       );
 
@@ -168,6 +172,7 @@ class FalTool implements ProductionTool {
         {
           headers: { Authorization: `Key ${this.apiKey}` },
           signal: AbortSignal.timeout(10_000),
+          redirect: 'error',
         }
       );
 
@@ -188,6 +193,14 @@ class FalTool implements ProductionTool {
         return { jobId, toolId: this.id, status: 'failed', error: 'No URL in fal result' };
       }
 
+      addCost({
+        step: `asset:${this.id}`,
+        provider: 'fal',
+        model: this.id,
+        type: 'video',
+        costUSD: calculateToolCost(this.id, parsed.durationSeconds),
+        inputUnits: 1,
+      });
       return {
         jobId,
         toolId: this.id,
@@ -232,12 +245,12 @@ const videoInput =
     ...extra,
   });
 
-/** Image-to-video: adds image_url */
+/** Image-to-video: adds image_url (falls back to referenceImageUrl for character consistency) */
 const img2videoInput =
   (maxDur = 10) =>
   (req: AssetGenerationRequest) => ({
     prompt: req.prompt ?? 'the character is talking',
-    image_url: req.imageUrl,
+    image_url: req.imageUrl ?? req.referenceImageUrl,
     duration: clampDuration(req.durationSeconds, 5, maxDur),
     aspect_ratio: req.aspectRatio ?? '9:16',
   });
@@ -327,7 +340,7 @@ const FAL_MODEL_CATALOG: FalModelEntry[] = [
     maxDurationSeconds: 10,
     buildInput: (req) => ({
       prompt: req.prompt ?? 'the character is talking naturally',
-      image_url: req.imageUrl,
+      image_url: req.imageUrl ?? req.referenceImageUrl,
       duration: clampDuration(req.durationSeconds, 5, 10),
       aspect_ratio: req.aspectRatio ?? '9:16',
     }),

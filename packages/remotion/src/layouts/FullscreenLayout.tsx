@@ -1,4 +1,4 @@
-import { AbsoluteFill, Loop, OffthreadVideo, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, OffthreadVideo, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolveMediaUrl } from '../utils/resolve-media-url';
 import { remapFrame } from '../utils/remap-frame';
 
@@ -38,8 +38,13 @@ export const FullscreenLayout: React.FC<FullscreenLayoutProps> = ({
   );
 
   if (primaryVideoDurationSeconds && !hasSpeedRamps) {
-    const loopFrames = Math.round(primaryVideoDurationSeconds * fps);
-    return <Loop durationInFrames={loopFrames}>{videoEl}</Loop>;
+    return (
+      <OffthreadVideo
+        muted
+        src={resolveMediaUrl(primaryVideoUrl)}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    );
   }
 
   return <>{videoEl}</>;

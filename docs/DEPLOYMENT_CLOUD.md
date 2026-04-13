@@ -75,5 +75,5 @@ curl https://your-app.vercel.app/api/health
 Expected response:
 
 ```json
-{"status":"ok","mode":"cloud","db":true,"timestamp":"..."}
+{ "status": "ok", "mode": "cloud", "db": true, "timestamp": "..." }
 ```

@@ -2,7 +2,7 @@ import { Inngest } from 'inngest';
 import type { QueueAdapter, JobStatus, QueueName } from '@reelstack/types';
 
 const EVENT_MAP: Record<QueueName, string> = {
-  'render': 'render/job.queued',
+  render: 'render/job.queued',
   'reel-render': 'reel/render.queued',
   'reel-publish': 'reel/publish.queued',
 };
@@ -14,7 +14,11 @@ export class InngestQueueAdapter implements QueueAdapter {
     this.client = new Inngest({ id: 'reelstack' });
   }
 
-  async enqueue(jobId: string, payload: Record<string, unknown>, queueName?: QueueName): Promise<void> {
+  async enqueue(
+    jobId: string,
+    payload: Record<string, unknown>,
+    queueName?: QueueName
+  ): Promise<void> {
     const eventName = EVENT_MAP[queueName ?? 'render'];
     await this.client.send({
       name: eventName,

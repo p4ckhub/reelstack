@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@reelstack/ffmpeg": "workspace:*",
     "@reelstack/logger": "workspace:*",
     "@reelstack/remotion": "workspace:*",
     "@reelstack/storage": "workspace:*",

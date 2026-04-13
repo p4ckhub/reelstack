@@ -14,13 +14,15 @@ console.log(`Seeding TierConfig for product: "${productSlug}" ...`);
 await seedTierDefaults(productSlug);
 
 const rows = await prisma.tierConfig.findMany({ where: { productSlug } });
-console.table(rows.map((r) => ({
-  tier: r.tier,
-  creditsPerMonth: r.creditsPerMonth,
-  maxFileSizeMb: r.maxFileSizeMb,
-  maxDurationSec: r.maxDurationSec === -1 ? '∞' : r.maxDurationSec,
-  active: r.active,
-})));
+console.table(
+  rows.map((r) => ({
+    tier: r.tier,
+    creditsPerMonth: r.creditsPerMonth,
+    maxFileSizeMb: r.maxFileSizeMb,
+    maxDurationSec: r.maxDurationSec === -1 ? '∞' : r.maxDurationSec,
+    active: r.active,
+  }))
+);
 
 console.log('Done.');
 await prisma.$disconnect();

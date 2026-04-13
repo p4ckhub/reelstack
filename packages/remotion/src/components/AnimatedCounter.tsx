@@ -42,12 +42,10 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ segment }) => 
 
   // Count up animation — takes 70% of duration, rest holds at final value
   const countDuration = Math.round((endFrame - startFrame) * 0.7);
-  const countProgress = interpolate(
-    frame,
-    [startFrame, startFrame + countDuration],
-    [0, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const countProgress = interpolate(frame, [startFrame, startFrame + countDuration], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   // Spring overshoot at the end
   const settleSpring = spring({
@@ -72,12 +70,10 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ segment }) => 
 
   // Exit fade
   const exitDuration = Math.round(0.3 * fps);
-  const exitOpacity = interpolate(
-    frame,
-    [endFrame - exitDuration, endFrame],
-    [1, 0],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const exitOpacity = interpolate(frame, [endFrame - exitDuration, endFrame], [1, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   // Final scale pulse when count completes
   const finalScale = countProgress >= 1 ? 1 + (settleSpring - 1) * 0.08 : 1;
@@ -90,7 +86,10 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ segment }) => 
     justifyContent: 'center',
   };
   if (position === 'top') positionStyle.top = '15%';
-  if (position === 'center') { positionStyle.top = '50%'; positionStyle.transform = 'translateY(-50%)'; }
+  if (position === 'center') {
+    positionStyle.top = '50%';
+    positionStyle.transform = 'translateY(-50%)';
+  }
   if (position === 'bottom') positionStyle.bottom = '15%';
 
   return (
@@ -106,7 +105,9 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ segment }) => 
           color: textColor,
           fontSize,
           fontWeight: 'bold',
-          fontFamily: isCountdown ? '"JetBrains Mono", "Fira Code", monospace' : 'Outfit, sans-serif',
+          fontFamily: isCountdown
+            ? '"JetBrains Mono", "Fira Code", monospace'
+            : 'Outfit, sans-serif',
           transform: `scale(${entryScale * finalScale})`,
           textShadow: '0 4px 24px rgba(0,0,0,0.5)',
         }}

@@ -17,7 +17,11 @@ import { randomUUID } from 'node:crypto';
 import { createTTSProvider } from '@reelstack/tts';
 import type { TTSConfig } from '@reelstack/tts';
 import { groupWordsIntoCues } from '@reelstack/transcription';
-import { normalizeAudioForWhisper, getAudioDuration, transcribeAudio } from '@reelstack/remotion/pipeline';
+import {
+  normalizeAudioForWhisper,
+  getAudioDuration,
+  transcribeAudio,
+} from '@reelstack/remotion/pipeline';
 import { createRenderer } from '@reelstack/remotion/render';
 import { ToolRegistry } from '../../agent/src/registry/tool-registry';
 import { discoverTools } from '../../agent/src/registry/discovery';
@@ -73,8 +77,11 @@ async function main() {
 
   const planFilePath = args['plan-file'];
   const savePlan = args['save-plan'] === 'true';
-  const directorNotes = args['director-notes']
-    ?? (args['director-notes-file'] ? fs.readFileSync(args['director-notes-file'], 'utf-8').trim() : undefined);
+  const directorNotes =
+    args['director-notes'] ??
+    (args['director-notes-file']
+      ? fs.readFileSync(args['director-notes-file'], 'utf-8').trim()
+      : undefined);
 
   // ── LOAD PLAN MODE ──
   if (planFilePath) {
@@ -96,7 +103,8 @@ async function main() {
   const brandPreset: BrandPreset = { captionPreset: presetName };
   const style = (args['style'] as 'dynamic' | 'calm' | 'cinematic' | 'educational') ?? 'dynamic';
   const lang = args['lang'] ?? 'pl-PL';
-  const outputPath = args['output'] ?? path.join(process.cwd(), 'out', `agent-reel-${Date.now()}.mp4`);
+  const outputPath =
+    args['output'] ?? path.join(process.cwd(), 'out', `agent-reel-${Date.now()}.mp4`);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelstack-local-'));
@@ -107,7 +115,9 @@ async function main() {
   console.log(`Preset:  ${presetName}`);
   console.log(`Style:   ${style}`);
   console.log(`Mode:    ${savePlan ? 'save-plan (no render)' : 'full pipeline'}`);
-  console.log(`LLM:     ${process.env.ANTHROPIC_API_KEY ? 'Anthropic Claude' : process.env.OPENROUTER_API_KEY ? 'OpenRouter' : 'rule-based'}`);
+  console.log(
+    `LLM:     ${process.env.ANTHROPIC_API_KEY ? 'Anthropic Claude' : process.env.OPENROUTER_API_KEY ? 'OpenRouter' : 'rule-based'}`
+  );
   console.log(`Pexels:  ${process.env.PEXELS_API_KEY ? 'enabled' : 'disabled'}`);
   console.log('─'.repeat(50));
 
@@ -119,7 +129,12 @@ async function main() {
   for (const tool of discoverTools()) registry.register(tool);
   await registry.discover();
   const manifest = registry.getToolManifest();
-  console.log(`    Tools: ${manifest.tools.filter(t => t.available).map(t => t.id).join(', ')}`);
+  console.log(
+    `    Tools: ${manifest.tools
+      .filter((t) => t.available)
+      .map((t) => t.id)
+      .join(', ')}`
+  );
 
   // ── 2. TTS ──
   console.log('  → Generating voiceover (edge-tts)...');
@@ -144,16 +159,21 @@ async function main() {
   console.log(`    Words: ${transcription.words.length}`);
 
   // ── 4. GROUP CUES (using preset config) ──
-  const preset = BUILT_IN_CAPTION_PRESETS[presetName] ?? BUILT_IN_CAPTION_PRESETS[DEFAULT_CAPTION_PRESET];
+  const preset =
+    BUILT_IN_CAPTION_PRESETS[presetName] ?? BUILT_IN_CAPTION_PRESETS[DEFAULT_CAPTION_PRESET];
   const animStyle = brandPreset.animationStyle ?? preset.animationStyle;
   const maxWords = brandPreset.maxWordsPerCue ?? preset.maxWordsPerCue;
   const maxDur = brandPreset.maxDurationPerCue ?? preset.maxDurationPerCue;
   console.log(`  → Grouping cues: ${maxWords} words/cue, animation=${animStyle}`);
-  const cues = groupWordsIntoCues(transcription.words, {
-    maxWordsPerCue: maxWords,
-    maxDurationPerCue: maxDur,
-    breakOnPunctuation: true,
-  }, animStyle);
+  const cues = groupWordsIntoCues(
+    transcription.words,
+    {
+      maxWordsPerCue: maxWords,
+      maxDurationPerCue: maxDur,
+      breakOnPunctuation: true,
+    },
+    animStyle
+  );
   console.log(`    Cues: ${cues.length}`);
 
   // ── 5. LLM PLAN ──
@@ -168,7 +188,9 @@ async function main() {
     layout: 'fullscreen',
     timingReference,
   });
-  console.log(`    Shots: ${plan.shots.length}, Effects: ${plan.effects.length}, Layout: ${plan.layout}`);
+  console.log(
+    `    Shots: ${plan.shots.length}, Effects: ${plan.effects.length}, Layout: ${plan.layout}`
+  );
   console.log(`    Reasoning: ${plan.reasoning.slice(0, 120)}`);
 
   // ── 5b. SUPERVISOR REVIEW ──
@@ -184,10 +206,14 @@ async function main() {
   plan = supervision.plan;
   for (const review of supervision.reviews) {
     const icon = review.verdict === 'approved' ? '✅' : '🔄';
-    console.log(`    ${icon} Round ${review.iteration}: score ${review.score}/10 — ${review.verdict}`);
+    console.log(
+      `    ${icon} Round ${review.iteration}: score ${review.score}/10 — ${review.verdict}`
+    );
     if (review.notes) console.log(`       ${review.notes.slice(0, 200)}`);
   }
-  console.log(`    Final: ${supervision.approved ? 'APPROVED' : 'BEST EFFORT'} after ${supervision.iterations} review(s)`);
+  console.log(
+    `    Final: ${supervision.approved ? 'APPROVED' : 'BEST EFFORT'} after ${supervision.iterations} review(s)`
+  );
   console.log(`    Shots: ${plan.shots.length}, Effects: ${plan.effects.length}`);
 
   // ── 6. GENERATE ASSETS ──
@@ -203,9 +229,12 @@ async function main() {
     const persistedVoiceover = path.join(outDir, `voiceover-${Date.now()}.mp3`);
     fs.copyFileSync(voiceoverPath, persistedVoiceover);
 
-    const serializedCues = cues.map(c => ({
-      id: c.id, text: c.text, startTime: c.startTime, endTime: c.endTime,
-      words: c.words?.map(w => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
+    const serializedCues = cues.map((c) => ({
+      id: c.id,
+      text: c.text,
+      startTime: c.startTime,
+      endTime: c.endTime,
+      words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
       animationStyle: c.animationStyle,
     }));
 
@@ -234,7 +263,9 @@ async function main() {
     console.log('');
     console.log('Next steps:');
     console.log(`  Render as-is:  bun run agent-reel.ts --plan-file "${planPath}"`);
-    console.log(`  Revise & render: bun run agent-reel.ts --plan-file "${planPath}" --director-notes "your feedback"`);
+    console.log(
+      `  Revise & render: bun run agent-reel.ts --plan-file "${planPath}" --director-notes "your feedback"`
+    );
 
     // Cleanup tmp
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -261,9 +292,12 @@ async function main() {
   const props = assembleComposition({
     plan,
     assets,
-    cues: cues.map(c => ({
-      id: c.id, text: c.text, startTime: c.startTime, endTime: c.endTime,
-      words: c.words?.map(w => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
+    cues: cues.map((c) => ({
+      id: c.id,
+      text: c.text,
+      startTime: c.startTime,
+      endTime: c.endTime,
+      words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
       animationStyle: c.animationStyle,
     })),
     voiceoverFilename,
@@ -274,7 +308,9 @@ async function main() {
   console.log(`    B-roll segments: ${props.bRollSegments.length}`);
   console.log(`    Effects: ${props.effects.length}`);
   console.log(`    Music volume: ${props.musicVolume}`);
-  console.log(`    Caption style: ${(props.captionStyle as any)?.fontSize}px ${(props.captionStyle as any)?.fontFamily} ${(props.captionStyle as any)?.textTransform}`);
+  console.log(
+    `    Caption style: ${(props.captionStyle as any)?.fontSize}px ${(props.captionStyle as any)?.fontFamily} ${(props.captionStyle as any)?.textTransform}`
+  );
 
   // ── 9. RENDER ──
   console.log('  → Rendering video (Remotion local)...');
@@ -293,8 +329,12 @@ async function main() {
 
   // Cleanup
   fs.rmSync(tmpDir, { recursive: true, force: true });
-  try { fs.unlinkSync(voiceoverPublicPath); } catch {};
-  try { fs.unlinkSync(path.join(bundlePublicDir, voiceoverFilename)); } catch {};
+  try {
+    fs.unlinkSync(voiceoverPublicPath);
+  } catch {}
+  try {
+    fs.unlinkSync(path.join(bundlePublicDir, voiceoverFilename));
+  } catch {}
 }
 
 /**
@@ -303,7 +343,7 @@ async function main() {
 async function runFromPlan(
   args: Record<string, string>,
   planFilePath: string,
-  directorNotes?: string,
+  directorNotes?: string
 ) {
   if (!fs.existsSync(planFilePath)) {
     console.error(`Plan file not found: ${planFilePath}`);
@@ -316,7 +356,8 @@ async function runFromPlan(
   let voiceoverSourcePath = saved.voiceoverPath;
 
   const brandPreset: BrandPreset = { captionPreset: presetName };
-  const outputPath = args['output'] ?? path.join(process.cwd(), 'out', `agent-reel-${Date.now()}.mp4`);
+  const outputPath =
+    args['output'] ?? path.join(process.cwd(), 'out', `agent-reel-${Date.now()}.mp4`);
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
   console.log('ReelStack Agent Pipeline (from plan)');
@@ -350,7 +391,9 @@ async function runFromPlan(
     const manifest = registry.getToolManifest();
 
     console.log('  → Revising plan with director notes...');
-    console.log(`    Notes: "${directorNotes.slice(0, 120)}${directorNotes.length > 120 ? '...' : ''}"`);
+    console.log(
+      `    Notes: "${directorNotes.slice(0, 120)}${directorNotes.length > 120 ? '...' : ''}"`
+    );
     const revisedPlan = await revisePlan({
       originalPlan: plan,
       directorNotes,
@@ -359,11 +402,13 @@ async function runFromPlan(
       style,
       toolManifest: manifest,
     });
-    console.log(`    Revised shots: ${revisedPlan.shots.length}, Effects: ${revisedPlan.effects.length}`);
+    console.log(
+      `    Revised shots: ${revisedPlan.shots.length}, Effects: ${revisedPlan.effects.length}`
+    );
 
     // Find new shots that need asset generation
-    const existingAssetShotIds = new Set(assets.map(a => a.shotId).filter(Boolean));
-    const newShots = revisedPlan.shots.filter(s => !existingAssetShotIds.has(s.id));
+    const existingAssetShotIds = new Set(assets.map((a) => a.shotId).filter(Boolean));
+    const newShots = revisedPlan.shots.filter((s) => !existingAssetShotIds.has(s.id));
 
     if (newShots.length > 0) {
       console.log(`  → Generating assets for ${newShots.length} new shot(s)...`);
@@ -372,13 +417,12 @@ async function runFromPlan(
         ...revisedPlan,
         shots: newShots,
       };
-      const newAssets = await generateAssets(partialPlan, registry, (msg) => console.log(`    ${msg}`));
+      const newAssets = await generateAssets(partialPlan, registry, (msg) =>
+        console.log(`    ${msg}`)
+      );
       // Keep existing assets for unchanged shots, add new ones
-      const revisedShotIds = new Set(revisedPlan.shots.map(s => s.id));
-      assets = [
-        ...assets.filter(a => a.shotId && revisedShotIds.has(a.shotId)),
-        ...newAssets,
-      ];
+      const revisedShotIds = new Set(revisedPlan.shots.map((s) => s.id));
+      assets = [...assets.filter((a) => a.shotId && revisedShotIds.has(a.shotId)), ...newAssets];
       console.log(`    Total assets: ${assets.length}`);
     }
 
@@ -416,7 +460,9 @@ async function runFromPlan(
       console.log(`    ${icon} [${issue.type}] ${issue.message}`);
     }
     plan = validation.fixedPlan;
-    console.log(`    Plan after validation: ${plan.effects.length} effects, ${(plan.counters ?? []).length} counters`);
+    console.log(
+      `    Plan after validation: ${plan.effects.length} effects, ${(plan.counters ?? []).length} counters`
+    );
   } else {
     console.log('    ✓ Plan is valid');
   }
@@ -426,9 +472,12 @@ async function runFromPlan(
   const props = assembleComposition({
     plan,
     assets,
-    cues: cues.map(c => ({
-      id: c.id, text: c.text, startTime: c.startTime, endTime: c.endTime,
-      words: c.words?.map(w => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
+    cues: cues.map((c) => ({
+      id: c.id,
+      text: c.text,
+      startTime: c.startTime,
+      endTime: c.endTime,
+      words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
       animationStyle: c.animationStyle,
     })),
     voiceoverFilename,
@@ -439,7 +488,9 @@ async function runFromPlan(
   console.log(`    B-roll segments: ${props.bRollSegments.length}`);
   console.log(`    Effects: ${props.effects.length}`);
   console.log(`    Music volume: ${props.musicVolume}`);
-  console.log(`    Caption style: ${(props.captionStyle as any)?.fontSize}px ${(props.captionStyle as any)?.fontFamily} ${(props.captionStyle as any)?.textTransform}`);
+  console.log(
+    `    Caption style: ${(props.captionStyle as any)?.fontSize}px ${(props.captionStyle as any)?.fontFamily} ${(props.captionStyle as any)?.textTransform}`
+  );
 
   // ── RENDER ──
   console.log('  → Rendering video (Remotion local)...');
@@ -457,17 +508,22 @@ async function runFromPlan(
   console.log(`Total:    ${totalSec}s`);
 
   // Cleanup
-  try { fs.unlinkSync(voiceoverPublicPath); } catch {};
-  try { fs.unlinkSync(path.join(bundlePublicDir, voiceoverFilename)); } catch {};
+  try {
+    fs.unlinkSync(voiceoverPublicPath);
+  } catch {}
+  try {
+    fs.unlinkSync(path.join(bundlePublicDir, voiceoverFilename));
+  } catch {}
 }
 
 /** Determine the next version number for a revised plan file */
 function getNextVersion(planFilePath: string): number {
   const dir = path.dirname(planFilePath);
   const base = path.basename(planFilePath, '.json').replace(/-v\d+$/, '');
-  const existing = fs.readdirSync(dir)
-    .filter(f => f.startsWith(base) && f.endsWith('.json'))
-    .map(f => {
+  const existing = fs
+    .readdirSync(dir)
+    .filter((f) => f.startsWith(base) && f.endsWith('.json'))
+    .map((f) => {
       const match = f.match(/-v(\d+)\.json$/);
       return match ? parseInt(match[1], 10) : 0;
     });
@@ -488,16 +544,19 @@ function printPlanSummary(plan: ProductionPlan, assets: GeneratedAsset[], audioD
 
   for (const shot of plan.shots) {
     const dur = (shot.endTime - shot.startTime).toFixed(1);
-    const visual = shot.visual.type === 'b-roll'
-      ? `b-roll "${shot.visual.searchQuery}" (${shot.visual.toolId})`
-      : shot.visual.type === 'ai-image'
-        ? `ai-image "${shot.visual.prompt?.slice(0, 40)}" (${shot.visual.toolId})`
-        : shot.visual.type === 'ai-video'
-          ? `ai-video "${shot.visual.prompt?.slice(0, 40)}" (${shot.visual.toolId})`
-          : shot.visual.type === 'text-card'
-            ? `text-card "${shot.visual.headline?.slice(0, 40)}"`
-            : shot.visual.type;
-    console.log(`  [${shot.startTime.toFixed(1)}s-${shot.endTime.toFixed(1)}s] ${shot.id}: ${visual} (${dur}s)`);
+    const visual =
+      shot.visual.type === 'b-roll'
+        ? `b-roll "${shot.visual.searchQuery}" (${shot.visual.toolId})`
+        : shot.visual.type === 'ai-image'
+          ? `ai-image "${shot.visual.prompt?.slice(0, 40)}" (${shot.visual.toolId})`
+          : shot.visual.type === 'ai-video'
+            ? `ai-video "${shot.visual.prompt?.slice(0, 40)}" (${shot.visual.toolId})`
+            : shot.visual.type === 'text-card'
+              ? `text-card "${shot.visual.headline?.slice(0, 40)}"`
+              : shot.visual.type;
+    console.log(
+      `  [${shot.startTime.toFixed(1)}s-${shot.endTime.toFixed(1)}s] ${shot.id}: ${visual} (${dur}s)`
+    );
     if (shot.reason) console.log(`    reason: ${shot.reason}`);
   }
 
@@ -505,7 +564,9 @@ function printPlanSummary(plan: ProductionPlan, assets: GeneratedAsset[], audioD
     console.log('');
     console.log('  Effects:');
     for (const fx of plan.effects) {
-      console.log(`    [${fx.startTime.toFixed(1)}s-${fx.endTime.toFixed(1)}s] ${fx.type}: ${fx.reason}`);
+      console.log(
+        `    [${fx.startTime.toFixed(1)}s-${fx.endTime.toFixed(1)}s] ${fx.type}: ${fx.reason}`
+      );
     }
   }
 
@@ -519,7 +580,9 @@ function printPlanSummary(plan: ProductionPlan, assets: GeneratedAsset[], audioD
  * Build timing reference from transcription words so the LLM knows when each sentence is spoken.
  * Groups words into sentences by punctuation and returns a compact timing map.
  */
-function buildTimingReference(words: Array<{ text: string; startTime: number; endTime: number }>): string {
+function buildTimingReference(
+  words: Array<{ text: string; startTime: number; endTime: number }>
+): string {
   if (words.length === 0) return '';
   const sentences: Array<{ text: string; start: number; end: number }> = [];
   let current: typeof words = [];
@@ -529,7 +592,7 @@ function buildTimingReference(words: Array<{ text: string; startTime: number; en
     // Flush on sentence-ending punctuation
     if (/[.!?]$/.test(word.text.trim())) {
       sentences.push({
-        text: current.map(w => w.text).join(' '),
+        text: current.map((w) => w.text).join(' '),
         start: current[0].startTime,
         end: current[current.length - 1].endTime,
       });
@@ -539,13 +602,13 @@ function buildTimingReference(words: Array<{ text: string; startTime: number; en
   // Flush remaining
   if (current.length > 0) {
     sentences.push({
-      text: current.map(w => w.text).join(' '),
+      text: current.map((w) => w.text).join(' '),
       start: current[0].startTime,
       end: current[current.length - 1].endTime,
     });
   }
 
-  return sentences.map(s => `[${s.start.toFixed(1)}s-${s.end.toFixed(1)}s] ${s.text}`).join('\n');
+  return sentences.map((s) => `[${s.start.toFixed(1)}s-${s.end.toFixed(1)}s] ${s.text}`).join('\n');
 }
 
 function printUsage() {
@@ -556,7 +619,7 @@ function printUsage() {
   console.error('  --style type               dynamic | calm | cinematic | educational');
   console.error('  --lang code                Language (default: pl-PL)');
   console.error('  --output path              Output MP4 path');
-  console.error('  --save-plan                Save plan and exit (don\'t render)');
+  console.error("  --save-plan                Save plan and exit (don't render)");
   console.error('  --plan-file path           Load plan from file (skip TTS/whisper/planning)');
   console.error('  --director-notes text      Feedback for the director (used with --plan-file)');
   console.error('  --director-notes-file path Read director notes from file');

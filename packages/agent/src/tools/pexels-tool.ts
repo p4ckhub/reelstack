@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type { ProductionTool } from '../registry/tool-interface';
 import type { ToolCapability, AssetGenerationRequest, AssetGenerationJob } from '../types';
-import { isPublicUrl } from '../planner/production-planner';
+import { isPublicUrl } from '../utils/url-validation';
 import { PEXELS_GUIDELINES } from './prompt-guidelines';
 import { createLogger } from '@reelstack/logger';
+import { addCost } from '../context';
 
 const log = createLogger('pexels-tool');
 const PEXELS_API = 'https://api.pexels.com';
@@ -43,6 +44,7 @@ export class PexelsTool implements ProductionTool {
       const res = await fetch(`${PEXELS_API}/videos/search?query=test&per_page=1`, {
         headers: { Authorization: apiKey },
         signal: AbortSignal.timeout(5000),
+        redirect: 'error',
       });
       return res.ok
         ? { available: true }
@@ -81,6 +83,7 @@ export class PexelsTool implements ProductionTool {
     const res = await fetch(url, {
       headers: { Authorization: apiKey },
       signal: AbortSignal.timeout(10_000),
+      redirect: 'error',
     });
 
     const durationMs = Math.round(performance.now() - startTime);
@@ -125,6 +128,14 @@ export class PexelsTool implements ProductionTool {
         };
       }
 
+      addCost({
+        step: `asset:${this.id}`,
+        provider: 'pexels',
+        type: 'video',
+        costUSD: 0,
+        inputUnits: 1,
+        durationMs,
+      });
       return {
         jobId: randomUUID(),
         toolId: this.id,
@@ -160,6 +171,14 @@ export class PexelsTool implements ProductionTool {
       };
     }
 
+    addCost({
+      step: `asset:${this.id}`,
+      provider: 'pexels',
+      type: 'image',
+      costUSD: 0,
+      inputUnits: 1,
+      durationMs,
+    });
     return {
       jobId: randomUUID(),
       toolId: this.id,

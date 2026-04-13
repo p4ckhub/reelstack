@@ -1,54 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const mockAuthenticate = vi.fn();
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-          { status: 401 },
-        );
-      }
-      try {
-        return await handler(req, ctx);
-      } catch (err) {
-        console.error(err);
-        return NextResponse.json(
-          { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-          { status: 500 },
-        );
-      }
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
 
-const mockGetUserPreferences = vi.fn();
-const mockUpdateUserPreferences = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getUserPreferences: (...args: unknown[]) => mockGetUserPreferences(...args),
-  updateUserPreferences: (...args: unknown[]) => mockUpdateUserPreferences(...args),
-}));
+import {
+  databaseMockFactory,
+  mockGetUserPreferences,
+  mockUpdateUserPreferences,
+} from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
 const { GET, PATCH } = await import('../../v1/user/preferences/route');
 
@@ -129,7 +94,9 @@ describe('PATCH /api/v1/user/preferences', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data).toEqual(merged);
-    expect(mockUpdateUserPreferences).toHaveBeenCalledWith('user-1', { defaultLayout: 'fullscreen' });
+    expect(mockUpdateUserPreferences).toHaveBeenCalledWith('user-1', {
+      defaultLayout: 'fullscreen',
+    });
   });
 
   it('accepts partial brandPreset update', async () => {

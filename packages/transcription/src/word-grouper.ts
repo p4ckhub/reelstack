@@ -2,7 +2,7 @@
  * Word Grouper - groups transcription words into SubtitleCue objects.
  * Inspired by OpenReel's transcription-service.ts:262-308.
  */
-import type { SubtitleCue, CaptionAnimationStyle } from '@reelstack/types';
+import type { SubtitleCue } from '@reelstack/types';
 import type { TranscriptionWord, WordGroupingConfig } from './types';
 import { DEFAULT_GROUPING_CONFIG, ORPHAN_WORDS } from './types';
 
@@ -11,8 +11,7 @@ import { DEFAULT_GROUPING_CONFIG, ORPHAN_WORDS } from './types';
  */
 export function groupWordsIntoCues(
   words: readonly TranscriptionWord[],
-  config: Partial<WordGroupingConfig> = {},
-  defaultAnimationStyle: CaptionAnimationStyle = 'karaoke',
+  config: Partial<WordGroupingConfig> = {}
 ): SubtitleCue[] {
   if (words.length === 0) return [];
 
@@ -39,12 +38,12 @@ export function groupWordsIntoCues(
     const prevEndedSentence = breakOnPunctuation && prevWord && /[.!?]$/.test(prevWord.text);
 
     if (prevEndedSentence && currentWords.length >= 1) {
-      cues.push(createCueFromWords(currentWords, defaultAnimationStyle));
+      cues.push(createCueFromWords(currentWords));
       currentWords = [word];
       groupStart = word.startTime;
     } else if ((wouldExceedWords || wouldExceedDuration) && currentWords.length > 0) {
       // Flush group if limits exceeded
-      cues.push(createCueFromWords(currentWords, defaultAnimationStyle));
+      cues.push(createCueFromWords(currentWords));
       currentWords = [word];
       groupStart = word.startTime;
     } else {
@@ -54,7 +53,7 @@ export function groupWordsIntoCues(
 
   // Flush remaining words
   if (currentWords.length > 0) {
-    cues.push(createCueFromWords(currentWords, defaultAnimationStyle));
+    cues.push(createCueFromWords(currentWords));
   }
 
   // Post-process: fix orphans by moving trailing short words to next cue
@@ -90,25 +89,31 @@ function fixOrphans(cues: SubtitleCue[]): void {
 
     cues[i] = {
       ...cue,
-      text: keptWords.map((w) => w.text).join(' ').trim(),
+      text: keptWords
+        .map((w) => w.text)
+        .join(' ')
+        .trim(),
       endTime: keptWords[keptWords.length - 1].endTime,
       words: keptWords.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
     };
 
     cues[i + 1] = {
       ...nextCue,
-      text: movedWords.map((w) => w.text).join(' ').trim(),
+      text: movedWords
+        .map((w) => w.text)
+        .join(' ')
+        .trim(),
       startTime: lastWord.startTime,
       words: movedWords.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
     };
   }
 }
 
-function createCueFromWords(
-  words: TranscriptionWord[],
-  animationStyle: CaptionAnimationStyle,
-): SubtitleCue {
-  const text = words.map((w) => w.text).join(' ').trim();
+function createCueFromWords(words: TranscriptionWord[]): SubtitleCue {
+  const text = words
+    .map((w) => w.text)
+    .join(' ')
+    .trim();
   const startTime = words[0].startTime;
   const endTime = words[words.length - 1].endTime;
 
@@ -122,6 +127,5 @@ function createCueFromWords(
       startTime: w.startTime,
       endTime: w.endTime,
     })),
-    animationStyle,
   };
 }

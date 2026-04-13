@@ -12,9 +12,18 @@ const mockMinioClient = {
   removeObject: vi.fn().mockResolvedValue(undefined),
 };
 
-vi.mock('minio', () => ({
-  Client: vi.fn().mockImplementation(() => mockMinioClient),
-}));
+vi.mock('minio', () => {
+  return {
+    Client: class MockClient {
+      bucketExists = mockMinioClient.bucketExists;
+      makeBucket = mockMinioClient.makeBucket;
+      putObject = mockMinioClient.putObject;
+      getObject = mockMinioClient.getObject;
+      presignedGetObject = mockMinioClient.presignedGetObject;
+      removeObject = mockMinioClient.removeObject;
+    },
+  };
+});
 
 // ==========================================
 // Mock Supabase client
@@ -40,7 +49,6 @@ describe('MinioStorageAdapter', () => {
   let adapter: any;
 
   beforeEach(async () => {
-    vi.resetModules();
     vi.clearAllMocks();
 
     // Set required env vars
@@ -98,7 +106,11 @@ describe('MinioStorageAdapter', () => {
       const buf = Buffer.from('file content');
       await adapter.upload(buf, 'uploads/video.mp4');
 
-      expect(mockMinioClient.putObject).toHaveBeenCalledWith('test-bucket', 'uploads/video.mp4', buf);
+      expect(mockMinioClient.putObject).toHaveBeenCalledWith(
+        'test-bucket',
+        'uploads/video.mp4',
+        buf
+      );
     });
 
     it('creates bucket if it does not exist', async () => {
@@ -126,7 +138,6 @@ describe('SupabaseStorageAdapter', () => {
   let adapter: any;
 
   beforeEach(async () => {
-    vi.resetModules();
     vi.clearAllMocks();
 
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';

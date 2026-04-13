@@ -74,10 +74,10 @@ describe('generateASS', () => {
           { text: 'beautiful', startTime: 1, endTime: 2 },
           { text: 'world', startTime: 2, endTime: 3 },
         ],
-        animationStyle: 'karaoke',
       },
     ];
-    const result = generateASS(karaokeCues, DEFAULT_SUBTITLE_STYLE);
+    const karaokeStyle = { ...DEFAULT_SUBTITLE_STYLE, animationStyle: 'karaoke' as const };
+    const result = generateASS(karaokeCues, karaokeStyle);
     expect(result).toContain('{\\kf100}Hello');
     expect(result).toContain('{\\kf100}beautiful');
     expect(result).toContain('{\\kf100}world');
@@ -94,10 +94,10 @@ describe('generateASS', () => {
           { text: 'Hello', startTime: 0, endTime: 1 },
           { text: 'world', startTime: 1, endTime: 2 },
         ],
-        animationStyle: 'word-highlight',
       },
     ];
-    const result = generateASS(cues, DEFAULT_SUBTITLE_STYLE);
+    const highlightStyle = { ...DEFAULT_SUBTITLE_STYLE, animationStyle: 'word-highlight' as const };
+    const result = generateASS(cues, highlightStyle);
     expect(result).not.toContain('\\kf');
     expect(result).toContain('Hello world');
   });

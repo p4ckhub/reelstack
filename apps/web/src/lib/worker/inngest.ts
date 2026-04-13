@@ -10,5 +10,5 @@ export const renderJobHandler = inngest.createFunction(
     const { jobId } = event.data;
     await processRenderJob(jobId);
     return { jobId, status: 'completed' };
-  },
+  }
 );

@@ -12,7 +12,7 @@ function computeEntrance(
   localFrame: number,
   fps: number,
   entrance: EntranceAnimation,
-  segmentId: string,
+  segmentId: string
 ): CSSProperties {
   if (entrance === 'none') return {};
 
@@ -138,7 +138,7 @@ function computeExit(
   durationFrames: number,
   fps: number,
   exit: ExitAnimation,
-  segmentId: string,
+  segmentId: string
 ): CSSProperties {
   if (exit === 'none') return {};
 
@@ -147,12 +147,10 @@ function computeExit(
 
   if (localFrame < exitStart) return {};
 
-  const exitProgress = interpolate(
-    localFrame,
-    [exitStart, durationFrames],
-    [0, 1],
-    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' },
-  );
+  const exitProgress = interpolate(localFrame, [exitStart, durationFrames], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   switch (exit) {
     case 'fade':

@@ -57,14 +57,14 @@ bun run dev
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Start dev server |
-| `bun run build` | Production build |
-| `bun run test` | Run all tests |
-| `bun run lint` | Lint all packages |
-| `bun run format` | Format with Prettier |
-| `bun run format:check` | Check formatting |
+| Command                | Description          |
+| ---------------------- | -------------------- |
+| `bun run dev`          | Start dev server     |
+| `bun run build`        | Production build     |
+| `bun run test`         | Run all tests        |
+| `bun run lint`         | Lint all packages    |
+| `bun run format`       | Format with Prettier |
+| `bun run format:check` | Check formatting     |
 
 ## Code Style
 
@@ -92,6 +92,7 @@ cd apps/web && bun run test --watch
 ```
 
 When adding new features:
+
 - Add unit tests for API routes (mock auth + database)
 - Add unit tests for utility functions and engines
 - Add E2E tests for critical user flows

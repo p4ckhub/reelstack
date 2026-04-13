@@ -1,11 +1,17 @@
 import { interpolate } from 'remotion';
 
-export type TransitionType = 'crossfade' | 'slide-left' | 'slide-right' | 'zoom-in' | 'wipe' | 'none';
+export type TransitionType =
+  | 'crossfade'
+  | 'slide-left'
+  | 'slide-right'
+  | 'zoom-in'
+  | 'wipe'
+  | 'none';
 
 export function computeEntrance(
   frame: number,
   transitionFrames: number,
-  transition: TransitionType,
+  transition: TransitionType
 ): { opacity: number; transform: string } {
   if (transition === 'none' || transitionFrames === 0) {
     return { opacity: 1, transform: 'none' };

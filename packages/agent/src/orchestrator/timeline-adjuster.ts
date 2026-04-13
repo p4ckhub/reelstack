@@ -6,7 +6,7 @@ import type { ProductionPlan, ShotPlan, EffectPlan } from '../types';
  */
 export function adjustTimeline(
   plan: ProductionPlan,
-  actualDurationSeconds: number,
+  actualDurationSeconds: number
 ): ProductionPlan {
   if (plan.shots.length === 0) return plan;
 

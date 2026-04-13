@@ -1,4 +1,4 @@
-import { AbsoluteFill, OffthreadVideo, useVideoConfig } from 'remotion';
+import { OffthreadVideo, useVideoConfig } from 'remotion';
 import { resolveMediaUrl } from '../utils/resolve-media-url';
 
 interface SplitScreenLayoutProps {
@@ -83,10 +83,7 @@ export const SplitScreenLayout: React.FC<SplitScreenLayoutProps> = ({
   );
 };
 
-const PlaceholderPanel: React.FC<{ label: string; color: string }> = ({
-  label,
-  color,
-}) => (
+const PlaceholderPanel: React.FC<{ label: string; color: string }> = ({ label, color }) => (
   <div
     style={{
       display: 'flex',

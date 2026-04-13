@@ -15,17 +15,12 @@ const SIGNATURES: Record<string, { offset: number; bytes: number[] }[]> = {
   ],
 };
 
-export function validateMagicBytes(
-  buffer: ArrayBuffer,
-  mimeType: string
-): boolean {
+export function validateMagicBytes(buffer: ArrayBuffer, mimeType: string): boolean {
   const view = new Uint8Array(buffer);
   const sigs = SIGNATURES[mimeType];
   if (!sigs) return false;
 
-  return sigs.some((sig) =>
-    sig.bytes.every((byte, i) => view[sig.offset + i] === byte)
-  );
+  return sigs.some((sig) => sig.bytes.every((byte, i) => view[sig.offset + i] === byte));
 }
 
 export function sanitizeSubtitleText(text: string): string {
@@ -47,10 +42,10 @@ export interface TierLimits {
 
 /** Hardcoded fallback — used when DB is unavailable or TierConfig row is missing. */
 const TIER_DEFAULTS: Record<TierName, TierLimits> = {
-  FREE:   { maxFileSize: 100 * 1024 * 1024,        maxDuration: 120,      creditsPerMonth: 30    },
-  SOLO:   { maxFileSize: 500 * 1024 * 1024,        maxDuration: 300,      creditsPerMonth: 300   },
-  PRO:    { maxFileSize: 2 * 1024 * 1024 * 1024,   maxDuration: 1800,     creditsPerMonth: 1000  },
-  AGENCY: { maxFileSize: 10 * 1024 * 1024 * 1024,  maxDuration: Infinity, creditsPerMonth: 5000  },
+  FREE: { maxFileSize: 100 * 1024 * 1024, maxDuration: 120, creditsPerMonth: 30 },
+  SOLO: { maxFileSize: 500 * 1024 * 1024, maxDuration: 300, creditsPerMonth: 300 },
+  PRO: { maxFileSize: 2 * 1024 * 1024 * 1024, maxDuration: 1800, creditsPerMonth: 1000 },
+  AGENCY: { maxFileSize: 10 * 1024 * 1024 * 1024, maxDuration: Infinity, creditsPerMonth: 5000 },
 };
 
 // ── In-memory cache (60s TTL per tier+product key) ──────────

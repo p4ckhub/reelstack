@@ -1,55 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  prismaMockFactory,
+  mockReelJobAggregate,
+  mockReelJobCreate,
+  mockReelJobFindFirst,
+  mockReelJobFindUnique,
+  mockReelJobUpdate,
+  mockReelJobFindMany,
+  mockUserFindUnique,
+  mockUserFindUniqueOrThrow,
+  mockUserUpdate,
+  mockTokenTransactionCreate,
+  mockTokenTransactionFindMany,
+  mockExecuteRaw,
+  mockTransaction,
+} from './prisma-mock';
 
-// Mock PrismaClient with token/reel models
-const mockReelJobCount = vi.fn();
-const mockReelJobAggregate = vi.fn();
-const mockReelJobCreate = vi.fn();
-const mockReelJobFindFirst = vi.fn();
-const mockReelJobFindUnique = vi.fn();
-const mockReelJobUpdate = vi.fn();
-const mockReelJobFindMany = vi.fn();
-const mockUserFindUnique = vi.fn();
-const mockUserFindUniqueOrThrow = vi.fn();
-const mockUserUpdate = vi.fn();
-const mockTokenTransactionCreate = vi.fn();
-const mockTokenTransactionFindMany = vi.fn();
-const mockExecuteRaw = vi.fn();
+vi.mock('@prisma/client', prismaMockFactory);
 
-vi.mock('@prisma/client', () => {
-  const mockInstance = {
+// Configure $transaction to pass-through to the callback with mock tx
+mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+  return fn({
+    reelJob: { aggregate: (...args: unknown[]) => mockReelJobAggregate(...args) },
     user: {
-      findUnique: mockUserFindUnique,
-      findUniqueOrThrow: mockUserFindUniqueOrThrow,
-      update: mockUserUpdate,
+      findUniqueOrThrow: (...args: unknown[]) => mockUserFindUniqueOrThrow(...args),
+      update: (...args: unknown[]) => mockUserUpdate(...args),
     },
-    reelJob: {
-      count: mockReelJobCount,
-      aggregate: mockReelJobAggregate,
-      create: mockReelJobCreate,
-      findFirst: mockReelJobFindFirst,
-      findUnique: mockReelJobFindUnique,
-      update: mockReelJobUpdate,
-      findMany: mockReelJobFindMany,
-    },
-    tokenTransaction: {
-      create: mockTokenTransactionCreate,
-      findMany: mockTokenTransactionFindMany,
-    },
-    $transaction: vi.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-      return fn({
-        reelJob: { aggregate: mockReelJobAggregate },
-        user: {
-          findUniqueOrThrow: mockUserFindUniqueOrThrow,
-          update: mockUserUpdate,
-        },
-        tokenTransaction: { create: mockTokenTransactionCreate },
-        $executeRaw: mockExecuteRaw,
-      });
-    }),
-  };
-  return {
-    PrismaClient: class { constructor() { return mockInstance; } },
-  };
+    tokenTransaction: { create: (...args: unknown[]) => mockTokenTransactionCreate(...args) },
+    $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),
+  });
 });
 
 const {
@@ -263,16 +242,16 @@ describe('ReelJob CRUD', () => {
 
   it('invalid transition COMPLETED → QUEUED throws', async () => {
     mockReelJobFindUnique.mockResolvedValue({ status: 'COMPLETED' });
-    await expect(
-      updateReelJobStatus('reel-1', { status: 'QUEUED' })
-    ).rejects.toThrow('Invalid status transition: COMPLETED → QUEUED for job reel-1');
+    await expect(updateReelJobStatus('reel-1', { status: 'QUEUED' })).rejects.toThrow(
+      'Invalid status transition: COMPLETED → QUEUED for job reel-1'
+    );
   });
 
   it('invalid transition COMPLETED → PROCESSING throws', async () => {
     mockReelJobFindUnique.mockResolvedValue({ status: 'COMPLETED' });
-    await expect(
-      updateReelJobStatus('reel-1', { status: 'PROCESSING' })
-    ).rejects.toThrow('Invalid status transition: COMPLETED → PROCESSING for job reel-1');
+    await expect(updateReelJobStatus('reel-1', { status: 'PROCESSING' })).rejects.toThrow(
+      'Invalid status transition: COMPLETED → PROCESSING for job reel-1'
+    );
   });
 
   it('valid retry FAILED → QUEUED succeeds', async () => {

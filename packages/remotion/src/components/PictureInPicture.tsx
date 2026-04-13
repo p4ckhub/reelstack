@@ -1,11 +1,4 @@
-import {
-  useCurrentFrame,
-  useVideoConfig,
-  spring,
-  interpolate,
-  OffthreadVideo,
-  Loop,
-} from 'remotion';
+import { useCurrentFrame, useVideoConfig, spring, interpolate, OffthreadVideo } from 'remotion';
 import type { PipSegment } from '@reelstack/types';
 import { resolveMediaUrl } from '../utils/resolve-media-url';
 
@@ -70,11 +63,6 @@ export const PictureInPicture: React.FC<PictureInPictureProps> = ({ segment }) =
     if (position.includes('right')) positionStyle.right = '5%';
   }
 
-  // Loop short video clips (e.g. 8s avatar in a 30s PiP segment)
-  const videoDurationSeconds = (segment as unknown as Record<string, unknown>)
-    .videoDurationSeconds as number | undefined;
-  const loopFrames = videoDurationSeconds ? Math.round(videoDurationSeconds * fps) : undefined;
-
   const videoElement = (
     <OffthreadVideo
       muted
@@ -99,7 +87,7 @@ export const PictureInPicture: React.FC<PictureInPictureProps> = ({ segment }) =
         boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
       }}
     >
-      {loopFrames ? <Loop durationInFrames={loopFrames}>{videoElement}</Loop> : videoElement}
+      {videoElement}
     </div>
   );
 };

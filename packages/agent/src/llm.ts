@@ -7,7 +7,8 @@
 import { createLogger } from '@reelstack/logger';
 import { detectProvider, getModel, getApiKey } from './config/models';
 import type { ModelRole, LLMProvider } from './config/models';
-import { getJobId } from './context';
+import { getJobId, addCost, logApiCall } from './context';
+import { calculateLLMCost } from './config/pricing';
 
 const log = createLogger('llm');
 
@@ -64,10 +65,11 @@ export async function callLLMWithSystem(
   if (provider === 'anthropic') {
     try {
       return await callAnthropic(systemPrompt, userMessage, opts);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Fallback to OpenRouter if Anthropic fails (credits exhausted, rate limit, etc.)
       if (process.env.OPENROUTER_API_KEY) {
-        log.warn({ error: err.message }, 'Anthropic failed, falling back to OpenRouter');
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn({ error: message }, 'Anthropic failed, falling back to OpenRouter');
         return callOpenAICompatible('openrouter', systemPrompt, userMessage, opts);
       }
       throw err;
@@ -111,11 +113,14 @@ async function callAnthropic(
 
   log.info({ provider: 'anthropic', model, role: opts.modelRole, jobId }, 'Calling LLM');
 
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  if (!anthropicKey) throw new Error('ANTHROPIC_API_KEY is not set');
+
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY!,
+      'x-api-key': anthropicKey,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
@@ -125,6 +130,7 @@ async function callAnthropic(
       messages: [{ role: 'user', content: userMessage }],
     }),
     signal: AbortSignal.timeout(opts.timeoutMs),
+    redirect: 'error',
   });
 
   if (!res.ok) {
@@ -153,14 +159,19 @@ async function callAnthropic(
   const durationMs = Math.round(performance.now() - startTime);
   const responseText = textBlock.text;
 
+  const inputTokens = data.usage?.input_tokens ?? 0;
+  const outputTokens = data.usage?.output_tokens ?? 0;
+  const costUSD = calculateLLMCost(model, inputTokens, outputTokens);
+
   log.info(
     {
       provider: 'anthropic',
       model,
       role: opts.modelRole,
       jobId,
-      inputTokens: data.usage?.input_tokens,
-      outputTokens: data.usage?.output_tokens,
+      inputTokens,
+      outputTokens,
+      costUSD: costUSD.toFixed(5),
       durationMs,
       systemPromptPreview: systemPrompt.slice(0, 200),
       userMessagePreview: userMessage.slice(0, 200),
@@ -168,6 +179,30 @@ async function callAnthropic(
     },
     'LLM call completed'
   );
+
+  addCost({
+    step: `llm:${opts.modelRole ?? 'unknown'}`,
+    provider: 'anthropic',
+    model,
+    type: 'llm',
+    costUSD,
+    inputUnits: inputTokens,
+    outputUnits: outputTokens,
+    durationMs,
+    metadata: {
+      systemPromptPreview: systemPrompt.slice(0, 500),
+      userMessagePreview: userMessage.slice(0, 500),
+      responsePreview: responseText.slice(0, 500),
+    },
+  });
+
+  logApiCall(`llm:${opts.modelRole ?? 'unknown'}`, `anthropic-${Date.now()}`, {
+    provider: 'anthropic',
+    model,
+    request: { systemPrompt, userMessage },
+    response: { text: responseText, usage: { inputTokens, outputTokens } },
+    durationMs,
+  });
 
   return responseText;
 }
@@ -182,7 +217,8 @@ async function callOpenAICompatible(
 ): Promise<string> {
   const isOpenRouter = provider === 'openrouter';
   const baseUrl = isOpenRouter ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1';
-  const apiKey = getApiKey(provider)!;
+  const apiKey = getApiKey(provider);
+  if (!apiKey) throw new Error(`API key for ${provider} is not set`);
   const model = getModel(opts.modelRole, provider);
   const startTime = performance.now();
   const jobId = getJobId();
@@ -211,6 +247,7 @@ async function callOpenAICompatible(
       ],
     }),
     signal: AbortSignal.timeout(opts.timeoutMs),
+    redirect: 'error',
   });
 
   if (!res.ok) {
@@ -239,14 +276,19 @@ async function callOpenAICompatible(
 
   const durationMs = Math.round(performance.now() - startTime);
 
+  const inputTokens = data.usage?.prompt_tokens ?? 0;
+  const outputTokens = data.usage?.completion_tokens ?? 0;
+  const costUSD = calculateLLMCost(model, inputTokens, outputTokens);
+
   log.info(
     {
       provider,
       model,
       role: opts.modelRole,
       jobId,
-      inputTokens: data.usage?.prompt_tokens,
-      outputTokens: data.usage?.completion_tokens,
+      inputTokens,
+      outputTokens,
+      costUSD: costUSD.toFixed(5),
       durationMs,
       systemPromptPreview: systemPrompt.slice(0, 200),
       userMessagePreview: userMessage.slice(0, 200),
@@ -254,6 +296,30 @@ async function callOpenAICompatible(
     },
     'LLM call completed'
   );
+
+  addCost({
+    step: `llm:${opts.modelRole ?? 'unknown'}`,
+    provider,
+    model,
+    type: 'llm',
+    costUSD,
+    inputUnits: inputTokens,
+    outputUnits: outputTokens,
+    durationMs,
+    metadata: {
+      systemPromptPreview: systemPrompt.slice(0, 500),
+      userMessagePreview: userMessage.slice(0, 500),
+      responsePreview: content.slice(0, 500),
+    },
+  });
+
+  logApiCall(`llm:${opts.modelRole ?? 'unknown'}`, `${provider}-${Date.now()}`, {
+    provider,
+    model,
+    request: { systemPrompt, userMessage },
+    response: { text: content, usage: { inputTokens, outputTokens } },
+    durationMs,
+  });
 
   return content;
 }

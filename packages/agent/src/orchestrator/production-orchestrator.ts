@@ -38,7 +38,7 @@ import type { ShotBrief } from '../planner/prompt-writer';
 import { createLogger } from '@reelstack/logger';
 import { PipelineLogger } from './pipeline-logger';
 import { persistAssetsToStorage } from './asset-persistence';
-import { runWithJobId } from '../context';
+import { runWithJobId, setApiCallLogger } from '../context';
 
 const baseLog = createLogger('production-orchestrator');
 
@@ -68,6 +68,7 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
   // Create job-scoped logger so all logs from this pipeline run are correlated
   const log = request.jobId ? baseLog.child({ jobId: request.jobId }) : baseLog;
   const pipelineLogger = request.jobId ? new PipelineLogger(request.jobId) : null;
+  if (pipelineLogger) setApiCallLogger(pipelineLogger);
 
   const steps: ProductionStep[] = [];
   const onProgress = request.onProgress;
@@ -189,6 +190,7 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     layout: request.layout,
     timingReference,
     montageProfile,
+    preferredToolIds: request.preferredToolIds,
   });
 
   steps.push({
@@ -486,6 +488,7 @@ export async function produceComposition(request: ComposeRequest): Promise<Produ
 async function produceCompositionInner(request: ComposeRequest): Promise<ProductionResult> {
   const log = request.jobId ? baseLog.child({ jobId: request.jobId }) : baseLog;
   const pipelineLogger = request.jobId ? new PipelineLogger(request.jobId) : null;
+  if (pipelineLogger) setApiCallLogger(pipelineLogger);
 
   const steps: ProductionStep[] = [];
   const onProgress = request.onProgress;
@@ -520,21 +523,16 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
     });
 
     const composePresetConfig = resolvePresetConfig(request.brandPreset);
-    cues = groupWordsIntoCues(
-      transcription.words,
-      {
-        maxWordsPerCue: composePresetConfig.maxWordsPerCue,
-        maxDurationPerCue: composePresetConfig.maxDurationPerCue,
-        breakOnPunctuation: true,
-      },
-      composePresetConfig.animationStyle
-    ).map((c) => ({
+    cues = groupWordsIntoCues(transcription.words, {
+      maxWordsPerCue: composePresetConfig.maxWordsPerCue,
+      maxDurationPerCue: composePresetConfig.maxDurationPerCue,
+      breakOnPunctuation: true,
+    }).map((c) => ({
       id: c.id,
       text: c.text,
       startTime: c.startTime,
       endTime: c.endTime,
       words: c.words?.map((w) => ({ text: w.text, startTime: w.startTime, endTime: w.endTime })),
-      animationStyle: c.animationStyle,
     }));
   } else {
     const ttsResult = await runTTSPipeline(

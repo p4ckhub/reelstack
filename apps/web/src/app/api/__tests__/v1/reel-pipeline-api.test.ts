@@ -1,46 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-const mockAuthenticate = vi.fn();
+import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-
-vi.mock('@/lib/api/v1/middleware', () => {
-  function withAuth(
-    _options: unknown,
-    handler: (req: NextRequest, ctx: unknown) => Promise<NextResponse>
-  ) {
-    return async (req: NextRequest) => {
-      const ctx = await mockAuthenticate(req);
-      if (!ctx) {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-          { status: 401 }
-        );
-      }
-      try {
-        return await handler(req, ctx);
-      } catch (err) {
-        console.error(err);
-        return NextResponse.json(
-          { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
-          { status: 500 }
-        );
-      }
-    };
-  }
-  function successResponse(data: unknown, status = 200) {
-    return NextResponse.json({ data }, { status });
-  }
-  function errorResponse(code: string, message: string, status: number) {
-    return NextResponse.json({ error: { code, message } }, { status });
-  }
-  return { withAuth, successResponse, errorResponse, authenticate: mockAuthenticate };
-});
-
+vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
@@ -53,10 +19,8 @@ vi.mock('@/lib/api/v1/pipeline-helpers', () => ({
   }),
 }));
 
-const mockGetReelJob = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  getReelJob: (...args: unknown[]) => mockGetReelJob(...args),
-}));
+import { databaseMockFactory, mockGetReelJob } from '@/__test-utils__/database-mock';
+vi.mock('@reelstack/database', databaseMockFactory);
 
 const mockPipelineEngineGetStatus = vi.fn();
 const mockPipelineEngineRetryStep = vi.fn();
@@ -86,10 +50,8 @@ vi.mock('@reelstack/agent/pipeline', () => ({
   PipelineEngine: vi.fn().mockImplementation(mockPipelineEngineFactory),
 }));
 
-const mockEnqueue = vi.fn();
-vi.mock('@reelstack/queue', () => ({
-  createQueue: () => Promise.resolve({ enqueue: mockEnqueue }),
-}));
+import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
+vi.mock('@reelstack/queue', queueMockFactory);
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -217,7 +179,7 @@ describe('POST /api/v1/reel/render/[id]/retry', () => {
         modifiedInput: { voice: 'en-US-GuyNeural' },
       })
     );
-    const json = await res.json();
+    const _json = await res.json();
 
     expect(res.status).toBe(200);
     expect(mockPipelineEngineRetryStep).toHaveBeenCalledWith(expect.anything(), 'job-1', 'tts', {

@@ -15,5 +15,5 @@ export const GET = withAuth(
     const { listBrands, DEFAULT_BRANDS_DIR } = await import('@reelstack/image-gen');
     const brands = listBrands(DEFAULT_BRANDS_DIR);
     return successResponse({ brands });
-  },
+  }
 );

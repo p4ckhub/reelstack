@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import {
   getUserByEmail,
+  getUserById,
   addTokens,
   updateUserTier,
   linkSellfCustomer,
@@ -33,16 +34,12 @@ function verifyWebhook(body: string, request: NextRequest): boolean {
   const secret = process.env.SELLF_WEBHOOK_SECRET;
   if (!secret) return false;
 
-  const signature = request.headers.get('x-sellf-signature')
-    ?? request.headers.get('x-webhook-signature')
-    ?? '';
+  const signature =
+    request.headers.get('x-sellf-signature') ?? request.headers.get('x-webhook-signature') ?? '';
 
   if (!signature) return false;
 
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(body)
-    .digest('hex');
+  const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
 
   // Constant-time comparison (safe even if lengths differ)
   const sigBuf = Buffer.from(signature);
@@ -64,21 +61,30 @@ interface NormalizedData {
 /** Sellf webhook format: nested event + data */
 const sellfPayloadSchema = z.object({
   event: z.string(),
-  data: z.object({
-    customer: z.object({
-      email: z.string().email(),
+  data: z
+    .object({
+      customer: z
+        .object({
+          email: z.string().email(),
+          userId: z.string().optional(),
+        })
+        .passthrough(),
+      product: z
+        .object({
+          slug: z.string().optional(),
+          id: z.string().optional(),
+        })
+        .passthrough(),
+      order: z
+        .object({
+          sessionId: z.string().optional(),
+        })
+        .passthrough()
+        .optional(),
+      reference: z.string().optional(),
       userId: z.string().optional(),
-    }).passthrough(),
-    product: z.object({
-      slug: z.string().optional(),
-      id: z.string().optional(),
-    }).passthrough(),
-    order: z.object({
-      sessionId: z.string().optional(),
-    }).passthrough().optional(),
-    reference: z.string().optional(),
-    userId: z.string().optional(),
-  }).passthrough(),
+    })
+    .passthrough(),
 });
 
 /** Direct webhook format: flat object */
@@ -106,8 +112,7 @@ function normalizePayload(raw: Record<string, unknown>): NormalizedData | null {
     return {
       email: data.customer.email,
       product: data.product.slug ?? data.product.id ?? '',
-      reference: data.reference
-        ?? `${parsed.data.event}:${data.order?.sessionId ?? ''}`,
+      reference: data.reference ?? `${parsed.data.event}:${data.order?.sessionId ?? ''}`,
       userId: data.userId ?? data.customer.userId,
     };
   }
@@ -131,17 +136,26 @@ type ProductAction =
   | { type: 'tokens'; amount: number };
 
 function getProductAction(productId: string): ProductAction | null {
-  const mapping: Record<string, ProductAction> = {
-    // Subscription tiers
-    [process.env.SELLF_PRODUCT_SOLO ?? 'sellf_solo']: { type: 'tier', tier: 'SOLO' },
-    [process.env.SELLF_PRODUCT_PRO ?? 'sellf_pro']: { type: 'tier', tier: 'PRO' },
-    [process.env.SELLF_PRODUCT_AGENCY ?? 'sellf_agency']: { type: 'tier', tier: 'AGENCY' },
-    // Token packs
-    [process.env.SELLF_PRODUCT_10_TOKENS ?? 'sellf_10_tokens']: { type: 'tokens', amount: 10 },
-    [process.env.SELLF_PRODUCT_50_TOKENS ?? 'sellf_50_tokens']: { type: 'tokens', amount: 50 },
-    [process.env.SELLF_PRODUCT_150_TOKENS ?? 'sellf_150_tokens']: { type: 'tokens', amount: 150 },
-    [process.env.SELLF_PRODUCT_500_TOKENS ?? 'sellf_500_tokens']: { type: 'tokens', amount: 500 },
-  };
+  const mapping: Record<string, ProductAction> = {};
+
+  // Subscription tiers - only map products that have env vars set
+  if (process.env.SELLF_PRODUCT_SOLO)
+    mapping[process.env.SELLF_PRODUCT_SOLO] = { type: 'tier', tier: 'SOLO' };
+  if (process.env.SELLF_PRODUCT_PRO)
+    mapping[process.env.SELLF_PRODUCT_PRO] = { type: 'tier', tier: 'PRO' };
+  if (process.env.SELLF_PRODUCT_AGENCY)
+    mapping[process.env.SELLF_PRODUCT_AGENCY] = { type: 'tier', tier: 'AGENCY' };
+
+  // Token packs - only map products that have env vars set
+  if (process.env.SELLF_PRODUCT_10_TOKENS)
+    mapping[process.env.SELLF_PRODUCT_10_TOKENS] = { type: 'tokens', amount: 10 };
+  if (process.env.SELLF_PRODUCT_50_TOKENS)
+    mapping[process.env.SELLF_PRODUCT_50_TOKENS] = { type: 'tokens', amount: 50 };
+  if (process.env.SELLF_PRODUCT_150_TOKENS)
+    mapping[process.env.SELLF_PRODUCT_150_TOKENS] = { type: 'tokens', amount: 150 };
+  if (process.env.SELLF_PRODUCT_500_TOKENS)
+    mapping[process.env.SELLF_PRODUCT_500_TOKENS] = { type: 'tokens', amount: 500 };
+
   return mapping[productId] ?? null;
 }
 
@@ -150,7 +164,7 @@ function getProductAction(productId: string): ProductAction | null {
 async function resolveUser(data: NormalizedData) {
   // By userId hint
   if (data.userId) {
-    const user = await getUserByEmail(data.userId).catch(() => null);
+    const user = await getUserById(data.userId).catch(() => null);
     if (user) return user;
   }
 
@@ -172,7 +186,7 @@ export async function POST(request: NextRequest) {
   if (!rl.success) {
     return NextResponse.json(
       { error: { code: 'RATE_LIMITED', message: 'Too many requests' } },
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -182,7 +196,7 @@ export async function POST(request: NextRequest) {
   if (!verifyWebhook(rawBody, request)) {
     return NextResponse.json(
       { error: { code: 'UNAUTHORIZED', message: 'Invalid webhook signature' } },
-      { status: 401 },
+      { status: 401 }
     );
   }
 
@@ -192,7 +206,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON' } },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -206,7 +220,7 @@ export async function POST(request: NextRequest) {
   if (!data) {
     return NextResponse.json(
       { error: { code: 'VALIDATION_ERROR', message: 'Invalid webhook payload structure' } },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -223,13 +237,15 @@ export async function POST(request: NextRequest) {
     log.error({ email: data.email }, 'User not found for provided email');
     return NextResponse.json(
       { error: { code: 'NOT_FOUND', message: 'User not found' } },
-      { status: 404 },
+      { status: 404 }
     );
   }
 
   // Link Sellf customer on first purchase
   if (data.email) {
-    await linkSellfCustomer(user.id, data.email).catch(err => log.warn({ userId: user.id, err }, 'Failed to link Sellf customer'));
+    await linkSellfCustomer(user.id, data.email).catch((err) =>
+      log.warn({ userId: user.id, err }, 'Failed to link Sellf customer')
+    );
   }
 
   // Idempotency — reject duplicate events
@@ -254,7 +270,7 @@ export async function POST(request: NextRequest) {
       action: 'tier.upgrade',
       target: action.tier,
       metadata: { previousTier, product: data.product },
-    }).catch(() => {});
+    }).catch((err) => log.warn({ err, userId: user.id }, 'Audit log failed'));
   } else {
     await addTokens(user.id, action.amount, 'purchase', reference);
     log.info({ userId: user.id, tokens: action.amount }, 'Added tokens to user');
@@ -263,7 +279,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       action: 'tokens.add',
       metadata: { amount: action.amount, product: data.product },
-    }).catch(() => {});
+    }).catch((err) => log.warn({ err, userId: user.id }, 'Audit log failed'));
   }
 
   return NextResponse.json({

@@ -12,7 +12,6 @@ export const captionCueSchema = z.object({
   startTime: z.number(),
   endTime: z.number(),
   words: z.array(subtitleWordSchema).optional(),
-  animationStyle: z.enum(['none', 'word-highlight', 'word-by-word', 'karaoke', 'bounce', 'typewriter']).optional(),
 });
 
 export type CaptionCue = z.infer<typeof captionCueSchema>;

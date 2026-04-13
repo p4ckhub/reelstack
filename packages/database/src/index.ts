@@ -59,7 +59,6 @@ export async function upsertUser(id: string, email: string) {
   });
 }
 
-
 export async function getUserPreferences(userId: string): Promise<Record<string, unknown>> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -277,7 +276,7 @@ export async function touchApiKey(id: string, ip?: string) {
 export async function consumeCredits(
   userId: string,
   monthlyBudget: number,
-  cost: number,
+  cost: number
 ): Promise<{ consumed: boolean; source: 'tier' | 'token' | null }> {
   if (!Number.isFinite(cost) || cost <= 0) {
     throw new Error(`Invalid credit cost: ${cost}`);
@@ -322,10 +321,7 @@ export async function consumeCredits(
  */
 const _pricingCache = new Map<string, { cost: number; expiresAt: number }>();
 
-export async function getCreditCost(
-  action: string,
-  productSlug = 'reelstack',
-): Promise<number> {
+export async function getCreditCost(action: string, productSlug = 'reelstack'): Promise<number> {
   const key = `${productSlug}:${action}`;
   const cached = _pricingCache.get(key);
   if (cached && Date.now() < cached.expiresAt) return cached.cost;
@@ -486,10 +482,10 @@ export async function getReelJobsByUser(userId: string, limit = 20, cursor?: str
 // ==========================================
 
 const TIER_CONFIG_DEFAULTS = [
-  { tier: 'FREE',   creditsPerMonth: 30,    maxFileSizeMb: 100,    maxDurationSec: 120  },
-  { tier: 'SOLO',   creditsPerMonth: 300,   maxFileSizeMb: 500,    maxDurationSec: 300  },
-  { tier: 'PRO',    creditsPerMonth: 1000,  maxFileSizeMb: 2048,   maxDurationSec: 1800 },
-  { tier: 'AGENCY', creditsPerMonth: 5000,  maxFileSizeMb: 10240,  maxDurationSec: -1   },
+  { tier: 'FREE', creditsPerMonth: 30, maxFileSizeMb: 100, maxDurationSec: 120 },
+  { tier: 'SOLO', creditsPerMonth: 300, maxFileSizeMb: 500, maxDurationSec: 300 },
+  { tier: 'PRO', creditsPerMonth: 1000, maxFileSizeMb: 2048, maxDurationSec: 1800 },
+  { tier: 'AGENCY', creditsPerMonth: 5000, maxFileSizeMb: 10240, maxDurationSec: -1 },
 ] as const;
 
 export async function getAllTierConfigs(productSlug = 'reelstack') {

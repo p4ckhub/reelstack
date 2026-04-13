@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server';
 import { API_SCOPES } from '@reelstack/types';
-import { createReelJob, consumeCredits, getCreditCost, updateReelJobStatus } from '@reelstack/database';
+import {
+  createReelJob,
+  consumeCredits,
+  getCreditCost,
+  updateReelJobStatus,
+} from '@reelstack/database';
 import { getTierLimits } from '@/lib/api/validation';
 import { createQueue } from '@reelstack/queue';
 import { withAuth, successResponse, errorResponse } from '@/lib/api/v1/middleware';
@@ -28,14 +33,17 @@ export const POST = withAuth(
       return errorResponse(
         'VALIDATION_ERROR',
         parsed.error.issues.map((i) => i.message).join(', '),
-        400,
+        400
       );
     }
 
     const limits = await getTierLimits(ctx.user.tier as import('@/lib/api/validation').TierName);
     const cost = await getCreditCost('video');
     const batchId = randomUUID();
-    const results: Array<{ index: number; jobId: string; mode: string; status: 'queued' } | { index: number; error: string }> = [];
+    const results: Array<
+      | { index: number; jobId: string; mode: string; status: 'queued' }
+      | { index: number; error: string }
+    > = [];
 
     let queue: Awaited<ReturnType<typeof createQueue>> | null = null;
     try {
@@ -54,9 +62,7 @@ export const POST = withAuth(
       }
 
       // Use explicit mode from schema. Backward compat: assets without mode = compose.
-      const mode = reel.mode === 'generate' && reel.assets
-        ? 'compose'
-        : reel.mode;
+      const mode = reel.mode === 'generate' && reel.assets ? 'compose' : reel.mode;
 
       const job = await createReelJob({
         userId: ctx.user.id,
@@ -89,7 +95,9 @@ export const POST = withAuth(
         await queue.enqueue(job.id, { jobId: job.id }, 'reel-render');
         results.push({ index: i, jobId: job.id, mode, status: 'queued' });
       } catch {
-        await updateReelJobStatus(job.id, { status: 'FAILED', error: 'Queue unavailable' }).catch(() => {});
+        await updateReelJobStatus(job.id, { status: 'FAILED', error: 'Queue unavailable' }).catch(
+          () => {}
+        );
         results.push({ index: i, error: 'Queue unavailable' });
       }
     }
@@ -105,7 +113,7 @@ export const POST = withAuth(
         failed,
         jobs: results,
       },
-      201,
+      201
     );
-  },
+  }
 );

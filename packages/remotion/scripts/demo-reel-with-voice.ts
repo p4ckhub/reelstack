@@ -29,7 +29,7 @@ interface DemoConfig {
 
 async function generateVoiceAndCues(
   script: string,
-  name: string,
+  name: string
 ): Promise<{ cues: ReelProps['cues']; voiceoverFile: string; duration: number }> {
   const tts = createTTSProvider({ provider: 'edge-tts', defaultLanguage: 'en-US' });
 
@@ -40,7 +40,8 @@ async function generateVoiceAndCues(
     rate: 1.05,
   });
 
-  const duration = ttsResult.durationSeconds ?? getAudioDuration(ttsResult.audioBuffer, ttsResult.format);
+  const duration =
+    ttsResult.durationSeconds ?? getAudioDuration(ttsResult.audioBuffer, ttsResult.format);
   console.log(`    ${duration.toFixed(1)}s audio generated`);
 
   // Save voiceover to public/ for Remotion
@@ -63,11 +64,15 @@ async function generateVoiceAndCues(
   console.log(`    ${transcription.words.length} words transcribed`);
 
   // Group into cues with karaoke
-  const rawCues = groupWordsIntoCues(transcription.words, {
-    maxWordsPerCue: 5,
-    maxDurationPerCue: 2.5,
-    breakOnPunctuation: true,
-  }, 'karaoke');
+  const rawCues = groupWordsIntoCues(
+    transcription.words,
+    {
+      maxWordsPerCue: 5,
+      maxDurationPerCue: 2.5,
+      breakOnPunctuation: true,
+    },
+    'karaoke'
+  );
 
   const cues: ReelProps['cues'] = rawCues.map((c) => ({
     id: c.id,
@@ -109,7 +114,11 @@ const CAPTION_STYLE: ReelProps['captionStyle'] = {
   upcomingColor: '#8888A0',
 };
 
-function buildShowcaseProps(cues: ReelProps['cues'], voiceoverFile: string, duration: number): ReelProps {
+function buildShowcaseProps(
+  cues: ReelProps['cues'],
+  voiceoverFile: string,
+  duration: number
+): ReelProps {
   const d = duration;
   return {
     layout: 'fullscreen',
@@ -137,15 +146,15 @@ function buildShowcaseProps(cues: ReelProps['cues'], voiceoverFile: string, dura
       // B-roll at ~30%
       {
         startTime: d * 0.28,
-        endTime: d * 0.40,
+        endTime: d * 0.4,
         media: { url: '#0D2137', type: 'color', label: '💻 Code Demo' },
         animation: 'spring-scale',
         transition: { type: 'slide-left', durationMs: 300 },
       },
       // Text card mid
       {
-        startTime: d * 0.50,
-        endTime: d * 0.60,
+        startTime: d * 0.5,
+        endTime: d * 0.6,
         media: {
           url: '',
           type: 'text-card',
@@ -173,15 +182,30 @@ function buildShowcaseProps(cues: ReelProps['cues'], voiceoverFile: string, dura
     pipSegments: [],
 
     zoomSegments: [
-      { startTime: d * 0.22, endTime: d * 0.30, scale: 1.4, focusPoint: { x: 50, y: 40 }, easing: 'spring' },
-      { startTime: d * 0.58, endTime: d * 0.68, scale: 1.25, focusPoint: { x: 50, y: 50 }, easing: 'smooth' },
+      {
+        startTime: d * 0.22,
+        endTime: d * 0.3,
+        scale: 1.4,
+        focusPoint: { x: 50, y: 40 },
+        easing: 'spring',
+      },
+      {
+        startTime: d * 0.58,
+        endTime: d * 0.68,
+        scale: 1.25,
+        focusPoint: { x: 50, y: 50 },
+        easing: 'smooth',
+      },
     ],
 
     highlights: [
       {
         startTime: d * 0.78,
         endTime: d * 0.87,
-        x: 10, y: 20, width: 80, height: 45,
+        x: 10,
+        y: 20,
+        width: 80,
+        height: 45,
         color: '#F59E0B',
         borderWidth: 3,
         borderRadius: 12,
@@ -202,7 +226,7 @@ function buildShowcaseProps(cues: ReelProps['cues'], voiceoverFile: string, dura
 
     counters: [
       {
-        startTime: d * 0.60,
+        startTime: d * 0.6,
         endTime: d * 0.72,
         value: 10000,
         suffix: ' renders',
@@ -240,7 +264,11 @@ function buildShowcaseProps(cues: ReelProps['cues'], voiceoverFile: string, dura
   };
 }
 
-function buildLayersProps(cues: ReelProps['cues'], voiceoverFile: string, duration: number): ReelProps {
+function buildLayersProps(
+  cues: ReelProps['cues'],
+  voiceoverFile: string,
+  duration: number
+): ReelProps {
   const d = duration;
   return {
     layout: 'fullscreen',
@@ -266,7 +294,7 @@ function buildLayersProps(cues: ReelProps['cues'], voiceoverFile: string, durati
       },
       {
         startTime: d * 0.38,
-        endTime: d * 0.50,
+        endTime: d * 0.5,
         media: { url: '#1A1A2E', type: 'color', label: '🔧 n8n Workflow' },
         animation: 'spring-scale',
         transition: { type: 'slide-left', durationMs: 300 },
@@ -293,7 +321,7 @@ function buildLayersProps(cues: ReelProps['cues'], voiceoverFile: string, durati
         accentColor: '#3B82F6',
       },
       {
-        startTime: d * 0.50,
+        startTime: d * 0.5,
         endTime: d * 0.62,
         title: 'n8n + Docker',
         subtitle: 'Self-hosted automation stack',
@@ -324,7 +352,7 @@ function buildLayersProps(cues: ReelProps['cues'], voiceoverFile: string, durati
         position: 'center',
       },
       {
-        startTime: d * 0.90,
+        startTime: d * 0.9,
         endTime: d,
         text: 'Follow for more',
         style: 'pill',
@@ -341,7 +369,11 @@ function buildLayersProps(cues: ReelProps['cues'], voiceoverFile: string, durati
   };
 }
 
-function buildTextcardsProps(cues: ReelProps['cues'], voiceoverFile: string, duration: number): ReelProps {
+function buildTextcardsProps(
+  cues: ReelProps['cues'],
+  voiceoverFile: string,
+  duration: number
+): ReelProps {
   const d = duration;
   return {
     layout: 'fullscreen',

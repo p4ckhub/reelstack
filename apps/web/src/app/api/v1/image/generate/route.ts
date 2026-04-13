@@ -43,25 +43,38 @@ export const POST = withAuth(
     if (!parsed.success) {
       return errorResponse(
         'VALIDATION_ERROR',
-        parsed.error.issues.map(i => i.message).join(', '),
-        400,
+        parsed.error.issues.map((i) => i.message).join(', '),
+        400
       );
     }
 
     if (parsed.data.size === 'all') {
-      return errorResponse('SERVICE_UNAVAILABLE', 'size=all (ZIP download) is not yet supported. Use post, story, or youtube.', 400);
+      return errorResponse(
+        'SERVICE_UNAVAILABLE',
+        'size=all (ZIP download) is not yet supported. Use post, story, or youtube.',
+        400
+      );
     }
 
-    const { render, listTemplates, listBrands, DEFAULT_BRANDS_DIR } = await import('@reelstack/image-gen');
+    const { render, listTemplates, listBrands, DEFAULT_BRANDS_DIR } =
+      await import('@reelstack/image-gen');
 
     // Validate brand and template exist before charging credits
     const availableTemplates = listTemplates();
     if (!availableTemplates.includes(parsed.data.template)) {
-      return errorResponse('VALIDATION_ERROR', `Template '${parsed.data.template}' not found. Available: ${availableTemplates.join(', ')}`, 400);
+      return errorResponse(
+        'VALIDATION_ERROR',
+        `Template '${parsed.data.template}' not found. Available: ${availableTemplates.join(', ')}`,
+        400
+      );
     }
     const availableBrands = listBrands(DEFAULT_BRANDS_DIR);
     if (!availableBrands.includes(parsed.data.brand)) {
-      return errorResponse('VALIDATION_ERROR', `Brand '${parsed.data.brand}' not found. Available: ${availableBrands.join(', ')}`, 400);
+      return errorResponse(
+        'VALIDATION_ERROR',
+        `Brand '${parsed.data.brand}' not found. Available: ${availableBrands.join(', ')}`,
+        400
+      );
     }
 
     const cost = await getCreditCost('image');
@@ -71,7 +84,7 @@ export const POST = withAuth(
       return errorResponse(
         'QUOTA_EXCEEDED',
         'Monthly image limit reached and no tokens available. Upgrade or purchase tokens.',
-        429,
+        429
       );
     }
 
@@ -82,7 +95,7 @@ export const POST = withAuth(
       return errorResponse(
         'RENDER_ERROR',
         err instanceof Error ? err.message : 'Render failed',
-        500,
+        500
       );
     }
 
@@ -94,5 +107,5 @@ export const POST = withAuth(
         'Content-Disposition': `attachment; filename="${parsed.data.template}-${parsed.data.brand}-${sizeName}.png"`,
       },
     });
-  },
+  }
 );

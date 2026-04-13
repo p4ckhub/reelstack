@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { databaseMockFactory, mockPrisma } from '@/__test-utils__/database-mock';
 
 // Mock next-auth
 const mockAuth = vi.fn();
@@ -7,14 +8,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 // Mock database
-const mockFindUnique = vi.fn();
-vi.mock('@reelstack/database', () => ({
-  prisma: {
-    user: {
-      findUnique: (...args: unknown[]) => mockFindUnique(...args),
-    },
-  },
-}));
+vi.mock('@reelstack/database', databaseMockFactory);
 
 // Import after mocks
 const { getAuthUser } = await import('../api/auth');
@@ -44,16 +38,16 @@ describe('getAuthUser', () => {
 
   it('returns null when user not found in DB', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', email: 'test@test.com' } });
-    mockFindUnique.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue(null);
     const result = await getAuthUser();
     expect(result).toBeNull();
-    expect(mockFindUnique).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-1' } });
   });
 
   it('returns dbUser when authenticated', async () => {
     const dbUser = { id: 'user-1', email: 'test@test.com', tier: 'FREE' };
     mockAuth.mockResolvedValue({ user: { id: 'user-1', email: 'test@test.com' } });
-    mockFindUnique.mockResolvedValue(dbUser);
+    mockPrisma.user.findUnique.mockResolvedValue(dbUser);
 
     const result = await getAuthUser();
     expect(result).toEqual({ dbUser });
