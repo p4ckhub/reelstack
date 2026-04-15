@@ -75,4 +75,4 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
             -p ${{ secrets.DEPLOY_PORT }} \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            'cd ~/reelstack && docker compose pull && docker compose up -d --remove-orphans && docker image prune -f'
+            'cd ~/reelstack && docker compose pull && docker compose up -d --remove-orphans && docker compose restart nginx && docker image prune -f'
