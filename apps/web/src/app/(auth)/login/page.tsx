@@ -18,16 +18,9 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const altchaRef = useRef<HTMLElement & { value?: string }>(null);
 
-  // Load Altcha web component from CDN (self-hosted, no API key required)
+  // Load Altcha web component from npm package (CDN serves wrong MIME type)
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://eu.altcha.org/js/latest/altcha.min.js';
-    script.async = true;
-    script.type = 'module';
-    document.head.appendChild(script);
-    return () => {
-      document.head.removeChild(script);
-    };
+    import('altcha');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

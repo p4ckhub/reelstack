@@ -29,12 +29,14 @@
     ]
   },
   "devDependencies": {
+    "altcha": "^3.0.2",
     "happy-dom": "^20.8.9",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "prisma": "~6.3.1",
     "turbo": "^2.8.10",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "web": "workspace:*"
   },
   "dependencies": {
     "altcha-lib": "^1.4.1"
