@@ -1,12 +1,67 @@
 'use client';
 
-import { Suspense, useState, useRef, useEffect } from 'react';
+import {
+  Suspense,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+/* ── Altcha wrapper (from official altcha-starter-react-ts) ── */
+
+const Altcha = forwardRef<{ value: string | null }>((_props, ref) => {
+  const widgetRef = useRef<HTMLElement & { value?: string }>(null);
+  const [value, setValue] = useState<string | null>(null);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      get value() {
+        return value;
+      },
+    }),
+    [value]
+  );
+
+  useEffect(() => {
+    import('altcha');
+  }, []);
+
+  useEffect(() => {
+    const el = widgetRef.current;
+    if (!el) return;
+    const handler = (ev: Event) => {
+      if ('detail' in ev) {
+        setValue((ev as CustomEvent).detail.payload || null);
+      }
+    };
+    el.addEventListener('statechange', handler);
+    return () => el.removeEventListener('statechange', handler);
+  }, []);
+
+  return (
+    <altcha-widget
+      ref={widgetRef}
+      configuration={JSON.stringify({
+        challenge: '/api/auth/altcha',
+        auto: 'onload',
+        display: 'invisible',
+      })}
+    />
+  );
+});
+Altcha.displayName = 'Altcha';
+
+/* ── Login form ── */
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -16,55 +71,52 @@ function LoginForm() {
   const [sent, setSent] = useState(isVerify);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const altchaRef = useRef<HTMLElement & { value?: string }>(null);
+  const altchaRef = useRef<{ value: string | null }>(null);
 
-  // Load Altcha web component from npm package (CDN serves wrong MIME type)
-  useEffect(() => {
-    import('altcha');
-  }, []);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    // Verify Altcha proof-of-work
-    const altchaPayload = altchaRef.current?.value;
-    if (!altchaPayload) {
-      setError('Please complete the verification.');
-      return;
-    }
-
-    const verification = await fetch('/api/auth/altcha', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload: altchaPayload }),
-    })
-      .then((r) => r.json())
-      .catch(() => ({ ok: false }));
-
-    if (!verification.ok) {
-      setError('Verification failed. Please try again.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await signIn('nodemailer', {
-        email,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError('Could not send magic link. Please try again.');
-      } else {
-        setSent(true);
+      const payload = altchaRef.current?.value;
+      if (!payload) {
+        setError('Security check in progress. Please wait a moment and try again.');
+        return;
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      const verification = await fetch('/api/auth/altcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload }),
+      })
+        .then((r) => r.json())
+        .catch(() => ({ ok: false }));
+
+      if (!verification.ok) {
+        setError('Verification failed. Please try again.');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const result = await signIn('nodemailer', {
+          email,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          setError('Could not send magic link. Please try again.');
+        } else {
+          setSent(true);
+        }
+      } catch {
+        setError('Something went wrong. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [email]
+  );
 
   return (
     <Card>
@@ -111,12 +163,7 @@ function LoginForm() {
                 required
               />
             </div>
-            {/* Altcha proof-of-work widget — no API key, no external service */}
-            <altcha-widget
-              ref={altchaRef}
-              challengeurl="/api/auth/altcha"
-              style={{ display: 'block' }}
-            />
+            <Altcha ref={altchaRef} />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Sending...' : 'Send magic link'}
             </Button>
