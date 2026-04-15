@@ -22,14 +22,21 @@ export const metadata: Metadata = {
     template: '%s · ReelStack',
   },
   description: 'Programmatic video pipeline — reels, YouTube, captions, TTS, all from code or API',
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  },
   openGraph: {
     siteName: 'ReelStack',
     locale: 'en_US',
     type: 'website',
+    images: [{ url: '/logo.svg', width: 512, height: 512, alt: 'ReelStack' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@reelstack',
+    images: ['/logo.svg'],
   },
 };
 
