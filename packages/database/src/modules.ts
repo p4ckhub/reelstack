@@ -5,14 +5,16 @@
  * n8n-explainer, etc.). Each module has:
  *   - a credit cost (some are more expensive because they use more AI)
  *   - optional `requiredTier` gating (null = available to everyone)
- *   - optional explicit grants via UserModuleAccess (purchases, gifts, owner access)
+ *   - optional explicit grants via UserModuleAccess (purchases, gifts)
  *
  * Access rules (in order of precedence):
- *   1. Owner users (isOwner = true) bypass all checks.
- *   2. Explicit non-expired UserModuleAccess grant → allowed.
- *   3. Module with requiredTier = null → allowed for everyone.
- *   4. User tier rank >= requiredTier rank → allowed.
- *   5. Otherwise denied.
+ *   1. Explicit non-expired UserModuleAccess grant → allowed.
+ *   2. Module with requiredTier = null → allowed for everyone.
+ *   3. User tier rank >= requiredTier rank → allowed.
+ *   4. Otherwise denied.
+ *
+ * OWNER tier sits above every paid tier in TIER_RANK, so owner users
+ * automatically pass (3) for every gated module — no special casing.
  */
 import { prisma, prismaRead } from './index';
 import type { Tier, Module as ModuleRow } from '@prisma/client';
@@ -24,11 +26,15 @@ const TIER_RANK: Record<Tier, number> = {
   SOLO: 1,
   PRO: 2,
   AGENCY: 3,
+  OWNER: 4,
 };
 
-/** Returns true when the user bypasses every limit and access check. */
-export function isUnlimited(user: { isOwner: boolean } | null | undefined): boolean {
-  return user?.isOwner === true;
+/**
+ * Returns true when the user bypasses every credit, access and rate limit.
+ * Owner tier is the single source of truth for unlimited access.
+ */
+export function isUnlimited(user: { tier: Tier } | null | undefined): boolean {
+  return user?.tier === 'OWNER';
 }
 
 /**
@@ -41,7 +47,7 @@ export function isUnlimited(user: { isOwner: boolean } | null | undefined): bool
  * Returns `false` for unknown or disabled modules.
  */
 export async function canUserAccessModule(
-  user: { id: string; tier: Tier; isOwner: boolean },
+  user: { id: string; tier: Tier },
   moduleSlug: string
 ): Promise<boolean> {
   if (isUnlimited(user)) return true;
@@ -72,7 +78,6 @@ export async function canUserAccessModule(
 export async function listAccessibleModules(user: {
   id: string;
   tier: Tier;
-  isOwner: boolean;
 }): Promise<ModuleRow[]> {
   const modules = await prismaRead.module.findMany({
     where: { enabled: true },

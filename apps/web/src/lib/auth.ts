@@ -46,7 +46,8 @@ if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEV_LOGIN === '1
           .toLowerCase();
         if (!email || !email.includes('@')) return null;
 
-        // Upsert user so downstream code (tier, credits) works
+        // Upsert user so downstream code (tier, credits) works.
+        // OWNER_EMAILS → isOwner handled by syncOwnerFlag in the jwt callback.
         const user = await prisma.user.upsert({
           where: { email },
           update: {},
@@ -56,6 +57,32 @@ if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEV_LOGIN === '1
       },
     })
   );
+}
+
+/** Lowercased email addresses that get the OWNER tier on every sign-in. */
+const OWNER_EMAILS = new Set(
+  (process.env.OWNER_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+
+/**
+ * Promote the user to OWNER tier when their email appears in OWNER_EMAILS.
+ * Idempotent and cheap. We never demote here — a paid tier shouldn't be
+ * overwritten just because someone forgot to keep the env var in sync.
+ */
+async function syncOwnerTier(userId: string, email: string | null | undefined): Promise<void> {
+  if (!email) return;
+  const shouldBeOwner = OWNER_EMAILS.has(email.toLowerCase());
+  if (!shouldBeOwner) return;
+  const current = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { tier: true },
+  });
+  if (current && current.tier !== 'OWNER') {
+    await prisma.user.update({ where: { id: userId }, data: { tier: 'OWNER' } });
+  }
 }
 
 const useSecureCookies = (process.env.NODE_ENV as string) === 'production';
@@ -106,6 +133,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Promote to OWNER tier first if OWNER_EMAILS matches — read-back
+        // below will then see the updated tier.
+        await syncOwnerTier(user.id!, user.email);
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id! },
           select: { tier: true },

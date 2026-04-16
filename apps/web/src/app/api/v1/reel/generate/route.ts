@@ -47,10 +47,7 @@ export const POST = withAuth(
 
     // Module catalog is the source of truth for both access and pricing.
     // Owner users bypass both.
-    const allowed = await canUserAccessModule(
-      { id: ctx.user.id, tier: ctx.user.tier, isOwner: ctx.user.isOwner },
-      mode
-    );
+    const allowed = await canUserAccessModule({ id: ctx.user.id, tier: ctx.user.tier }, mode);
     if (!allowed) {
       return errorResponse(
         'FORBIDDEN',

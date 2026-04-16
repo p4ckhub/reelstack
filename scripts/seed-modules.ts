@@ -42,20 +42,22 @@ if (OWNER_EMAILS.length > 0) {
   if (owners.length === 0) {
     console.log('  (no matching users found yet - they will be marked on first login)');
   } else {
-    // Flip isOwner
+    // Flip tier to OWNER — bypasses every credit/access/rate limit and
+    // auto-unlocks every gated module via tier-rank comparison.
     await prisma.user.updateMany({
       where: { email: { in: OWNER_EMAILS } },
-      data: { isOwner: true },
+      data: { tier: 'OWNER' },
     });
 
-    // Grant every gated module explicitly — defensive, in case `isOwner`
-    // logic is ever bypassed or an operator flips the flag off by accident.
+    // Defensive: also create explicit UserModuleAccess grants for every
+    // gated module. Belt-and-suspenders in case someone manually drops the
+    // tier back to FREE without cleaning up.
     const gatedSlugs = MODULE_DEFAULTS.filter((m) => m.requiredTier !== null).map((m) => m.slug);
     for (const owner of owners) {
       for (const slug of gatedSlugs) {
         await grantModuleAccess({ userId: owner.id, moduleSlug: slug, source: 'owner' });
       }
-      console.log(`  ✔ ${owner.email}: isOwner=true + grants for ${gatedSlugs.join(', ')}`);
+      console.log(`  ✔ ${owner.email}: tier=OWNER + grants for ${gatedSlugs.join(', ')}`);
     }
   }
 }

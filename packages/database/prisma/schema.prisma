@@ -13,6 +13,9 @@ enum Tier {
   SOLO
   PRO
   AGENCY
+  /// Owner tier — granted via OWNER_EMAILS env. Bypasses credit, access
+  /// and rate limits. Not a sellable plan.
+  OWNER
 }
 
 enum JobStatus {
@@ -30,8 +33,6 @@ model User {
   image            String?
   password         String?
   tier             Tier               @default(FREE)
-  /// Bypasses all credit, access and rate limits. Seeded from OWNER_EMAILS env.
-  isOwner          Boolean            @default(false)
   tokenBalance     Int                @default(0)
   preferences      Json?
   sellfCustomerId  String?            @unique

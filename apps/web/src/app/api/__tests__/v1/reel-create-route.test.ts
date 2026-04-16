@@ -243,8 +243,8 @@ describe('POST /api/v1/reel/generate', () => {
     expect(mockConsumeCredits).toHaveBeenCalledWith(expect.any(String), expect.any(Number), 25);
   });
 
-  it('owner bypasses credit consumption', async () => {
-    const ownerCtx = { ...mockAuthCtx, user: { ...mockUser, isOwner: true } };
+  it('OWNER tier bypasses credit consumption', async () => {
+    const ownerCtx = { ...mockAuthCtx, user: { ...mockUser, tier: 'OWNER' } };
     mockAuthenticate.mockResolvedValue(ownerCtx);
     mockIsUnlimited.mockReturnValue(true);
     mockCanUserAccessModule.mockResolvedValue(true);

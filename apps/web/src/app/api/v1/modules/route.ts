@@ -11,7 +11,8 @@ import type { AuthContext } from '@/lib/api/v1/types';
  * per-module credit cost. Used by the wizard UI and by anyone integrating
  * via API to know what's available on their tier.
  *
- * Owner users (isOwner = true) see every enabled module in the catalog.
+ * OWNER-tier users see every enabled module in the catalog (tier rank
+ * sits above every gating threshold).
  */
 export const GET = withAuth(
   { scope: API_SCOPES.REEL_READ },
@@ -19,7 +20,6 @@ export const GET = withAuth(
     const modules = await listAccessibleModules({
       id: ctx.user.id,
       tier: ctx.user.tier,
-      isOwner: ctx.user.isOwner,
     });
 
     return successResponse({

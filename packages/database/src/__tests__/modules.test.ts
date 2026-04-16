@@ -13,10 +13,10 @@ vi.mock('@prisma/client', prismaMockFactory);
 const { isUnlimited, canUserAccessModule, listAccessibleModules, grantModuleAccess } =
   await import('../modules');
 
-const FREE_USER = { id: 'u1', tier: 'FREE' as const, isOwner: false };
-const PRO_USER = { id: 'u2', tier: 'PRO' as const, isOwner: false };
-const AGENCY_USER = { id: 'u3', tier: 'AGENCY' as const, isOwner: false };
-const OWNER_USER = { id: 'u4', tier: 'FREE' as const, isOwner: true };
+const FREE_USER = { id: 'u1', tier: 'FREE' as const };
+const PRO_USER = { id: 'u2', tier: 'PRO' as const };
+const AGENCY_USER = { id: 'u3', tier: 'AGENCY' as const };
+const OWNER_USER = { id: 'u4', tier: 'OWNER' as const };
 
 const SLIDESHOW = {
   id: 'm1',
@@ -43,11 +43,14 @@ const N8N_EXPLAINER = {
 };
 
 describe('isUnlimited', () => {
-  it('returns true for owner', () => {
-    expect(isUnlimited({ isOwner: true })).toBe(true);
+  it('returns true for OWNER tier', () => {
+    expect(isUnlimited({ tier: 'OWNER' })).toBe(true);
   });
-  it('returns false for non-owner', () => {
-    expect(isUnlimited({ isOwner: false })).toBe(false);
+  it('returns false for every paid tier', () => {
+    expect(isUnlimited({ tier: 'FREE' })).toBe(false);
+    expect(isUnlimited({ tier: 'SOLO' })).toBe(false);
+    expect(isUnlimited({ tier: 'PRO' })).toBe(false);
+    expect(isUnlimited({ tier: 'AGENCY' })).toBe(false);
   });
   it('returns false for null user', () => {
     expect(isUnlimited(null)).toBe(false);
@@ -58,10 +61,11 @@ describe('isUnlimited', () => {
 describe('canUserAccessModule', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('owner always has access (no DB lookup)', async () => {
-    const allowed = await canUserAccessModule(OWNER_USER, 'n8n-explainer');
-    expect(allowed).toBe(true);
-    expect(mockModuleFindUnique).not.toHaveBeenCalled();
+  it('OWNER tier unlocks every gated module via tier rank', async () => {
+    // Even modules gated to AGENCY get unlocked because OWNER > AGENCY.
+    mockModuleFindUnique.mockResolvedValue(N8N_EXPLAINER);
+    mockUserModuleAccessFindUnique.mockResolvedValue(null);
+    expect(await canUserAccessModule(OWNER_USER, 'n8n-explainer')).toBe(true);
   });
 
   it('unknown module is denied', async () => {
@@ -130,12 +134,12 @@ describe('canUserAccessModule', () => {
 describe('listAccessibleModules', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('owner sees every enabled module without DB grant lookup', async () => {
+  it('OWNER tier sees every enabled module via tier rank', async () => {
     const allModules = [SLIDESHOW, TALKING_HEAD, N8N_EXPLAINER];
     mockModuleFindMany.mockResolvedValue(allModules);
+    mockUserModuleAccessFindMany.mockResolvedValue([]);
     const list = await listAccessibleModules(OWNER_USER);
     expect(list).toEqual(allModules);
-    expect(mockUserModuleAccessFindMany).not.toHaveBeenCalled();
   });
 
   it('FREE user sees only null-tier modules without grants', async () => {

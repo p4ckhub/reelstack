@@ -80,7 +80,10 @@ export async function updateUserPreferences(
   return (user[0]?.preferences as Record<string, unknown>) ?? {};
 }
 
-export async function updateUserTier(userId: string, tier: 'FREE' | 'SOLO' | 'PRO' | 'AGENCY') {
+export async function updateUserTier(
+  userId: string,
+  tier: 'FREE' | 'SOLO' | 'PRO' | 'AGENCY' | 'OWNER'
+) {
   return prisma.user.update({
     where: { id: userId },
     data: { tier },

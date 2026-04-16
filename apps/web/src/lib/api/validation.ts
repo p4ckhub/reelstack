@@ -32,7 +32,7 @@ export function sanitizeSubtitleText(text: string): string {
 
 import { prisma } from '@reelstack/database';
 
-export type TierName = 'FREE' | 'SOLO' | 'PRO' | 'AGENCY';
+export type TierName = 'FREE' | 'SOLO' | 'PRO' | 'AGENCY' | 'OWNER';
 
 export interface TierLimits {
   maxFileSize: number;
@@ -46,6 +46,9 @@ const TIER_DEFAULTS: Record<TierName, TierLimits> = {
   SOLO: { maxFileSize: 500 * 1024 * 1024, maxDuration: 300, creditsPerMonth: 300 },
   PRO: { maxFileSize: 2 * 1024 * 1024 * 1024, maxDuration: 1800, creditsPerMonth: 1000 },
   AGENCY: { maxFileSize: 10 * 1024 * 1024 * 1024, maxDuration: Infinity, creditsPerMonth: 5000 },
+  // OWNER bypasses enforcement in routes via isUnlimited(); values are never
+  // consulted in practice but we pick Infinity so accidental reads don't cap.
+  OWNER: { maxFileSize: Infinity, maxDuration: Infinity, creditsPerMonth: Infinity },
 };
 
 // ── In-memory cache (60s TTL per tier+product key) ──────────
