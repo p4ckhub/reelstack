@@ -354,6 +354,11 @@ bun run rs plan out/tts.json
 
 ## API Endpoints
 
+> **Per-module recipes:** every mode has its own `README.md` next to the
+> code. Lazy-load the one you need from the index in
+> [`docs/MODULES.md`](./docs/MODULES.md) — don't read the whole catalog
+> just to send one request.
+
 ### POST /api/v1/reel/generate
 
 Two core modes, detected automatically from body shape:

@@ -34,15 +34,27 @@ Owner tier is **not a sellable plan**. It's a hard-gated admin privilege driven 
 
 ## Current catalog (seeded by `scripts/seed-modules.ts`)
 
-| Slug                  | Category | Cost | Gated  | Notes                                              |
-| --------------------- | -------- | ---- | ------ | -------------------------------------------------- |
-| `generate`            | core     | 15   | —      | Full-auto mode; AI discovers tools and plans shots |
-| `compose`             | core     | 12   | —      | User-provided assets, AI arrangement               |
-| `slideshow`           | core     | 10   | —      | Script over slideshow with karaoke captions        |
-| `captions`            | core     | 8    | —      | Karaoke captions on an existing video              |
-| `talking-object`      | premium  | 15   | —      | Everyday objects narrated via AI image gen         |
-| `n8n-explainer`       | premium  | 20   | AGENCY | Animated n8n workflow walkthroughs                 |
-| `presenter-explainer` | premium  | 30   | PRO    | AI-generated on-camera presenter                   |
+Each module is a plug-in: code + its own `README.md` live together. Load
+the module-specific doc only when you actually call that mode.
+
+| Slug                  | Cost | Gate   | Doc (lazy-load)                                                                                                |
+| --------------------- | ---- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `generate`            | 15   | —      | [`AGENTS.md § API Endpoints`](../AGENTS.md)                                                                    |
+| `compose`             | 12   | —      | [`AGENTS.md § API Endpoints`](../AGENTS.md)                                                                    |
+| `slideshow`           | 10   | —      | [`slideshow/README`](../packages/modules/src/slideshow/README.md)                                              |
+| `captions`            | 8    | —      | [`captions/README`](../packages/modules/src/captions/README.md)                                                |
+| `talking-object`      | 15   | —      | [`ai-tips-module.md`](../packages/modules/src/private/agent/modules/ai-tips-module.md)                         |
+| `n8n-explainer`       | 20   | AGENCY | [`n8n-explainer-module.md`](../packages/modules/src/private/agent/modules/n8n-explainer-module.md)             |
+| `presenter-explainer` | 30   | PRO    | [`presenter-explainer-module.md`](../packages/modules/src/private/agent/modules/presenter-explainer-module.md) |
+
+### Shared polish layers (apply to every module)
+
+These wrap every composition — any module can opt in by passing the field.
+Agents should read only the one they're configuring:
+
+- [`scrollStopper`](./features/scroll-stopper.md) — intro attention grab
+- [`endCard`](./features/end-card.md) — closing CTA overlay
+- [`captionPreset`](./features/caption-presets.md) — premium caption renderers
 
 Changing a cost or gate: edit `MODULE_DEFAULTS` in `packages/database/src/modules.ts` and redeploy. Seed is idempotent and runs every deploy.
 
