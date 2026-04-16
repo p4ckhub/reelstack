@@ -1,11 +1,2 @@
-import type React from 'react';
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      'altcha-widget': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        challengeurl?: string;
-      };
-    }
-  }
-}
+// Use official altcha v3 React types (provides `configuration`, `auto`, `display`, etc.)
+import 'altcha/types/react';
