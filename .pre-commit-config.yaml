@@ -31,3 +31,12 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
+
+      - id: typecheck-web
+        name: TypeScript strict check on apps/web
+        # Catches build-time TS errors (like missing custom element attributes)
+        # that ESLint misses. Skip with: SKIP=typecheck-web git push
+        entry: bash -c 'cd apps/web && bunx tsc --noEmit 2>&1 | grep -v "^remotion-entry.local.ts" | { grep "error TS" && exit 1 || true; }'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
