@@ -17,9 +17,11 @@ interface ReelJobItem {
 
 interface UsageData {
   tier: string;
-  rendersThisMonth: number;
-  monthlyLimit: number;
+  creditsUsed: number;
+  creditsPerMonth: number;
+  creditsPerReel: number;
   tokenBalance: number;
+  resetsAt: string;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -55,31 +57,51 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const renderPercent = usage
-    ? Math.min(100, Math.round((usage.rendersThisMonth / usage.monthlyLimit) * 100))
+  const creditsLeft = usage ? Math.max(0, usage.creditsPerMonth - usage.creditsUsed) : 0;
+  const reelsLeft =
+    usage && usage.creditsPerReel > 0 ? Math.floor(creditsLeft / usage.creditsPerReel) : 0;
+  const usedPercent = usage
+    ? Math.min(100, Math.round((usage.creditsUsed / usage.creditsPerMonth) * 100))
     : 0;
+  const daysUntilReset = usage
+    ? Math.max(1, Math.ceil((new Date(usage.resetsAt).getTime() - Date.now()) / 86_400_000))
+    : null;
 
   return (
     <div className="p-8">
       {/* Usage card */}
       {usage && (
         <div className="mb-8 rounded-lg border p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span
-                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIER_COLORS[usage.tier] ?? ''}`}
-              >
-                {usage.tier}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {usage.rendersThisMonth} / {usage.monthlyLimit} renders this month
-              </span>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIER_COLORS[usage.tier] ?? ''}`}
+                >
+                  {usage.tier}
+                </span>
+                <span className="text-sm font-medium">
+                  {reelsLeft} {reelsLeft === 1 ? 'reel' : 'reels'} left this month
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {usage.creditsUsed} / {usage.creditsPerMonth} credits used
+                {' · '}
+                {usage.creditsPerReel} credits per reel
+                {daysUntilReset !== null && (
+                  <>
+                    {' · '}resets in {daysUntilReset} {daysUntilReset === 1 ? 'day' : 'days'}
+                  </>
+                )}
+              </p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm">
-                <strong>{usage.tokenBalance}</strong>{' '}
-                <span className="text-muted-foreground">tokens</span>
-              </span>
+              {usage.tokenBalance > 0 && (
+                <span className="text-sm">
+                  <strong>{usage.tokenBalance}</strong>{' '}
+                  <span className="text-muted-foreground">bonus tokens</span>
+                </span>
+              )}
               {usage.tier === 'FREE' && (
                 <Link href="/pricing">
                   <Button variant="outline" size="sm">
@@ -91,8 +113,8 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
             <div
-              className={`h-full rounded-full transition-all ${renderPercent >= 90 ? 'bg-red-500' : renderPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
-              style={{ width: `${renderPercent}%` }}
+              className={`h-full rounded-full transition-all ${usedPercent >= 90 ? 'bg-red-500' : usedPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+              style={{ width: `${usedPercent}%` }}
             />
           </div>
         </div>
