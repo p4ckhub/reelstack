@@ -41,7 +41,9 @@ export class OpenRouterProvider implements TranscriptionProvider {
 
   constructor(config: OpenRouterConfig) {
     this.apiKey = config.apiKey;
-    this.model = config.model ?? 'openai/gpt-4o-transcribe';
+    // whisper-1 is the only OpenAI model that supports response_format=verbose_json
+    // with timestamp_granularities=['word']. gpt-4o-transcribe rejects verbose_json.
+    this.model = config.model ?? 'openai/whisper-1';
   }
 
   async isAvailable(): Promise<boolean> {
