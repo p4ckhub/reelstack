@@ -24,17 +24,16 @@ describe('rateLimit', () => {
 
   it('resets after window expires', async () => {
     const key = `test-reset-${Date.now()}`;
-    const config = { maxRequests: 1, windowMs: 1 }; // 1ms window
+    // Redis stores TTL with second precision (Math.ceil(windowMs/1000)), so
+    // windowMs must be ≥ 1000 for the test to pass against both the Redis
+    // path (when local Redis is running) and the in-memory fallback.
+    const config = { maxRequests: 1, windowMs: 1000 };
 
     await rateLimit(key, config);
 
-    // Wait for window to expire
-    await new Promise<void>((resolve) => {
-      setTimeout(async () => {
-        const result = await rateLimit(key, config);
-        expect(result.success).toBe(true);
-        resolve();
-      }, 10);
-    });
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    const result = await rateLimit(key, config);
+    expect(result.success).toBe(true);
   });
 });
