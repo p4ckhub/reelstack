@@ -17,6 +17,7 @@ interface ReelJobItem {
 
 interface UsageData {
   tier: string;
+  unlimited?: boolean;
   creditsUsed: number;
   creditsPerMonth: number;
   creditsPerReel: number;
@@ -82,48 +83,59 @@ export default function DashboardPage() {
       {/* Usage card */}
       {usage && (
         <div className="mb-8 rounded-lg border p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIER_COLORS[usage.tier] ?? ''}`}
-                >
-                  {usage.tier}
-                </span>
-                <span className="text-sm font-medium">
-                  {reelsLeft} {reelsLeft === 1 ? 'reel' : 'reels'} left this month
-                </span>
+          {usage.unlimited ? (
+            <div className="flex items-center gap-3">
+              <span className="inline-flex rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-semibold text-violet-600">
+                OWNER
+              </span>
+              <span className="text-sm font-medium">Unlimited renders · no credit limits</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${TIER_COLORS[usage.tier] ?? ''}`}
+                    >
+                      {usage.tier}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {reelsLeft} {reelsLeft === 1 ? 'reel' : 'reels'} left this month
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {usage.creditsUsed} / {usage.creditsPerMonth} credits used
+                    {' · '}
+                    {usage.creditsPerReel} credits per reel
+                    {' · '}resets in {usage.daysUntilReset}{' '}
+                    {usage.daysUntilReset === 1 ? 'day' : 'days'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  {usage.tokenBalance > 0 && (
+                    <span className="text-sm">
+                      <strong>{usage.tokenBalance}</strong>{' '}
+                      <span className="text-muted-foreground">bonus tokens</span>
+                    </span>
+                  )}
+                  {usage.tier === 'FREE' && (
+                    <Link href="/pricing">
+                      <Button variant="outline" size="sm">
+                        Upgrade
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {usage.creditsUsed} / {usage.creditsPerMonth} credits used
-                {' · '}
-                {usage.creditsPerReel} credits per reel
-                {' · '}resets in {usage.daysUntilReset}{' '}
-                {usage.daysUntilReset === 1 ? 'day' : 'days'}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              {usage.tokenBalance > 0 && (
-                <span className="text-sm">
-                  <strong>{usage.tokenBalance}</strong>{' '}
-                  <span className="text-muted-foreground">bonus tokens</span>
-                </span>
-              )}
-              {usage.tier === 'FREE' && (
-                <Link href="/pricing">
-                  <Button variant="outline" size="sm">
-                    Upgrade
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full transition-all ${usedPercent >= 90 ? 'bg-red-500' : usedPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
-              style={{ width: `${usedPercent}%` }}
-            />
-          </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={`h-full rounded-full transition-all ${usedPercent >= 90 ? 'bg-red-500' : usedPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${usedPercent}%` }}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 

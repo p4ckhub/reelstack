@@ -18,6 +18,7 @@ import {
 type Step = 'script' | 'style' | 'settings' | 'generating';
 
 interface FormData {
+  mode: string;
   script: string;
   layout: 'fullscreen' | 'split-screen' | 'picture-in-picture';
   style: 'dynamic' | 'calm' | 'cinematic' | 'educational';
@@ -27,6 +28,14 @@ interface FormData {
   captionPreset: string;
   highlightColor: string;
   backgroundColor: string;
+}
+
+interface ModuleOption {
+  slug: string;
+  name: string;
+  description: string | null;
+  category: string;
+  creditCost: number;
 }
 
 interface JobStatus {
@@ -103,6 +112,7 @@ const TTS_VOICES: Record<string, Array<{ id: string; label: string }>> = {
 export default function ReelWizardPage() {
   const [step, setStep] = useState<Step>('script');
   const [form, setForm] = useState<FormData>({
+    mode: 'generate',
     script: '',
     layout: 'fullscreen',
     style: 'dynamic',
@@ -113,9 +123,18 @@ export default function ReelWizardPage() {
     highlightColor: '#F59E0B',
     backgroundColor: '#0E0E12',
   });
+  const [modules, setModules] = useState<ModuleOption[]>([]);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Load available modules (access + credit cost are server-side truth)
+  useEffect(() => {
+    fetch('/api/v1/modules')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((resp) => setModules(resp?.data?.modules ?? []))
+      .catch((err) => console.warn('[reel-wizard] modules fetch failed:', err));
+  }, []);
 
   // Load saved user preferences as form defaults
   useEffect(() => {
@@ -171,6 +190,7 @@ export default function ReelWizardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          mode: form.mode,
           script: form.script,
           layout: form.layout,
           style: form.style,
@@ -256,6 +276,33 @@ export default function ReelWizardPage() {
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="space-y-4">
+              {modules.length > 0 && (
+                <div>
+                  <Label>Reel type</Label>
+                  <Select value={form.mode} onValueChange={(v) => update('mode', v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules.map((m) => (
+                        <SelectItem key={m.slug} value={m.slug}>
+                          {m.name}{' '}
+                          <span className="text-xs text-muted-foreground">
+                            — {m.creditCost} credits
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(() => {
+                    const selected = modules.find((m) => m.slug === form.mode);
+                    return selected?.description ? (
+                      <p className="mt-1 text-xs text-muted-foreground">{selected.description}</p>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="script">Script</Label>
                 <textarea

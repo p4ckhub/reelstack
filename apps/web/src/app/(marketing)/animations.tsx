@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 
 /* ── Scroll-triggered fade-in ──────────────────────────────────── */
 
@@ -227,7 +227,9 @@ const DEFAULT_KARAOKE_WORDS = [
 ];
 
 export function KaraokeDemo({ words, className = '' }: { words?: string[]; className?: string }) {
-  const DEMO_WORDS = words ?? DEFAULT_KARAOKE_WORDS;
+  // Memoize so the same prop value produces the same array identity across
+  // renders — lets the effect depend on it without re-running on every render.
+  const DEMO_WORDS = useMemo(() => words ?? DEFAULT_KARAOKE_WORDS, [words]);
   const [activeIdx, setActiveIdx] = useState(-1);
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
@@ -262,7 +264,7 @@ export function KaraokeDemo({ words, className = '' }: { words?: string[]; class
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [DEMO_WORDS]);
 
   return (
     <div
