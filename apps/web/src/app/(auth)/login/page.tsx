@@ -170,6 +170,38 @@ function LoginForm() {
             <p className="text-center text-xs text-muted-foreground">
               No password needed. We&apos;ll email you a sign-in link.
             </p>
+            {process.env.NEXT_PUBLIC_ALLOW_DEV_LOGIN === '1' && (
+              <div className="border-t pt-4">
+                <p className="mb-2 text-center text-xs text-yellow-600">
+                  Dev mode: sign in without email
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={loading || !email}
+                  onClick={async () => {
+                    setError('');
+                    setLoading(true);
+                    try {
+                      const result = await signIn('dev-login', {
+                        email,
+                        redirect: false,
+                      });
+                      if (result?.error) {
+                        setError('Dev login failed.');
+                      } else if (result?.ok) {
+                        window.location.href = '/dashboard';
+                      }
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Dev login (bypass magic link)
+                </Button>
+              </div>
+            )}
           </form>
         )}
       </CardContent>

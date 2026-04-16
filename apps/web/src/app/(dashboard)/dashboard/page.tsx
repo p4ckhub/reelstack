@@ -63,9 +63,16 @@ export default function DashboardPage() {
   const usedPercent = usage
     ? Math.min(100, Math.round((usage.creditsUsed / usage.creditsPerMonth) * 100))
     : 0;
-  const daysUntilReset = usage
-    ? Math.max(1, Math.ceil((new Date(usage.resetsAt).getTime() - Date.now()) / 86_400_000))
-    : null;
+  // Compute in effect — Date.now() is impure, can't call during render (React rules)
+  const [daysUntilReset, setDaysUntilReset] = useState<number | null>(null);
+  useEffect(() => {
+    if (!usage) return;
+    const days = Math.max(
+      1,
+      Math.ceil((new Date(usage.resetsAt).getTime() - Date.now()) / 86_400_000)
+    );
+    setDaysUntilReset(days);
+  }, [usage]);
 
   return (
     <div className="p-8">

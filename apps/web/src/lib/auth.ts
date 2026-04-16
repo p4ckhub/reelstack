@@ -9,6 +9,8 @@ const log = createLogger('auth');
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const Nodemailer = require('next-auth/providers/nodemailer').default;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Credentials = require('next-auth/providers/credentials').default;
 
 const providers: Provider[] = [
   Nodemailer({
@@ -23,6 +25,38 @@ const providers: Provider[] = [
     from: process.env.EMAIL_FROM || 'noreply@reelstack.io',
   }),
 ];
+
+/**
+ * Dev-only credentials provider: lets you sign in locally with just an email
+ * (no SMTP required). Gated on NODE_ENV=development AND ALLOW_DEV_LOGIN=1
+ * so it can never accidentally ship to production.
+ */
+if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEV_LOGIN === '1') {
+  log.warn('⚠️  Dev login provider ENABLED — any email logs in without password');
+  providers.push(
+    Credentials({
+      id: 'dev-login',
+      name: 'Dev Login (localhost only)',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+      },
+      async authorize(credentials: Record<string, unknown> | undefined) {
+        const email = String(credentials?.email ?? '')
+          .trim()
+          .toLowerCase();
+        if (!email || !email.includes('@')) return null;
+
+        // Upsert user so downstream code (tier, credits) works
+        const user = await prisma.user.upsert({
+          where: { email },
+          update: {},
+          create: { email, emailVerified: new Date() },
+        });
+        return { id: user.id, email: user.email, name: user.name };
+      },
+    })
+  );
+}
 
 const useSecureCookies = (process.env.NODE_ENV as string) === 'production';
 
