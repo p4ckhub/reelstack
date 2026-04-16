@@ -340,7 +340,12 @@ async function transcribeViaApi(
     new Blob([new Uint8Array(wavBuffer)], { type: 'audio/wav' }),
     'audio.wav'
   );
-  formData.append('model', 'gpt-4o-transcribe');
+  // whisper-1 is currently the only OpenAI model that accepts
+  // response_format=verbose_json with word-level timestamp_granularities.
+  // gpt-4o-transcribe (which aliases to gpt-4o-transcribe-api-ev3)
+  // explicitly rejects verbose_json — we'd lose word timings, which the
+  // entire karaoke-caption pipeline depends on.
+  formData.append('model', 'whisper-1');
   formData.append('response_format', 'verbose_json');
   formData.append('timestamp_granularities[]', 'word');
   if (options?.language) {
