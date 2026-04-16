@@ -30,6 +30,8 @@ model User {
   image            String?
   password         String?
   tier             Tier               @default(FREE)
+  /// Bypasses all credit, access and rate limits. Seeded from OWNER_EMAILS env.
+  isOwner          Boolean            @default(false)
   tokenBalance     Int                @default(0)
   preferences      Json?
   sellfCustomerId  String?            @unique
@@ -40,6 +42,7 @@ model User {
   apiKeys          ApiKey[]
   tokenTransactions TokenTransaction[]
   auditLogs        AuditLog[]
+  moduleAccesses   UserModuleAccess[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 }
@@ -177,6 +180,51 @@ model CreditPricing {
   updatedAt   DateTime @updatedAt
 
   @@id([productSlug, action])
+}
+
+/// Catalog of reel-generation modules (slideshow, captions, n8n-explainer, etc.).
+/// Phase 1 uses: enabled, creditCost, requiredTier.
+/// Phase 3 (marketplace) will use: bundleUrl, version, thumbnailUrl, previewUrl.
+model Module {
+  id           String   @id @default(uuid())
+  slug         String   @unique // "slideshow", "captions", "n8n-explainer", ...
+  name         String
+  description  String?
+  category     String   @default("premium") // "core" | "premium" | "experimental"
+
+  enabled      Boolean  @default(true)
+  creditCost   Int      @default(10)
+  requiredTier Tier? // null = available to all tiers
+
+  // Marketplace metadata (Phase 3)
+  thumbnailUrl String?
+  previewUrl   String?
+  bundleUrl    String? // where to fetch runtime bundle from when Phase 3 lands
+  version      String   @default("1.0.0")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accesses     UserModuleAccess[]
+
+  @@index([enabled, category])
+}
+
+/// Explicit grants for module access (manual, purchase, subscription, gift).
+/// Overrides `Module.requiredTier`: if a row exists and hasn't expired, the
+/// user has access regardless of their tier.
+model UserModuleAccess {
+  userId    String
+  moduleId  String
+  grantedAt DateTime @default(now())
+  expiresAt DateTime?
+  source    String   @default("manual") // "manual" | "purchase" | "subscription" | "gift" | "owner"
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, moduleId])
+  @@index([userId])
 }
 
 model ReelJob {

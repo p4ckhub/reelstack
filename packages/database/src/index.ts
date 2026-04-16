@@ -555,5 +555,11 @@ export async function getAuditLogs(options: {
   });
 }
 
+// ==========================================
+// Module access control
+// ==========================================
+
+export * from './modules';
+
 export { PrismaClient };
 export type * from '@prisma/client';

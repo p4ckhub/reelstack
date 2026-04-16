@@ -31,6 +31,16 @@ export const mockTokenTransactionFindMany = vi.fn();
 export const mockTierConfigFindUnique = vi.fn();
 export const mockTierConfigFindMany = vi.fn();
 
+// Module model
+export const mockModuleFindUnique = vi.fn();
+export const mockModuleFindMany = vi.fn();
+export const mockModuleUpsert = vi.fn();
+
+// UserModuleAccess model
+export const mockUserModuleAccessFindUnique = vi.fn();
+export const mockUserModuleAccessFindMany = vi.fn();
+export const mockUserModuleAccessUpsert = vi.fn();
+
 // Raw queries
 export const mockExecuteRaw = vi.fn();
 export const mockQueryRaw = vi.fn();
@@ -62,6 +72,16 @@ export const mockPrismaInstance = {
   tierConfig: {
     findUnique: (...args: unknown[]) => mockTierConfigFindUnique(...args),
     findMany: (...args: unknown[]) => mockTierConfigFindMany(...args),
+  },
+  module: {
+    findUnique: (...args: unknown[]) => mockModuleFindUnique(...args),
+    findMany: (...args: unknown[]) => mockModuleFindMany(...args),
+    upsert: (...args: unknown[]) => mockModuleUpsert(...args),
+  },
+  userModuleAccess: {
+    findUnique: (...args: unknown[]) => mockUserModuleAccessFindUnique(...args),
+    findMany: (...args: unknown[]) => mockUserModuleAccessFindMany(...args),
+    upsert: (...args: unknown[]) => mockUserModuleAccessUpsert(...args),
   },
   $transaction: (...args: unknown[]) => mockTransaction(...args),
   $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),
