@@ -12,8 +12,23 @@ import type { VideoGenerator, VideoGeneratorOptions } from './video-generator';
 
 const log = createLogger('video-generator-factory');
 
-/** Provider preference order (best quality/features first) */
-const DEFAULT_PREFERENCE = ['veo3', 'veo31-gemini', 'kling', 'seedance'] as const;
+/**
+ * Provider preference order, best quality first.
+ *
+ * Tool IDs are `<model>-<provider>` (e.g. `kling-kie`, `kling-piapi`). We
+ * match by **model prefix** so whichever provider (KIE, PIAPI, Wavespeed,
+ * Google direct) is configured gets picked up automatically — no need to
+ * keep this list in lockstep with every provider variant.
+ */
+const DEFAULT_PREFERENCE = [
+  'veo31',
+  'veo3',
+  'kling',
+  'seedance',
+  'wan',
+  'hailuo',
+  'hunyuan',
+] as const;
 
 export interface VideoGeneratorFactoryOptions extends VideoGeneratorOptions {
   /** Preferred provider order (default: veo3 > kling > seedance) */
@@ -41,14 +56,22 @@ export async function createBestVideoGenerator(
   const preference = options?.preferredProviders ?? DEFAULT_PREFERENCE;
   const manifest = registry.getToolManifest();
 
-  // Collect all available tools in preference order
+  // Match each preference as a prefix against tool IDs. Example:
+  // preference 'kling' matches 'kling-kie', 'kling-piapi', 'kling-img2video-piapi'.
+  // Preserves preference order (best model first), and within a model the
+  // registry's tool order breaks ties.
   const availableTools = [];
-  for (const providerId of preference) {
-    const entry = manifest.tools.find((t) => t.id === providerId && t.available);
-    if (entry) {
-      const tool = registry.get(providerId);
+  const seen = new Set<string>();
+  for (const modelPrefix of preference) {
+    const matches = manifest.tools.filter(
+      (t) => t.available && (t.id === modelPrefix || t.id.startsWith(`${modelPrefix}-`))
+    );
+    for (const entry of matches) {
+      if (seen.has(entry.id)) continue;
+      const tool = registry.get(entry.id);
       if (tool) {
         availableTools.push(tool);
+        seen.add(entry.id);
       }
     }
   }
@@ -56,7 +79,7 @@ export async function createBestVideoGenerator(
   if (availableTools.length === 0) {
     const available = manifest.tools.filter((t) => t.available).map((t) => t.id);
     throw new Error(
-      `No video generation tool available. Checked: ${[...preference].join(', ')}. Available tools: ${available.join(', ') || 'none'}`
+      `No video generation tool available. Checked model prefixes: ${[...preference].join(', ')}. Available tools: ${available.join(', ') || 'none'}`
     );
   }
 
