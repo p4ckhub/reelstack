@@ -32,7 +32,9 @@ Omit the whole object to render without a card.
 
 ## Architecture
 
-- Component: `packages/remotion/src/components/EndCardOverlay.tsx`.
+- Implemented as a private card preset (`shimmer`) in `reelstack-modules`
+  — composition looks it up via `getCard('shimmer')` from
+  `@reelstack/remotion/cards`.
 - Pure transform + opacity animations (Lighthouse-safe, deterministic
   across render retries).
 - Renders `null` outside its frame window, so the underlying composition
