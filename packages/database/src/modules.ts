@@ -119,6 +119,25 @@ export const MODULE_DEFAULTS: ReadonlyArray<{
   creditCost: number;
   requiredTier: Tier | null;
 }> = [
+  // Slugs match the values of `reelModeSchema` in
+  // apps/web/src/lib/api/v1/reel-schemas.ts so that the API `mode`
+  // field maps directly to a catalog row — no translation table needed.
+  {
+    slug: 'generate',
+    name: 'Full auto',
+    description: 'Script in, AI discovers tools and plans shots automatically.',
+    category: 'core',
+    creditCost: 15,
+    requiredTier: null,
+  },
+  {
+    slug: 'compose',
+    name: 'Compose',
+    description: 'Arrange your own assets with AI-generated narration and cuts.',
+    category: 'core',
+    creditCost: 12,
+    requiredTier: null,
+  },
   {
     slug: 'slideshow',
     name: 'Slideshow',
@@ -136,7 +155,7 @@ export const MODULE_DEFAULTS: ReadonlyArray<{
     requiredTier: null,
   },
   {
-    slug: 'talking-objects',
+    slug: 'talking-object',
     name: 'Talking Objects',
     description: 'Everyday objects animated with AI to narrate your script.',
     category: 'premium',
@@ -153,7 +172,7 @@ export const MODULE_DEFAULTS: ReadonlyArray<{
     requiredTier: 'AGENCY',
   },
   {
-    slug: 'talking-head',
+    slug: 'presenter-explainer',
     name: 'Talking Head',
     description: 'AI-generated presenter reads your script on camera.',
     category: 'premium',

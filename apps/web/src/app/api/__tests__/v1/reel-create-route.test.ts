@@ -20,6 +20,9 @@ import {
   mockConsumeCredits,
   mockGetCreditCost,
   mockUpdateReelJobStatus,
+  mockCanUserAccessModule,
+  mockGetModuleBySlug,
+  mockIsUnlimited,
 } from '@/__test-utils__/database-mock';
 vi.mock('@reelstack/database', databaseMockFactory);
 
@@ -44,6 +47,10 @@ describe('POST /api/v1/reel/generate', () => {
     vi.clearAllMocks();
     mockGetCreditCost.mockResolvedValue(10);
     mockUpdateReelJobStatus.mockResolvedValue({});
+    // Module access defaults: allowed, not-owner, fallback cost 10
+    mockCanUserAccessModule.mockResolvedValue(true);
+    mockIsUnlimited.mockReturnValue(false);
+    mockGetModuleBySlug.mockResolvedValue(null);
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -210,5 +217,44 @@ describe('POST /api/v1/reel/generate', () => {
         reelConfig: expect.objectContaining({ mode: 'compose' }),
       })
     );
+  });
+
+  it('returns 403 when user lacks module access', async () => {
+    mockAuthenticate.mockResolvedValue(mockAuthCtx);
+    mockCanUserAccessModule.mockResolvedValue(false);
+    const response = await POST(makeRequest({ script: 'Hello' }));
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error.code).toBe('FORBIDDEN');
+    expect(mockConsumeCredits).not.toHaveBeenCalled();
+  });
+
+  it('uses per-module credit cost when module row exists', async () => {
+    mockAuthenticate.mockResolvedValue(mockAuthCtx);
+    mockCanUserAccessModule.mockResolvedValue(true);
+    mockGetModuleBySlug.mockResolvedValue({ creditCost: 25 });
+    mockConsumeCredits.mockResolvedValue({ consumed: true, source: 'tier' });
+    mockCreateReelJob.mockResolvedValue({ id: 'reel-7' });
+    mockEnqueue.mockResolvedValue(undefined);
+
+    await POST(makeRequest({ script: 'Hello' }));
+
+    // Third positional arg to consumeCredits is the per-module cost.
+    expect(mockConsumeCredits).toHaveBeenCalledWith(expect.any(String), expect.any(Number), 25);
+  });
+
+  it('owner bypasses credit consumption', async () => {
+    const ownerCtx = { ...mockAuthCtx, user: { ...mockUser, isOwner: true } };
+    mockAuthenticate.mockResolvedValue(ownerCtx);
+    mockIsUnlimited.mockReturnValue(true);
+    mockCanUserAccessModule.mockResolvedValue(true);
+    mockCreateReelJob.mockResolvedValue({ id: 'reel-owner' });
+    mockEnqueue.mockResolvedValue(undefined);
+
+    const response = await POST(makeRequest({ script: 'Hello' }));
+    expect(response.status).toBe(201);
+    const body = await response.json();
+    expect(body.data.creditSource).toBe('owner');
+    expect(mockConsumeCredits).not.toHaveBeenCalled();
   });
 });

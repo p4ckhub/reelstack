@@ -65,6 +65,14 @@ export const mockSeedTierDefaults = vi.fn();
 // AuditLog queries
 export const mockCreateAuditLog = vi.fn().mockResolvedValue({});
 
+// Module queries
+export const mockIsUnlimited = vi.fn().mockReturnValue(false);
+export const mockCanUserAccessModule = vi.fn().mockResolvedValue(true);
+export const mockListAccessibleModules = vi.fn().mockResolvedValue([]);
+export const mockGetModuleBySlug = vi.fn().mockResolvedValue(null);
+export const mockGrantModuleAccess = vi.fn().mockResolvedValue(undefined);
+export const mockSeedModuleDefaults = vi.fn().mockResolvedValue(undefined);
+
 // Prisma client (for tests that access prisma directly)
 export const mockPrisma = {
   user: { findUnique: vi.fn(), upsert: vi.fn() },
@@ -148,6 +156,13 @@ export function databaseMockFactory() {
     seedTierDefaults: (...args: unknown[]) => mockSeedTierDefaults(...args),
     createAuditLog: (...args: unknown[]) => mockCreateAuditLog(...args),
     getAuditLogs: vi.fn(),
+    isUnlimited: (...args: unknown[]) => mockIsUnlimited(...args),
+    canUserAccessModule: (...args: unknown[]) => mockCanUserAccessModule(...args),
+    listAccessibleModules: (...args: unknown[]) => mockListAccessibleModules(...args),
+    getModuleBySlug: (...args: unknown[]) => mockGetModuleBySlug(...args),
+    grantModuleAccess: (...args: unknown[]) => mockGrantModuleAccess(...args),
+    seedModuleDefaults: (...args: unknown[]) => mockSeedModuleDefaults(...args),
+    MODULE_DEFAULTS: [],
     PrismaClient: vi.fn(),
   };
 }

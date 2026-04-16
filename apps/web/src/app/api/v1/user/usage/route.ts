@@ -1,12 +1,17 @@
 import { NextRequest } from 'next/server';
 import { API_SCOPES } from '@reelstack/types';
-import { getMonthlyCreditsUsed, getTokenBalance, getCreditCost } from '@reelstack/database';
+import {
+  getMonthlyCreditsUsed,
+  getTokenBalance,
+  getCreditCost,
+  isUnlimited,
+} from '@reelstack/database';
 import { withAuth, successResponse } from '@/lib/api/v1/middleware';
 import { getTierLimits } from '@/lib/api/validation';
 import type { TierName } from '@/lib/api/validation';
 import type { AuthContext } from '@/lib/api/v1/types';
 
-/** GET /api/v1/user/usage - Get current usage stats */
+/** GET /api/v1/user/usage — current usage stats, tier limits and reset date. */
 export const GET = withAuth(
   { scope: API_SCOPES.REEL_READ },
   async (_req: NextRequest, ctx: AuthContext) => {
@@ -24,6 +29,7 @@ export const GET = withAuth(
 
     return successResponse({
       tier,
+      unlimited: isUnlimited(ctx.user),
       creditsUsed,
       creditsPerMonth: limits.creditsPerMonth,
       creditsPerReel: videoCost,

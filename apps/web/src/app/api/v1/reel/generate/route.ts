@@ -3,7 +3,9 @@ import { API_SCOPES } from '@reelstack/types';
 import {
   createReelJob,
   consumeCredits,
-  getCreditCost,
+  getModuleBySlug,
+  canUserAccessModule,
+  isUnlimited,
   updateReelJobStatus,
 } from '@reelstack/database';
 import { getTierLimits } from '@/lib/api/validation';
@@ -38,21 +40,43 @@ export const POST = withAuth(
       );
     }
 
-    const limits = await getTierLimits(ctx.user.tier as import('@/lib/api/validation').TierName);
-    const cost = await getCreditCost('video');
-    const { consumed, source } = await consumeCredits(ctx.user.id, limits.creditsPerMonth, cost);
-    if (!consumed) {
-      return errorResponse(
-        'QUOTA_EXCEEDED',
-        'Monthly render limit reached and no tokens available. Upgrade or purchase tokens.',
-        429
-      );
-    }
-
     // Use explicit mode from schema (defaults to 'generate').
     // Backward compat: if assets provided but mode not explicitly set, treat as compose.
     const mode =
       parsed.data.mode === 'generate' && parsed.data.assets ? 'compose' : parsed.data.mode;
+
+    // Module catalog is the source of truth for both access and pricing.
+    // Owner users bypass both.
+    const allowed = await canUserAccessModule(
+      { id: ctx.user.id, tier: ctx.user.tier, isOwner: ctx.user.isOwner },
+      mode
+    );
+    if (!allowed) {
+      return errorResponse(
+        'FORBIDDEN',
+        `Your plan doesn't include the "${mode}" module. Upgrade or purchase it to unlock.`,
+        403
+      );
+    }
+
+    // Load per-module credit cost. Fall back to a sensible default if the
+    // catalog hasn't been seeded (e.g. first boot before `seed-modules.ts`).
+    const mod = await getModuleBySlug(mode);
+    const cost = mod?.creditCost ?? 10;
+
+    let source: 'tier' | 'token' | 'owner' | null = 'owner';
+    if (!isUnlimited(ctx.user)) {
+      const limits = await getTierLimits(ctx.user.tier as import('@/lib/api/validation').TierName);
+      const result = await consumeCredits(ctx.user.id, limits.creditsPerMonth, cost);
+      if (!result.consumed) {
+        return errorResponse(
+          'QUOTA_EXCEEDED',
+          'Monthly render limit reached and no tokens available. Upgrade or purchase tokens.',
+          429
+        );
+      }
+      source = result.source;
+    }
 
     const job = await createReelJob({
       userId: ctx.user.id,
