@@ -16,7 +16,7 @@
  * OWNER tier sits above every paid tier in TIER_RANK, so owner users
  * automatically pass (3) for every gated module — no special casing.
  */
-import { prisma, prismaRead } from './index';
+import { prisma, prismaRead } from './client';
 import type { Tier, Module as ModuleRow } from '@prisma/client';
 
 // Tier ordering for >= comparisons. Keep in sync with the Tier enum in
