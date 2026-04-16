@@ -335,7 +335,9 @@ describe('processReelPipelineJob', () => {
 
     await processReelPipelineJob('reel-1');
 
-    expect(mockGetSignedUrl).toHaveBeenCalledWith('reels/reel-1/output.mp4', 86400);
+    expect(mockGetSignedUrl).toHaveBeenCalledWith('reels/reel-1/output.mp4', 86400, {
+      audience: 'external',
+    });
   });
 
   it('sets status to COMPLETED with output URL', async () => {

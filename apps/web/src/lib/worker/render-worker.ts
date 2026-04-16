@@ -73,7 +73,7 @@ export async function processRenderJob(jobId: string): Promise<void> {
     const outputKey = `renders/${jobId}/output.mp4`;
     await storage.upload(outputBuffer, outputKey);
 
-    const outputUrl = await storage.getSignedUrl(outputKey, 86400); // 24h
+    const outputUrl = await storage.getSignedUrl(outputKey, 86400, { audience: 'external' });
 
     await updateReelJobStatus(jobId, {
       status: 'COMPLETED',

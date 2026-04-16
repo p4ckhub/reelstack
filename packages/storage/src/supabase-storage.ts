@@ -68,7 +68,12 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     return buffer;
   }
 
-  async getSignedUrl(path: string, expiresIn = 3600): Promise<string> {
+  async getSignedUrl(
+    path: string,
+    expiresIn = 3600,
+    // Supabase serves a single public URL — internal/external are the same.
+    _opts?: { audience?: 'internal' | 'external' }
+  ): Promise<string> {
     this.validatePath(path);
     const { data, error } = await this.supabase.storage
       .from(this.bucket)

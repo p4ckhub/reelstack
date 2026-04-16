@@ -193,7 +193,9 @@ export async function processReelPipelineJob(jobId: string, fromStepId?: string)
     const outputBuffer = await readFile(outputPath);
     const outputKey = `reels/${jobId}/output.mp4`;
     await storage.upload(outputBuffer, outputKey);
-    const outputUrl = await storage.getSignedUrl(outputKey, 86400);
+    // Final MP4 URL goes to the dashboard, API clients, publisher workers
+    // (YouTube/TikTok) — all consumers outside the docker network.
+    const outputUrl = await storage.getSignedUrl(outputKey, 86400, { audience: 'external' });
 
     // Clean up local file
     await unlink(outputPath).catch((err) => log.warn({ jobId, err }, 'Cleanup failed'));

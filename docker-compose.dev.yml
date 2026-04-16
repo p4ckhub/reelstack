@@ -190,6 +190,10 @@ services:
       REDIS_URL: ${REDIS_URL}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_PORT: "9000"
+      # Presigned URLs need to be reachable from the host (where the browser
+      # lives), not just from inside the docker network. Operator points
+      # this at wherever MinIO is exposed to clients.
+      MINIO_PUBLIC_ENDPOINT: localhost
       # Point n8n-explainer at the sibling n8n service so it doesn't try to
       # `docker run` from inside this container.
       N8N_BASE_URL: http://n8n:5678

@@ -445,7 +445,23 @@ export type DeploymentMode = 'cloud' | 'vps';
 export interface StorageAdapter {
   upload(file: Buffer, path: string): Promise<string>;
   download(path: string): Promise<Buffer>;
-  getSignedUrl(path: string, expiresIn?: number): Promise<string>;
+  /**
+   * Presigned GET URL.
+   *
+   * `audience` chooses which hostname the URL is bound to:
+   *   - `'internal'` (default): reachable from pipeline workers in the
+   *     same network (e.g. docker-compose `minio` hostname).
+   *   - `'external'`: reachable from the public internet / user's browser.
+   *     API routes that return a URL to the client MUST pass this.
+   *
+   * Adapters that don't have a split between internal/external hosts
+   * should return the same URL for both.
+   */
+  getSignedUrl(
+    path: string,
+    expiresIn?: number,
+    opts?: { audience?: 'internal' | 'external' }
+  ): Promise<string>;
   delete(path: string): Promise<void>;
 }
 
