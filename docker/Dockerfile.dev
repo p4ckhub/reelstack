@@ -53,6 +53,13 @@ COPY packages/image-gen/package.json packages/image-gen/
 
 RUN bun install
 
+# Install Playwright chromium for the n8n-explainer module (screenshots of
+# the n8n editor). Skipped if @playwright/test isn't a resolved dep, so
+# forks without the private modules don't pay the ~300MB download.
+RUN if [ -d node_modules/@playwright ]; then \
+      bunx playwright install --with-deps chromium; \
+    fi
+
 # Generate Prisma Client at build time so the volume mount keeps it
 COPY packages/database/prisma ./packages/database/prisma
 RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma

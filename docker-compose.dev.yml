@@ -53,6 +53,28 @@ services:
       timeout: 5s
       retries: 10
 
+  # n8n — used by the n8n-explainer module to load workflow JSON and take
+  # screenshots. Running it as a compose service lets the worker talk to it
+  # over HTTP instead of spawning a sibling docker container from inside
+  # itself (which would need Docker-in-Docker).
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_TEMPLATES_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_SECURE_COOKIE: "false"
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -168,12 +190,17 @@ services:
       REDIS_URL: ${REDIS_URL}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_PORT: "9000"
+      # Point n8n-explainer at the sibling n8n service so it doesn't try to
+      # `docker run` from inside this container.
+      N8N_BASE_URL: http://n8n:5678
     volumes:
       - .:/app
       - node_modules_root:/app/node_modules
       - node_modules_web:/app/apps/web/node_modules
     depends_on:
       web:
+        condition: service_healthy
+      n8n:
         condition: service_healthy
 
   # Same node_modules volumes are also needed by db-migrate so the seed can
@@ -184,6 +211,7 @@ volumes:
   postgres_data:
   redis_data:
   minio_data:
+  n8n_data:
   node_modules_root:
   node_modules_web:
   next_cache:
