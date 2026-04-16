@@ -232,42 +232,50 @@ export const CaptionOverlay: React.FC<CaptionOverlayProps> = ({ cues, style: sty
           borderRadius: 16,
         }}
       >
-        {segments.map((seg: WordSegment, i: number) => {
-          const isActive = seg.style === 'active' || seg.style === 'highlighted';
-          const displayText = textTransform === 'uppercase' ? seg.text.toUpperCase() : seg.text;
+        {(() => {
+          // Layout-stable base: every word reserves the same footprint as
+          // the active variant (padding, borders, inline-block), so the
+          // caption line doesn't reflow as highlight moves across tokens.
+          const styleOpts = {
+            color: pillColor,
+            fontSize: captionStyle.fontSize,
+            padding: pillPad,
+            borderRadius: pillRadius,
+          } as const;
+          const baseStyle = modeRenderer?.baseStyle?.(styleOpts) ?? {};
 
-          const activeStyle =
-            isActive && modeRenderer
-              ? modeRenderer.activeStyle({
-                  color: pillColor,
-                  fontSize: captionStyle.fontSize,
-                  padding: pillPad,
-                  borderRadius: pillRadius,
-                })
-              : {};
+          return segments.map((seg: WordSegment, i: number) => {
+            const isActive = seg.style === 'active' || seg.style === 'highlighted';
+            const displayText = textTransform === 'uppercase' ? seg.text.toUpperCase() : seg.text;
 
-          // Modes with background (pill) keep base font color;
-          // otherwise use the segment highlight color
-          const hasBg = isActive && activeStyle && 'backgroundColor' in activeStyle;
-          const textColor = hasBg ? captionStyle.fontColor : (seg.color ?? captionStyle.fontColor);
+            const activeStyle = isActive && modeRenderer ? modeRenderer.activeStyle(styleOpts) : {};
 
-          return (
-            // eslint-disable-next-line react/jsx-key
-            <>
-              <span
-                key={i}
-                style={{
-                  fontWeight: 'bold',
-                  color: textColor,
-                  ...activeStyle,
-                }}
-              >
-                {displayText}
-              </span>
-              {i < segments.length - 1 ? ' ' : ''}
-            </>
-          );
-        })}
+            // Modes with background (pill) keep base font color;
+            // otherwise use the segment highlight color.
+            const hasBg = isActive && activeStyle && 'backgroundColor' in activeStyle;
+            const textColor = hasBg
+              ? captionStyle.fontColor
+              : (seg.color ?? captionStyle.fontColor);
+
+            return (
+              // eslint-disable-next-line react/jsx-key
+              <>
+                <span
+                  key={i}
+                  style={{
+                    fontWeight: 'bold',
+                    color: textColor,
+                    ...baseStyle,
+                    ...activeStyle,
+                  }}
+                >
+                  {displayText}
+                </span>
+                {i < segments.length - 1 ? ' ' : ''}
+              </>
+            );
+          });
+        })()}
       </p>
     </div>
   );

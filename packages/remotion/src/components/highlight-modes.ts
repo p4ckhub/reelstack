@@ -1,14 +1,24 @@
 import type React from 'react';
 
+export interface HighlightStyleOpts {
+  color: string;
+  fontSize: number;
+  padding: number;
+  borderRadius: number;
+}
+
 export interface HighlightModeRenderer {
   id: string;
-  /** Return CSS style object for active (highlighted) word */
-  activeStyle: (opts: {
-    color: string;
-    fontSize: number;
-    padding: number;
-    borderRadius: number;
-  }) => React.CSSProperties;
+  /** CSS for the currently-highlighted word. */
+  activeStyle: (opts: HighlightStyleOpts) => React.CSSProperties;
+  /**
+   * CSS for *every* word, active or not. Needed to pre-reserve the same
+   * layout footprint that the active word will occupy (padding, margins,
+   * borders, display-type). Without this, the whole line shifts each
+   * time the active token moves, which reads as jitter. Defaults to an
+   * empty style when not provided.
+   */
+  baseStyle?: (opts: HighlightStyleOpts) => React.CSSProperties;
 }
 
 // ── Built-in modes (no registry, no side effects — webpack-safe) ─────
