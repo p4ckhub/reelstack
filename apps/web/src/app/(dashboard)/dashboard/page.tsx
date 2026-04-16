@@ -41,7 +41,7 @@ const TIER_COLORS: Record<string, string> = {
 export default function DashboardPage() {
   const { user: _user } = useAuth();
   const [reels, setReels] = useState<ReelJobItem[]>([]);
-  const [usage, setUsage] = useState<UsageData | null>(null);
+  const [usage, setUsage] = useState<(UsageData & { daysUntilReset: number }) | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +51,20 @@ export default function DashboardPage() {
         .then((resp) => setReels(resp.data ?? [])),
       fetch('/api/v1/user/usage')
         .then((res) => (res.ok ? res.json() : null))
-        .then((resp) => setUsage(resp?.data ?? null)),
+        .then((resp) => {
+          const data: UsageData | null = resp?.data ?? null;
+          if (!data) {
+            setUsage(null);
+            return;
+          }
+          // Compute derived value at fetch time — Date.now() is impure and
+          // can't be called during render or synchronously in an effect.
+          const daysUntilReset = Math.max(
+            1,
+            Math.ceil((new Date(data.resetsAt).getTime() - Date.now()) / 86_400_000)
+          );
+          setUsage({ ...data, daysUntilReset });
+        }),
     ])
       .catch((err) => console.warn('[dashboard] request failed:', err))
       .finally(() => setLoading(false));
@@ -63,16 +76,6 @@ export default function DashboardPage() {
   const usedPercent = usage
     ? Math.min(100, Math.round((usage.creditsUsed / usage.creditsPerMonth) * 100))
     : 0;
-  // Compute in effect — Date.now() is impure, can't call during render (React rules)
-  const [daysUntilReset, setDaysUntilReset] = useState<number | null>(null);
-  useEffect(() => {
-    if (!usage) return;
-    const days = Math.max(
-      1,
-      Math.ceil((new Date(usage.resetsAt).getTime() - Date.now()) / 86_400_000)
-    );
-    setDaysUntilReset(days);
-  }, [usage]);
 
   return (
     <div className="p-8">
@@ -95,11 +98,8 @@ export default function DashboardPage() {
                 {usage.creditsUsed} / {usage.creditsPerMonth} credits used
                 {' · '}
                 {usage.creditsPerReel} credits per reel
-                {daysUntilReset !== null && (
-                  <>
-                    {' · '}resets in {daysUntilReset} {daysUntilReset === 1 ? 'day' : 'days'}
-                  </>
-                )}
+                {' · '}resets in {usage.daysUntilReset}{' '}
+                {usage.daysUntilReset === 1 ? 'day' : 'days'}
               </p>
             </div>
             <div className="flex items-center gap-4">
