@@ -167,7 +167,7 @@ export default function ReelWizardPage() {
     setStep('generating');
 
     try {
-      const res = await fetch('/api/v1/reel/create', {
+      const res = await fetch('/api/v1/reel/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
