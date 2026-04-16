@@ -107,13 +107,11 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
     volumes:
-      # Full source mount so the seed script can import from
-      # packages/database and scripts. Prisma generator also needs to write
-      # into node_modules, so we rely on the anonymous volumes from the web
-      # service by reusing the image layer layout.
+      # Reuse the same named node_modules volumes as web + worker so prisma
+      # generate lands in one place everything can import from.
       - .:/app
-      - /app/node_modules
-      - /app/apps/web/node_modules
+      - node_modules_root:/app/node_modules
+      - node_modules_web:/app/apps/web/node_modules
     restart: "no"
 
   # ──────────────────────────────────────────────────────────
@@ -135,12 +133,13 @@ services:
     ports:
       - "3001:3000"
     volumes:
-      # Mount source for hot reload. node_modules stays inside the container
-      # (anonymous volume) so Linux binaries aren't shadowed by macOS ones.
+      # Mount source for hot reload. node_modules are named volumes shared
+      # with the worker service — one `bun install` from the Dockerfile
+      # populates them, both services see the same Linux binaries.
       - .:/app
-      - /app/node_modules
-      - /app/apps/web/node_modules
-      - /app/apps/web/.next
+      - node_modules_root:/app/node_modules
+      - node_modules_web:/app/apps/web/node_modules
+      - next_cache:/app/apps/web/.next
     depends_on:
       postgres:
         condition: service_healthy
@@ -171,13 +170,20 @@ services:
       MINIO_PORT: "9000"
     volumes:
       - .:/app
-      - /app/node_modules
-      - /app/apps/web/node_modules
+      - node_modules_root:/app/node_modules
+      - node_modules_web:/app/apps/web/node_modules
     depends_on:
       web:
         condition: service_healthy
+
+  # Same node_modules volumes are also needed by db-migrate so the seed can
+  # import prisma + the workspace packages.
+  # (already referenced above — listed here for the volumes: section below)
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+  node_modules_root:
+  node_modules_web:
+  next_cache:
