@@ -241,6 +241,24 @@ export const generateReelSchema = z
           .default('#09090f'),
       })
       .optional(),
+    /** Intro scroll-stopper animation. `none` disables; default is
+     *  zoom-bounce @ 0.6s. Presets live in @reelstack/modules. */
+    scrollStopper: z
+      .object({
+        preset: z
+          .enum([
+            'none',
+            'flash-zoom',
+            'glitch-reveal',
+            'impact-shake',
+            'tv-static',
+            'swipe-in',
+            'zoom-bounce',
+          ])
+          .default('zoom-bounce'),
+        durationSeconds: z.number().min(0.2).max(2).default(0.6),
+      })
+      .optional(),
     /** Topic for AI generation (ai-tips, presenter-explainer modes) */
     topic: z.string().min(1).max(1000).optional(),
     /** Language for script generation (default: from tts.language or 'pl') */

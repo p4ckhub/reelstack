@@ -90,6 +90,7 @@ export const POST = withAuth(
         avatar: parsed.data.avatar,
         workflowUrl: parsed.data.workflowUrl,
         endCard: parsed.data.endCard,
+        scrollStopper: parsed.data.scrollStopper,
         topic: parsed.data.topic,
         language: parsed.data.language,
         persona: parsed.data.persona,
