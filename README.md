@@ -10,7 +10,7 @@
 [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
 
-[Live Demo](https://reelstack.sellf.app) | [Documentation](docs/) | [Pipeline Guide](docs/REEL_PIPELINE.md) | [API Reference](#public-api-v1) | [Report Bug](https://github.com/jurczykpawel/reelstack/issues)
+[Live Demo](https://reelstack.sellf.app) | [Documentation](docs/) | [Pipeline Guide](docs/REEL_PIPELINE.md) | [Modules](docs/MODULES.md) | [API Reference](#public-api-v1) | [Report Bug](https://github.com/jurczykpawel/reelstack/issues)
 
 </div>
 
