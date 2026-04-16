@@ -89,6 +89,7 @@ export const POST = withAuth(
         directorNotes: parsed.data.directorNotes,
         avatar: parsed.data.avatar,
         workflowUrl: parsed.data.workflowUrl,
+        endCard: parsed.data.endCard,
         topic: parsed.data.topic,
         language: parsed.data.language,
         persona: parsed.data.persona,

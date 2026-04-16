@@ -223,6 +223,24 @@ export const generateReelSchema = z
         message: 'Workflow URL must be a valid public HTTP(S) URL',
       })
       .optional(),
+    /** Optional closing CTA shown over the last N seconds of the reel. */
+    endCard: z
+      .object({
+        enabled: z.boolean().default(true),
+        headline: z.string().min(1).max(120),
+        subheadline: z.string().max(200).optional(),
+        action: z.string().max(80).optional(),
+        durationSeconds: z.number().min(1).max(10).default(3),
+        accentColor: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .default('#7c3aed'),
+        backgroundColor: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .default('#09090f'),
+      })
+      .optional(),
     /** Topic for AI generation (ai-tips, presenter-explainer modes) */
     topic: z.string().min(1).max(1000).optional(),
     /** Language for script generation (default: from tts.language or 'pl') */
