@@ -1,0 +1,65 @@
+# syntax=docker/dockerfile:1.7
+# ============================================================
+# Dockerfile.dev — development container (web + worker)
+# ============================================================
+# Used by docker-compose.dev.yml. Runs `bun run dev` (web) or
+# `bun run worker` (worker). Source code is mounted as a volume
+# for hot reload, so only dependencies live in the image.
+# ============================================================
+
+FROM oven/bun:1.3
+
+WORKDIR /app
+
+# System deps: ffmpeg for video, chromium for Remotion local rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ffmpeg \
+      curl \
+      ca-certificates \
+      fonts-liberation \
+      libnss3 \
+      libatk1.0-0 \
+      libatk-bridge2.0-0 \
+      libcups2 \
+      libdrm2 \
+      libgbm1 \
+      libpangocairo-1.0-0 \
+      libpango-1.0-0 \
+      libxcomposite1 \
+      libxdamage1 \
+      libxrandr2 \
+      libxkbcommon0 \
+      libasound2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies first (cached layer)
+# Package manifests copied in a single step so bun can resolve the workspace
+COPY package.json bun.lock bunfig.toml turbo.json ./
+COPY apps/web/package.json apps/web/
+COPY packages/types/package.json packages/types/
+COPY packages/ffmpeg/package.json packages/ffmpeg/
+COPY packages/database/package.json packages/database/
+COPY packages/queue/package.json packages/queue/
+COPY packages/core/package.json packages/core/
+COPY packages/storage/package.json packages/storage/
+COPY packages/transcription/package.json packages/transcription/
+COPY packages/remotion/package.json packages/remotion/
+COPY packages/tts/package.json packages/tts/
+COPY packages/publisher/package.json packages/publisher/
+COPY packages/logger/package.json packages/logger/
+COPY packages/agent/package.json packages/agent/
+COPY packages/modules/package.json packages/modules/
+COPY packages/image-gen/package.json packages/image-gen/
+
+RUN bun install
+
+# Generate Prisma Client at build time so the volume mount keeps it
+COPY packages/database/prisma ./packages/database/prisma
+RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
+
+# Source code is mounted at runtime — no COPY . .
+
+EXPOSE 3000
+
+# Default command overridden by docker-compose.dev.yml per service
+CMD ["bun", "--cwd", "apps/web", "dev"]

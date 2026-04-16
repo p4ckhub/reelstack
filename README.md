@@ -246,53 +246,46 @@ Each tool has an editable markdown prompt guideline in `packages/agent/src/promp
 | [PostgreSQL](https://www.postgresql.org/) | 15+ (or use Docker)            |
 | OS                                        | macOS, Linux, or Windows (WSL) |
 
-### Run Locally (Development)
+### Run Locally (Docker, one command)
 
-**1. Clone and install**
+The fastest path: everything in Docker, hot-reload, sign in without SMTP.
 
 ```bash
 git clone https://github.com/jurczykpawel/reelstack.git
 cd reelstack
-bun install
+bin/dev-up.sh                 # first run creates .env.dev, re-run after editing
 ```
 
-**2. Set up environment**
+What this starts:
 
-```bash
-cp .env.example .env
-```
+- Postgres, Redis, MinIO (S3-compatible storage) — all with auto-setup
+- `web` (Next.js) on `http://localhost:3001`
+- `worker` (reel pipeline) with hot reload from mounted source
 
-Edit `.env` with at minimum these two values:
+On first run the script prints the path to `.env.dev`. Open it and add at least:
 
 ```env
-AUTH_SECRET=your-random-secret-here        # Generate with: openssl rand -base64 32
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/reelstack
+ANTHROPIC_API_KEY=sk-ant-...   # required — Claude plans the video
+OPENAI_API_KEY=sk-...          # required — Whisper transcribes for captions
 ```
 
-**3. Start the database**
+Then re-run `bin/dev-up.sh`. Open `http://localhost:3001/login` and click **“Dev login”** to sign in with any email. No password, no SMTP.
+
+Reset the environment (drop DB + storage): `docker compose -f docker-compose.dev.yml down -v`.
+
+### Run Locally (bare metal, no Docker)
+
+If you prefer running Next.js on the host:
 
 ```bash
-docker run -d --name sb-postgres -p 5432:5432 \
-  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=reelstack postgres:16-alpine
+bun install
+docker compose up -d postgres redis minio       # infra only
+bunx prisma db push --schema=packages/database/prisma/schema.prisma
+bun run dev                                     # web
+bun run worker --filter web                     # second terminal
 ```
 
-**4. Initialize database schema**
-
-```bash
-cd packages/database
-./node_modules/.bin/prisma generate
-./node_modules/.bin/prisma db push
-cd ../..
-```
-
-**5. Start the dev server**
-
-```bash
-bun run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) and create an account at [http://localhost:3000/signup](http://localhost:3000/signup).
+Set `ALLOW_DEV_LOGIN=1` and `NEXT_PUBLIC_ALLOW_DEV_LOGIN=1` in `apps/web/.env` for the Dev login button.
 
 ### Build for Production
 

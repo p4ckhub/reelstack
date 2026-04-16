@@ -1,0 +1,175 @@
+# ============================================================
+# Docker Compose — Local development (one-command spin-up)
+# ============================================================
+# Starts the full stack: postgres + redis + minio + web + worker,
+# creates the MinIO bucket and runs Prisma migrations automatically.
+#
+# Usage:
+#   cp .env.dev.example .env.dev          # first time only
+#   # edit .env.dev and add ANTHROPIC_API_KEY (required)
+#   docker compose -f docker-compose.dev.yml --env-file .env.dev up -d --build
+#
+# Then open http://localhost:3001 — click "Dev login" to sign in
+# with any email (no password, no SMTP).
+#
+# Shut down:
+#   docker compose -f docker-compose.dev.yml down
+#
+# Reset everything (drops DB + storage):
+#   docker compose -f docker-compose.dev.yml down -v
+# ============================================================
+
+services:
+  # ──────────────────────────────────────────────────────────
+  # Infrastructure
+  # ──────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ──────────────────────────────────────────────────────────
+  # One-shot setup containers
+  # ──────────────────────────────────────────────────────────
+
+  # Create the MinIO bucket and make it publicly readable for rendered videos.
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} &&
+        mc mb --ignore-existing local/${MINIO_BUCKET} &&
+        mc anonymous set download local/${MINIO_BUCKET} &&
+        echo 'MinIO bucket ${MINIO_BUCKET} ready.'
+      "
+    restart: "no"
+
+  # Apply the Prisma schema to the dev database (idempotent).
+  db-migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        bunx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss &&
+        echo 'Database schema ready.'
+      "
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - ./packages/database/prisma:/app/packages/database/prisma:ro
+    restart: "no"
+
+  # ──────────────────────────────────────────────────────────
+  # Application services (hot reload via mounted source)
+  # ──────────────────────────────────────────────────────────
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    command: bun --cwd apps/web dev -- --hostname 0.0.0.0 --port 3000
+    env_file: .env.dev
+    environment:
+      # Override the host ports with in-network service names
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: "9000"
+    ports:
+      - "3001:3000"
+    volumes:
+      # Mount source for hot reload. node_modules stays inside the container
+      # (anonymous volume) so Linux binaries aren't shadowed by macOS ones.
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+      db-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    command: bun --cwd apps/web worker
+    env_file: .env.dev
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: "9000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
