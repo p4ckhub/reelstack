@@ -100,12 +100,20 @@ services:
     command: >
       sh -c "
         bunx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss &&
-        echo 'Database schema ready.'
+        bun run scripts/seed-modules.ts &&
+        echo 'Database schema + module catalog ready.'
       "
+    env_file: .env.dev
     environment:
       DATABASE_URL: ${DATABASE_URL}
     volumes:
-      - ./packages/database/prisma:/app/packages/database/prisma:ro
+      # Full source mount so the seed script can import from
+      # packages/database and scripts. Prisma generator also needs to write
+      # into node_modules, so we rely on the anonymous volumes from the web
+      # service by reusing the image layer layout.
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
     restart: "no"
 
   # ──────────────────────────────────────────────────────────

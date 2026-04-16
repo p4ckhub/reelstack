@@ -39,6 +39,7 @@
     "web": "workspace:*"
   },
   "dependencies": {
+    "@prisma/client": "6.3.1",
     "altcha-lib": "^1.4.1"
   }
 }

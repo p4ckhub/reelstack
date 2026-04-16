@@ -12,6 +12,7 @@ standalone/
 # Environment
 .env
 .env.local
+.env.dev
 .env.production
 .env.*.local
 

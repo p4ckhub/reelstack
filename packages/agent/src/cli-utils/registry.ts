@@ -10,7 +10,8 @@ import { D, X } from './cli-helpers';
  */
 export async function loadPrivateModules(): Promise<void> {
   try {
-    // @ts-expect-error - private module, no type declarations
+    // Private module with no type declarations — tolerate when it resolves.
+    // @ts-ignore
     await import('@reelstack/modules');
   } catch {
     try {

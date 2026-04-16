@@ -1,7 +1,11 @@
 [install]
-# Use classic node_modules layout instead of Bun's .bun/ flat structure.
-# Required for webpack (used by @remotion/bundler) to resolve modules correctly.
-node-modules-dir = "classic"
+# Use hoisted (npm-like) node_modules layout instead of Bun's isolated .bun/
+# structure. Required for webpack (@remotion/bundler) and Turbopack (Next.js
+# dev) to resolve nested transitive dependencies like @ioredis/commands and
+# pino-std-serializers. Prior value "node-modules-dir = classic" was not a
+# valid key and silently ignored — bun fell back to isolated, which broke
+# dev rendering inside Docker.
+linker = "hoisted"
 
 [test]
 # CRITICAL: Clear API keys during tests to prevent accidental real API calls.
