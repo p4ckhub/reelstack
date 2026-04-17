@@ -135,6 +135,14 @@ Core provides the infrastructure (TTS, Whisper, rendering, storage, tools). Modu
 
 **Interface:** `packages/agent/src/modules/module-interface.ts`
 
+### Remotion packages — before writing anything
+
+Before implementing a new card / transition / effect / TTS integration, check
+[`docs/remotion-packages.md`](./docs/remotion-packages.md). It lists every official
+`@remotion/*` package, what we already use, what's worth adding, and when NOT to
+roll custom (e.g. `@remotion/captions` parses SRT/VTT — don't reinvent).
+License boundaries live separately in `vault/brands/_shared/reference/remotion-license-strategy.md`.
+
 ## Tool Registry
 
 Tools are auto-discovered based on environment variables. The architecture uses a `ProviderTool` base class pattern -- each provider file exports an `allXxxTools` catalog array. Adding a new model = one config object in the provider file (no discovery.ts or pricing.ts changes needed). Tools self-declare pricing via `tool.pricing`.
