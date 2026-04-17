@@ -65,6 +65,9 @@ export const RemotionRoot: React.FC = () => {
           showProgressBar: true,
           backgroundColor: '#000000',
           speedRamps: [],
+          // Preview the FREE-tier watermark in Studio. Production renders
+          // drive this via shouldShowWatermark(user) — never client-set.
+          watermark: { enabled: true, seed: 'studio-preview' },
         }}
       />
 

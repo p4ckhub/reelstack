@@ -417,6 +417,7 @@ function createCompositionStep(deps: GeneratePipelineDeps): StepDefinition {
         cues: ttsResult.cues,
         voiceoverFilename: voiceoverUrl,
         brandPreset: ctx.input.brandPreset as BrandPreset | undefined,
+        watermark: ctx.input.watermark as { enabled: boolean; seed?: string } | undefined,
       });
 
       return { reelProps, plan };

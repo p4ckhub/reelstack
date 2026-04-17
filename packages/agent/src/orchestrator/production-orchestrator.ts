@@ -409,6 +409,7 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     cues: ttsResult.cues,
     voiceoverFilename: voiceoverUrl,
     brandPreset: request.brandPreset,
+    watermark: request.watermark,
   });
 
   // Pipeline logging: composition assembly

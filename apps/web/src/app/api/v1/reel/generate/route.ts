@@ -6,6 +6,7 @@ import {
   getModuleBySlug,
   canUserAccessModule,
   isUnlimited,
+  shouldShowWatermark,
   updateReelJobStatus,
 } from '@reelstack/database';
 import { getTierLimits } from '@/lib/api/validation';
@@ -75,12 +76,22 @@ export const POST = withAuth(
       source = result.source;
     }
 
+    // FREE-tier watermark flag + seed. Server-side only — clients cannot set either.
+    // shouldShowWatermark() returns true for FREE tier, false for paid + OWNER.
+    // Random seed keeps watermark positions stable across re-renders of the same job.
+    const watermarkConfig = {
+      enabled: shouldShowWatermark(ctx.user),
+      seed: crypto.randomUUID(),
+    };
+
     const job = await createReelJob({
       userId: ctx.user.id,
       script: parsed.data.script,
       reelConfig: {
         mode,
         layout: parsed.data.layout,
+        // Authoritative: whatever the client sent, server overrides.
+        watermark: watermarkConfig,
         style: parsed.data.style,
         tts: parsed.data.tts,
         whisper: parsed.data.whisper,

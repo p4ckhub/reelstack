@@ -315,6 +315,7 @@ async function buildGeneratePipelineSetup(
       brandPreset: config.brandPreset,
       montageProfile: config.montageProfile,
       preferredToolIds: config.preferredToolIds,
+      watermark: config.watermark,
     },
     stepProgressMap: {
       'script-review': 10,
@@ -377,6 +378,7 @@ function buildComposePipelineSetup(
             whisper: ctx.input.whisper as ComposeRequest['whisper'],
             brandPreset: ctx.input.brandPreset as ComposeRequest['brandPreset'],
             directorNotes: ctx.input.directorNotes as string | undefined,
+            watermark: ctx.input.watermark as { enabled: boolean; seed?: string } | undefined,
             onProgress: makeProgressCallback(ctx.jobId, progressMap),
           };
 
@@ -398,6 +400,7 @@ function buildComposePipelineSetup(
       whisper: config.whisper,
       brandPreset: config.brandPreset,
       directorNotes: config.directorNotes,
+      watermark: config.watermark,
     },
     stepProgressMap: { compose: 5 },
     async postProcess(result: PipelineResult) {

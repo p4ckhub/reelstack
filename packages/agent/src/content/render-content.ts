@@ -22,6 +22,8 @@ export interface RenderContentRequest {
   effects?: EffectsMode;
   /** Brand preset for caption styling etc */
   brandPreset?: BrandPreset;
+  /** FREE-tier watermark config. Server-authoritative, never client-set. */
+  watermark?: { enabled: boolean; seed?: string };
   /** Output file path */
   outputPath?: string;
   /** Progress callback */
@@ -128,6 +130,7 @@ export async function renderContentPackage(
     primaryVideoObjectPosition: content.primaryVideo
       ? (framingMap[content.primaryVideo.framing] ?? 'center')
       : 'center',
+    watermark: request.watermark,
   });
 
   log.info(

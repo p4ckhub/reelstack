@@ -360,6 +360,8 @@ export interface ProductionRequest {
   readonly outputPath?: string;
   /** Montage profile ID (auto-selected from script if not provided) */
   readonly montageProfile?: string;
+  /** FREE-tier watermark config. Server-authoritative, never client-set. */
+  readonly watermark?: { enabled: boolean; seed?: string };
   /** Progress callback */
   readonly onProgress?: (step: string) => void;
 }
@@ -423,6 +425,8 @@ export interface ComposeRequest {
   }>;
   /** Additional instructions for the LLM composer (e.g. "pokaż screenshot dashboardu gdy mówię o analytics") */
   readonly directorNotes?: string;
+  /** FREE-tier watermark config. Server-authoritative, never client-set. */
+  readonly watermark?: { enabled: boolean; seed?: string };
   readonly outputPath?: string;
   readonly onProgress?: (step: string) => void;
 }

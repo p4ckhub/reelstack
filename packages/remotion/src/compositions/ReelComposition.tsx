@@ -30,6 +30,7 @@ import { HighlightBox } from '../components/HighlightBox';
 import { MultiPanelMontage } from '../components/MultiPanelMontage';
 import { ScrollStopper, useScrollStopperTransform } from '../components/ScrollStopper';
 import { LogoOverlay } from '../components/LogoOverlay';
+import { WatermarkOverlay } from '../components/WatermarkOverlay';
 import { sfxIdToUrl } from '../schemas/catalog';
 import { getEffect } from '../effects';
 
@@ -186,6 +187,7 @@ export const ReelComposition: React.FC<ReelProps> = ({
   backgroundColor = '#000000',
   scrollStopper,
   logoOverlay,
+  watermark,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -594,6 +596,9 @@ export const ReelComposition: React.FC<ReelProps> = ({
             durationSeconds={scrollStopper.durationSeconds}
           />
         )}
+        {watermark?.enabled && (
+          <WatermarkOverlay enabled={watermark.enabled} seed={watermark.seed} />
+        )}
       </AbsoluteFill>
     );
   }
@@ -796,6 +801,9 @@ export const ReelComposition: React.FC<ReelProps> = ({
             preset={scrollStopper.preset}
             durationSeconds={scrollStopper.durationSeconds}
           />
+        )}
+        {watermark?.enabled && (
+          <WatermarkOverlay enabled={watermark.enabled} seed={watermark.seed} />
         )}
       </AbsoluteFill>
     );
@@ -1008,6 +1016,9 @@ export const ReelComposition: React.FC<ReelProps> = ({
             durationSeconds={scrollStopper.durationSeconds}
           />
         )}
+        {watermark?.enabled && (
+          <WatermarkOverlay enabled={watermark.enabled} seed={watermark.seed} />
+        )}
       </AbsoluteFill>
     );
   }
@@ -1172,6 +1183,7 @@ export const ReelComposition: React.FC<ReelProps> = ({
           durationSeconds={scrollStopper.durationSeconds}
         />
       )}
+      {watermark?.enabled && <WatermarkOverlay enabled={watermark.enabled} seed={watermark.seed} />}
     </AbsoluteFill>
   );
 };

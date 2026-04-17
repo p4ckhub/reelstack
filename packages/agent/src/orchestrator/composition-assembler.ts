@@ -84,6 +84,8 @@ export interface AssemblyInput {
   primaryVideoObjectPosition?: string;
   /** Primary video has transparent background (rmbg/greenscreen WebM alpha) */
   primaryVideoTransparent?: boolean;
+  /** FREE-tier watermark config. Server-authoritative, never client-set. */
+  watermark?: { enabled: boolean; seed?: string };
 }
 
 /** Extract string from unknown, return undefined if not string */
@@ -99,7 +101,7 @@ function num(v: unknown): number | undefined {
  * Assembles a ProductionPlan + generated assets + cues into ReelProps.
  */
 export function assembleComposition(input: AssemblyInput): AssembledProps {
-  const { plan, assets, cues, voiceoverFilename, brandPreset } = input;
+  const { plan, assets, cues, voiceoverFilename, brandPreset, watermark } = input;
 
   // Build asset lookup: shotId -> asset (also index by searchQuery for compose mode)
   const assetMap = new Map<string, GeneratedAsset>();
@@ -446,5 +448,6 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
     ...(plan.scrollStopper ? { scrollStopper: plan.scrollStopper } : {}),
     ...(brandPreset?.logoOverlay ? { logoOverlay: brandPreset.logoOverlay } : {}),
     ...(plan.sfxSegments?.length ? { sfxSegments: plan.sfxSegments } : {}),
+    ...(watermark ? { watermark } : {}),
   };
 }

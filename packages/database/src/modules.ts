@@ -38,6 +38,21 @@ export function isUnlimited(user: { tier: Tier } | null | undefined): boolean {
 }
 
 /**
+ * Whether the rendered reel should include the "reelstack.dev" watermark.
+ *
+ * FREE-tier users see it as part of the free-plan experience (same pattern
+ * as Canva / CapCut free tiers). Paid tiers (SOLO, PRO, AGENCY) and OWNER
+ * render clean output.
+ *
+ * Anonymous / missing user → watermark on (fail-closed, safer default).
+ */
+export function shouldShowWatermark(user: { tier: Tier } | null | undefined): boolean {
+  if (!user) return true;
+  if (isUnlimited(user)) return false;
+  return user.tier === 'FREE';
+}
+
+/**
  * Returns true when the given (user, module) pair is permitted to generate
  * content. Call this in API routes *before* kicking off a pipeline.
  *

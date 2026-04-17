@@ -53,6 +53,16 @@ export const videoClipPropsSchema = z.object({
       height: z.number().min(2).max(8).default(3),
     })
     .optional(),
+  /**
+   * FREE-tier "reelstack.dev" watermark. Set by the API endpoint via
+   * shouldShowWatermark(user) — never client-configurable.
+   */
+  watermark: z
+    .object({
+      enabled: z.boolean(),
+      seed: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type VideoClipProps = z.infer<typeof videoClipPropsSchema>;

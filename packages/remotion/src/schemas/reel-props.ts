@@ -274,6 +274,15 @@ export const reelPropsSchema = z.object({
       margin: z.number().min(0).max(15).default(4),
     })
     .optional(),
+
+  // FREE-tier "reelstack.dev" watermark — rotates across 8 safe edge positions.
+  // Set by the API endpoint via shouldShowWatermark(user) — never client-set.
+  watermark: z
+    .object({
+      enabled: z.boolean(),
+      seed: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type ReelProps = z.infer<typeof reelPropsSchema>;
