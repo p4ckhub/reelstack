@@ -1,39 +1,39 @@
 /**
- * Transition types — bridge between two scenes in a reel.
+ * Transition types — curation layer on top of `@remotion/transitions`.
  *
- * Mirrors the card system architecturally:
- *  - A flat library of transition components (private repo)
- *  - Pack manifests that curate selections for sale/licensing (Module table, kind=TRANSITION_PACK)
- *  - Palette-configurable where it makes visual sense (glitch-cut, ink-wipe, portal)
+ * We DO NOT redefine Remotion's `TransitionPresentation` or
+ * `TransitionPresentationComponentProps` — we import them directly and
+ * re-export. This keeps the licensing trail clean (we consume Remotion's
+ * public API, we are not a derivative of Remotion) and guarantees we
+ * stay in sync with the upstream type definitions.
  *
- * Built on top of `@remotion/transitions` — each preset exposes a
- * TransitionPresentation that `<TransitionSeries>` consumes. We don't
- * reinvent the two-scene rendering loop, we add curated content.
+ * Our own types (`TransitionMetadata`, `TransitionPackManifest`,
+ * `RegisteredTransition`, etc.) are pure curation metadata — slugs,
+ * descriptions, tier gating. Those are our original work.
  */
 
-import type { ComponentType } from 'react';
+import type {
+  TransitionPresentation as RemotionTransitionPresentation,
+  TransitionPresentationComponentProps as RemotionTransitionPresentationComponentProps,
+} from '@remotion/transitions';
 import type { CardPalette, PackTier } from '../cards/types';
 
-export type PresentationDirection = 'entering' | 'exiting';
+// ── Re-exports from @remotion/transitions (single source of truth) ──────
+// PresentationDirection isn't a public export, so we pull it via indexed
+// access on the public component-props type. This still keeps us on the
+// API surface — no code duplication.
+export type PresentationDirection = RemotionTransitionPresentationComponentProps<
+  Record<string, unknown>
+>['presentationDirection'];
 
-/** Props every transition presentation component receives. */
-export interface TransitionPresentationComponentProps<
-  PresentationProps extends Record<string, unknown> = Record<string, unknown>,
-> {
-  readonly presentationProgress: number;
-  readonly children: React.ReactNode;
-  readonly presentationDirection: PresentationDirection;
-  readonly passedProps: PresentationProps;
-  readonly presentationDurationInFrames: number;
-}
+export type TransitionPresentationComponentProps<
+  P extends Record<string, unknown> = Record<string, unknown>,
+> = RemotionTransitionPresentationComponentProps<P>;
 
-/** Shape Remotion expects — component + its bound props. */
-export interface TransitionPresentation<
-  PresentationProps extends Record<string, unknown> = Record<string, unknown>,
-> {
-  component: ComponentType<TransitionPresentationComponentProps<PresentationProps>>;
-  props: PresentationProps;
-}
+export type TransitionPresentation<P extends Record<string, unknown> = Record<string, unknown>> =
+  RemotionTransitionPresentation<P>;
+
+// ── Our own curation/metadata types ────────────────────────────────────
 
 /** Props callers may pass when invoking the preset factory. */
 export interface TransitionInvocationProps {
