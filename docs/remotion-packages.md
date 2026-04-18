@@ -20,22 +20,28 @@ Ostatni review: **2026-04-18**. Sprawdzaj przy każdym upgrade Remotion.
 
 ## Zainstalowane (stan na 2026-04-18)
 
-| Paczka                   | Wersja  | Licencja | Gdzie używana u nas                                                                      |
-| ------------------------ | ------- | -------- | ---------------------------------------------------------------------------------------- |
-| `remotion`               | 4.0.431 | RLA      | Wszędzie — core hooks, `AbsoluteFill`, `interpolate`, `spring`, `random`                 |
-| `@remotion/bundler`      | 4.0.431 | RLA      | CLI only (`remotion bundle` przez worker)                                                |
-| `@remotion/cli`          | 4.0.431 | RLA      | CLI only (`remotion studio`, `remotion render`)                                          |
-| `@remotion/renderer`     | 4.0.431 | RLA      | Worker rendering + test types                                                            |
-| `@remotion/lambda`       | 4.0.431 | RLA      | Produkcyjny rendering na AWS Lambda                                                      |
-| `@remotion/player`       | 4.0.431 | RLA      | Zainstalowana, nieużywana (zarezerwowana dla przyszłego preview UI)                      |
-| `@remotion/google-fonts` | 4.0.301 | RLA      | Font loading: Inter, JetBrainsMono, Outfit, Montserrat, Poppins, Roboto, Ubuntu          |
-| `@remotion/transitions`  | 4.0.431 | RLA      | `packages/remotion/src/transitions/` + 21 card/transition presetów w `reelstack-modules` |
-| `@remotion/motion-blur`  | 4.0.431 | **MIT**  | `Trail` w transitions `zoom-punch`/`warp-zoom`/`push-horizontal` + karcie `warp-speed`   |
-| `@remotion/noise`        | 4.0.431 | **MIT**  | `noise2D` wobble w kartach `liquid`/`ink-splash` + VHS drift/jitter w `retro-vhs`        |
-| `@remotion/paths`        | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                      |
-| `@remotion/shapes`       | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                      |
-| `@remotion/media-parser` | 4.0.431 | RLA      | Transitive, nieużywana                                                                   |
-| `@remotion/media-utils`  | 4.0.431 | **MIT**  | Transitive, nieużywana                                                                   |
+| Paczka                     | Wersja  | Licencja | Gdzie używana u nas                                                                                                                |
+| -------------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `remotion`                 | 4.0.431 | RLA      | Wszędzie — core hooks, `AbsoluteFill`, `interpolate`, `spring`, `random`                                                           |
+| `@remotion/bundler`        | 4.0.431 | RLA      | CLI only (`remotion bundle` przez worker)                                                                                          |
+| `@remotion/cli`            | 4.0.431 | RLA      | CLI only (`remotion studio`, `remotion render`)                                                                                    |
+| `@remotion/renderer`       | 4.0.431 | RLA      | Worker rendering + test types                                                                                                      |
+| `@remotion/lambda`         | 4.0.431 | RLA      | Produkcyjny rendering na AWS Lambda                                                                                                |
+| `@remotion/player`         | 4.0.431 | RLA      | Zainstalowana, nieużywana (zarezerwowana dla przyszłego preview UI)                                                                |
+| `@remotion/google-fonts`   | 4.0.301 | RLA      | Font loading: Inter, JetBrainsMono, Outfit, Montserrat, Poppins, Roboto, Ubuntu                                                    |
+| `@remotion/transitions`    | 4.0.431 | RLA      | `packages/remotion/src/transitions/` + 21 card/transition presetów w `reelstack-modules`                                           |
+| `@remotion/motion-blur`    | 4.0.431 | **MIT**  | `Trail` w transitions `zoom-punch`/`warp-zoom`/`push-horizontal` + karcie `warp-speed`                                             |
+| `@remotion/noise`          | 4.0.431 | **MIT**  | `noise2D` wobble w kartach `liquid`/`ink-splash` + VHS drift/jitter w `retro-vhs`                                                  |
+| `@remotion/sfx`            | 4.0.431 | **MIT**  | Per-transition whoosh/impact URLs via `TRANSITION_SFX_MAP`. Wire'owane w transitions-demo. Pipeline-level wiring jeszcze odłożone. |
+| `@remotion/layout-utils`   | 4.0.431 | **MIT**  | `fitText()` auto-size w kartach `stat-card`, `wave-text`, `quote-card`.                                                            |
+| `@remotion/light-leaks`    | 4.0.431 | RLA      | Transition `organic-light-leak` (WebGL shape leak, alternatywa dla naszego `light-leak` sweep).                                    |
+| `@remotion/lottie`         | 4.0.431 | RLA      | Karta `emoji-burst` renderuje Google Fonts Noto Emoji Lottie JSON z CDN.                                                           |
+| `@remotion/animated-emoji` | 4.0.431 | RLA      | Emoji name/codepoint data dla `emoji-burst`. `<AnimatedEmoji>` sam nieużywany (brak assetów w public).                             |
+| `@remotion/three`          | 4.0.431 | **MIT**  | Karta `3d-frame` — rotujący 3D slab z headline'em. Wymaga `three` + `@react-three/fiber`.                                          |
+| `@remotion/media-utils`    | 4.0.431 | **MIT**  | `useAudioData` + `visualizeAudio` w karcie `beat-pulse` (audio-reactive).                                                          |
+| `@remotion/paths`          | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                                                                |
+| `@remotion/shapes`         | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                                                                |
+| `@remotion/media-parser`   | 4.0.431 | RLA      | Transitive, nieużywana                                                                                                             |
 
 ## Masz custom, istnieje oficjalne — kiedy zastępować
 
@@ -54,13 +60,18 @@ Posortowane od **high impact / low effort**:
 
 ### Must-have — dodaj gdy dojdzie naturalny moment
 
-| Paczka                   | Licencja | Unlock                                                          | Status                                                                                                                                               |
-| ------------------------ | -------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@remotion/motion-blur`  | MIT      | `Trail` (lightweight DOM-duplikat) + `CameraMotionBlur` (drogi) | **DONE 2026-04-18** — `Trail` w `zoom-punch`, `warp-zoom`, `push-horizontal`, `warp-speed`. `CameraMotionBlur` świadomie NIE używamy (koszt Lambda). |
-| `@remotion/noise`        | MIT      | `noise2D(seed, x, y)` — simplex noise (-1..1)                   | **DONE 2026-04-18** — zastąpił `Math.sin` wobble w `liquid`, `ink-splash`. Tracking drift + head-jitter w `retro-vhs`.                               |
-| `@remotion/lottie`       | RLA      | Renderowanie Lottie files                                       | Jak tylko zechcesz dodać ikony/animacje z AE / LottieFiles. Katapulta dla szybkiego rich contentu bez rysowania od zera.                             |
-| `@remotion/captions`     | RLA      | `parseSrt` / `parseVtt` / `createTikTokStyleCaptions`           | Gdy user wrzuca zewnętrzne napisy. Nie potrzeba pisać parsera.                                                                                       |
-| `@remotion/layout-utils` | RLA      | `fitText()`                                                     | Gdy headline w karcie przerośnie boks. Zamienia "hardcoded fontSize" na auto.                                                                        |
+| Paczka                     | Licencja | Unlock                                                                               | Status                                                                                                                                               |
+| -------------------------- | -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@remotion/motion-blur`    | MIT      | `Trail` (lightweight DOM-duplikat) + `CameraMotionBlur` (drogi)                      | **DONE 2026-04-18** — `Trail` w `zoom-punch`, `warp-zoom`, `push-horizontal`, `warp-speed`. `CameraMotionBlur` świadomie NIE używamy (koszt Lambda). |
+| `@remotion/noise`          | MIT      | `noise2D(seed, x, y)` — simplex noise (-1..1)                                        | **DONE 2026-04-18** — zastąpił `Math.sin` wobble w `liquid`, `ink-splash`. Tracking drift + head-jitter w `retro-vhs`.                               |
+| `@remotion/sfx`            | MIT      | 7 normalized SFX (whip/whoosh/pageTurn/uiSwitch/mouseClick/shutterModern/shutterOld) | **DONE 2026-04-18** — `TRANSITION_SFX_MAP` + wire w `TransitionsDemoComposition`. Full pipeline wiring (composition-assembler) — odłożone.           |
+| `@remotion/lottie`         | RLA      | Renderowanie Lottie files                                                            | **DONE 2026-04-18** — karta `emoji-burst` renderuje Google Fonts Noto Emoji.                                                                         |
+| `@remotion/light-leaks`    | RLA      | WebGL shape light leak                                                               | **DONE 2026-04-18** — transition `organic-light-leak` (alternatywa dla naszego liniowego `light-leak`).                                              |
+| `@remotion/animated-emoji` | RLA      | Google Fonts animated emoji                                                          | **DONE 2026-04-18** — używamy danych (name→codepoint). Komponent nieaktywny (brak webm/mp4 assets w public).                                         |
+| `@remotion/three`          | MIT      | React Three Fiber integration                                                        | **DONE 2026-04-18** — karta `3d-frame` (rotujący 3D slab).                                                                                           |
+| `@remotion/media-utils`    | MIT      | `useAudioData` + `visualizeAudio`                                                    | **DONE 2026-04-18** — karta `beat-pulse` (audio-reactive waveform ring + pulse na peaks).                                                            |
+| `@remotion/layout-utils`   | MIT      | `fitText()`                                                                          | **DONE 2026-04-18** — wire'owane w `stat-card`, `wave-text`, `quote-card`.                                                                           |
+| `@remotion/captions`       | RLA      | `parseSrt` / `parseVtt` / `createTikTokStyleCaptions`                                | Gdy user wrzuca zewnętrzne napisy. Nie potrzeba pisać parsera.                                                                                       |
 
 ### Nice-to-have — specyficzne use cases
 
@@ -111,10 +122,11 @@ Przed napisaniem custom komponentu, odpowiedz sobie:
 
 ## Historia zmian
 
-| Data       | Zmiana                                                                                                                                                               |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-04-18 | Dodane `@remotion/motion-blur` + `@remotion/noise` (oba MIT). `Trail` w 3 transitions + 1 karcie. `noise2D` zastąpił `Math.sin` wobble w 3 kartach. Lottie odłożone. |
-| 2026-04-17 | Initial write-up po audycie pakietów. 7 oficjalnych zainstalowanych + 5 transitive. Custom implementacje: CaptionOverlay, Whisper pipeline, ElevenLabs integration.  |
+| Data       | Zmiana                                                                                                                                                                                                                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-04-18 | **Wow-factor sweep Tier 1+2** — +sfx, +lottie, +light-leaks, +animated-emoji, +three + @react-three/fiber + three, +media-utils, +layout-utils. Nowe karty: `emoji-burst`, `3d-frame`, `beat-pulse`. Nowa transition: `organic-light-leak`. `fitText()` w 3 kartach tekstowych. SFX wire w transitions-demo. |
+| 2026-04-18 | Dodane `@remotion/motion-blur` + `@remotion/noise` (oba MIT). `Trail` w 3 transitions + 1 karcie. `noise2D` zastąpił `Math.sin` wobble w 3 kartach. Lottie odłożone.                                                                                                                                         |
+| 2026-04-17 | Initial write-up po audycie pakietów. 7 oficjalnych zainstalowanych + 5 transitive. Custom implementacje: CaptionOverlay, Whisper pipeline, ElevenLabs integration.                                                                                                                                          |
 
 ## Wow-factor research (2026-04-18)
 
