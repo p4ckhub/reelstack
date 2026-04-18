@@ -103,11 +103,11 @@ export interface GeneratePipelineDeps {
     onProgress?: (msg: string) => void
   ) => Promise<{ outputPath: string; step: { name: string; durationMs: number; detail?: string } }>;
   discoverTools: () => unknown[];
-  createToolRegistry: () => {
-    register: (tool: unknown) => void;
-    discover: () => Promise<void>;
-    getToolManifest: () => ToolManifest;
-  };
+  // Factory returns a live ToolRegistry instance. Must expose the full
+  // class (register/discover/getToolManifest + get) because the asset-gen
+  // step calls registry.get(toolId). An earlier narrower struct-adapter
+  // caused a runtime TypeError.
+  createToolRegistry: () => ToolRegistry;
 }
 
 // ── Pipeline factory ──────────────────────────────────────────
@@ -167,7 +167,11 @@ function createDiscoverToolsStep(deps: GeneratePipelineDeps): StepDefinition {
     async execute(_ctx: PipelineContext) {
       const registry = deps.createToolRegistry();
       for (const tool of deps.discoverTools()) {
-        registry.register(tool);
+        // discoverTools is typed as unknown[] at the deps boundary to avoid
+        // tight coupling between agent and the specific ProductionTool
+        // interface; the actual items ARE ProductionTool-shaped because
+        // the worker passes them through from the tool discovery module.
+        registry.register(tool as Parameters<ToolRegistry['register']>[0]);
       }
       await registry.discover();
       const manifest = registry.getToolManifest();

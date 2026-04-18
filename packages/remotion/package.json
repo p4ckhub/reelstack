@@ -52,7 +52,7 @@
     "@reelstack/types": "workspace:*",
     "@remotion/bundler": "4.0.431",
     "@remotion/cli": "4.0.431",
-    "@remotion/google-fonts": "4.0.301",
+    "@remotion/google-fonts": "4.0.431",
     "@remotion/lambda": "4.0.431",
     "@remotion/player": "4.0.431",
     "@remotion/renderer": "4.0.431",

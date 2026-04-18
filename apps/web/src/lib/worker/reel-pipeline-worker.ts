@@ -601,12 +601,11 @@ async function createGenerateDeps(): Promise<GeneratePipelineDeps> {
     renderVideo,
     discoverTools,
     createToolRegistry: () => {
-      const registry = new ToolRegistry();
-      return {
-        register: (tool: unknown) => registry.register(tool as never),
-        discover: () => registry.discover(),
-        getToolManifest: () => registry.getToolManifest(),
-      };
+      // Return the full instance so asset-generator.generateSingle can call
+      // registry.get(toolId). Previously this adapter only exposed
+      // register/discover/getToolManifest which caused a TypeError at the
+      // asset-gen step ("registry.get is not a function").
+      return new ToolRegistry();
     },
   };
 }
