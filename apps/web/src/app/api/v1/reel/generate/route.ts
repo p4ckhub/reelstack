@@ -76,13 +76,15 @@ export const POST = withAuth(
       source = result.source;
     }
 
-    // FREE-tier watermark flag + seed. Server-side only — clients cannot set either.
-    // Decision is PER-RENDER: FREE user using monthly allowance → watermark on,
-    // FREE user burning purchased tokens → clean (they paid for this render),
-    // paid tiers + OWNER → clean always. See shouldShowWatermarkForRender().
-    // Random seed keeps watermark positions stable across re-renders of the same job.
+    // Watermark: infrastructure is wired but DISABLED until SaaS pricing model
+    // is validated (≥10 PL clients + Remotion Automator License purchased).
+    // See vault decyzje.md 2026-04-18. When re-enabling: replace `false` below
+    // with `shouldShowWatermarkForRender(ctx.user, source)` — nothing else needs
+    // to change, the helper + per-render decision matrix are already in place.
+    // Random seed is kept so positions are already stable when we flip the flag.
+    void shouldShowWatermarkForRender; // keep import alive for easy re-enable
     const watermarkConfig = {
-      enabled: shouldShowWatermarkForRender(ctx.user, source),
+      enabled: false,
       seed: crypto.randomUUID(),
     };
 

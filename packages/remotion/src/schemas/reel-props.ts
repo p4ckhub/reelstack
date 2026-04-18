@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { effectSegmentSchema } from '../effects/schemas';
 import { captionCueSchema } from './caption-cue';
+import { watermarkSchema } from './watermark';
 
 const textCardConfigSchema = z.object({
   headline: z.string(),
@@ -277,12 +278,7 @@ export const reelPropsSchema = z.object({
 
   // FREE-tier "reelstack.dev" watermark — rotates across 8 safe edge positions.
   // Set by the API endpoint via shouldShowWatermark(user) — never client-set.
-  watermark: z
-    .object({
-      enabled: z.boolean(),
-      seed: z.string().optional(),
-    })
-    .optional(),
+  watermark: watermarkSchema.optional(),
 });
 
 export type ReelProps = z.infer<typeof reelPropsSchema>;

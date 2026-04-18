@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { captionCueSchema } from './caption-cue';
+import { watermarkSchema } from './watermark';
 
 const videoClipSchema = z.object({
   /** URL of the video clip */
@@ -57,12 +58,7 @@ export const videoClipPropsSchema = z.object({
    * FREE-tier "reelstack.dev" watermark. Set by the API endpoint via
    * shouldShowWatermark(user) — never client-configurable.
    */
-  watermark: z
-    .object({
-      enabled: z.boolean(),
-      seed: z.string().optional(),
-    })
-    .optional(),
+  watermark: watermarkSchema.optional(),
 });
 
 export type VideoClipProps = z.infer<typeof videoClipPropsSchema>;
