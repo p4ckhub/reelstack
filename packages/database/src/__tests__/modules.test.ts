@@ -10,8 +10,14 @@ import {
 
 vi.mock('@prisma/client', prismaMockFactory);
 
-const { isUnlimited, canUserAccessModule, listAccessibleModules, grantModuleAccess } =
-  await import('../modules');
+const {
+  isUnlimited,
+  shouldShowWatermark,
+  shouldShowWatermarkForRender,
+  canUserAccessModule,
+  listAccessibleModules,
+  grantModuleAccess,
+} = await import('../modules');
 
 const FREE_USER = { id: 'u1', tier: 'FREE' as const };
 const PRO_USER = { id: 'u2', tier: 'PRO' as const };
@@ -55,6 +61,49 @@ describe('isUnlimited', () => {
   it('returns false for null user', () => {
     expect(isUnlimited(null)).toBe(false);
     expect(isUnlimited(undefined)).toBe(false);
+  });
+});
+
+describe('shouldShowWatermark (user-level)', () => {
+  it('returns true for FREE tier', () => {
+    expect(shouldShowWatermark(FREE_USER)).toBe(true);
+  });
+  it('returns false for paid tiers', () => {
+    expect(shouldShowWatermark(PRO_USER)).toBe(false);
+    expect(shouldShowWatermark(AGENCY_USER)).toBe(false);
+  });
+  it('returns false for OWNER', () => {
+    expect(shouldShowWatermark(OWNER_USER)).toBe(false);
+  });
+  it('fails closed (watermark on) for anonymous', () => {
+    expect(shouldShowWatermark(null)).toBe(true);
+    expect(shouldShowWatermark(undefined)).toBe(true);
+  });
+});
+
+describe('shouldShowWatermarkForRender (per-render, respects token top-ups)', () => {
+  it('FREE tier using monthly allowance → watermark on', () => {
+    expect(shouldShowWatermarkForRender(FREE_USER, 'tier')).toBe(true);
+  });
+  it('FREE tier using purchased tokens → clean (paid render)', () => {
+    expect(shouldShowWatermarkForRender(FREE_USER, 'token')).toBe(false);
+  });
+  it('paid tiers never get watermark regardless of source', () => {
+    expect(shouldShowWatermarkForRender(PRO_USER, 'tier')).toBe(false);
+    expect(shouldShowWatermarkForRender(PRO_USER, 'token')).toBe(false);
+    expect(shouldShowWatermarkForRender(AGENCY_USER, 'tier')).toBe(false);
+  });
+  it('OWNER never gets watermark regardless of source', () => {
+    expect(shouldShowWatermarkForRender(OWNER_USER, 'owner')).toBe(false);
+    expect(shouldShowWatermarkForRender(OWNER_USER, 'tier')).toBe(false);
+    expect(shouldShowWatermarkForRender(OWNER_USER, null)).toBe(false);
+  });
+  it('anonymous → watermark on (fail closed)', () => {
+    expect(shouldShowWatermarkForRender(null, 'tier')).toBe(true);
+    expect(shouldShowWatermarkForRender(undefined, null)).toBe(true);
+  });
+  it('FREE tier with null source → watermark on (defensive)', () => {
+    expect(shouldShowWatermarkForRender(FREE_USER, null)).toBe(true);
   });
 });
 

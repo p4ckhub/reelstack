@@ -68,6 +68,7 @@ export const mockCreateAuditLog = vi.fn().mockResolvedValue({});
 // Module queries
 export const mockIsUnlimited = vi.fn().mockReturnValue(false);
 export const mockShouldShowWatermark = vi.fn().mockReturnValue(false);
+export const mockShouldShowWatermarkForRender = vi.fn().mockReturnValue(false);
 export const mockCanUserAccessModule = vi.fn().mockResolvedValue(true);
 export const mockListAccessibleModules = vi.fn().mockResolvedValue([]);
 export const mockGetModuleBySlug = vi.fn().mockResolvedValue(null);
@@ -159,6 +160,7 @@ export function databaseMockFactory() {
     getAuditLogs: vi.fn(),
     isUnlimited: (...args: unknown[]) => mockIsUnlimited(...args),
     shouldShowWatermark: (...args: unknown[]) => mockShouldShowWatermark(...args),
+    shouldShowWatermarkForRender: (...args: unknown[]) => mockShouldShowWatermarkForRender(...args),
     canUserAccessModule: (...args: unknown[]) => mockCanUserAccessModule(...args),
     listAccessibleModules: (...args: unknown[]) => mockListAccessibleModules(...args),
     getModuleBySlug: (...args: unknown[]) => mockGetModuleBySlug(...args),

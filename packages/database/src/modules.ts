@@ -40,11 +40,29 @@ export function isUnlimited(user: { tier: Tier } | null | undefined): boolean {
 /**
  * Whether the rendered reel should include the "reelstack.dev" watermark.
  *
- * FREE-tier users see it as part of the free-plan experience (same pattern
- * as Canva / CapCut free tiers). Paid tiers (SOLO, PRO, AGENCY) and OWNER
- * render clean output.
+ * Per-render decision. The source of credits spent on THIS render
+ * (from `consumeCredits()`) decides together with the user's tier:
  *
- * Anonymous / missing user → watermark on (fail-closed, safer default).
+ *   • OWNER or any paid tier (SOLO, PRO, AGENCY) → clean, always
+ *   • FREE tier using monthly allowance (source='tier') → watermark on
+ *   • FREE tier using purchased tokens (source='token') → clean
+ *     (user paid for this specific render — same pattern as Canva top-ups)
+ *   • Anonymous / missing user → watermark on (fail-closed default)
+ */
+export function shouldShowWatermarkForRender(
+  user: { tier: Tier } | null | undefined,
+  creditSource: 'tier' | 'token' | 'owner' | null
+): boolean {
+  if (!user) return true;
+  if (isUnlimited(user)) return false;
+  if (user.tier !== 'FREE') return false;
+  return creditSource !== 'token';
+}
+
+/**
+ * User-level helper for UI copy ("your free renders will have a watermark").
+ * Does NOT account for token top-ups — use shouldShowWatermarkForRender()
+ * when deciding the actual render output.
  */
 export function shouldShowWatermark(user: { tier: Tier } | null | undefined): boolean {
   if (!user) return true;

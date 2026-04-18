@@ -6,7 +6,7 @@ import {
   getModuleBySlug,
   canUserAccessModule,
   isUnlimited,
-  shouldShowWatermark,
+  shouldShowWatermarkForRender,
   updateReelJobStatus,
 } from '@reelstack/database';
 import { getTierLimits } from '@/lib/api/validation';
@@ -77,10 +77,12 @@ export const POST = withAuth(
     }
 
     // FREE-tier watermark flag + seed. Server-side only — clients cannot set either.
-    // shouldShowWatermark() returns true for FREE tier, false for paid + OWNER.
+    // Decision is PER-RENDER: FREE user using monthly allowance → watermark on,
+    // FREE user burning purchased tokens → clean (they paid for this render),
+    // paid tiers + OWNER → clean always. See shouldShowWatermarkForRender().
     // Random seed keeps watermark positions stable across re-renders of the same job.
     const watermarkConfig = {
-      enabled: shouldShowWatermark(ctx.user),
+      enabled: shouldShowWatermarkForRender(ctx.user, source),
       seed: crypto.randomUUID(),
     };
 
