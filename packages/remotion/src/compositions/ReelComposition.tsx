@@ -24,6 +24,7 @@ import { BRollCutaway } from '../components/BRollCutaway';
 import { PictureInPicture } from '../components/PictureInPicture';
 import { LowerThird } from '../components/LowerThird';
 import { CtaOverlay } from '../components/CtaOverlay';
+import { EndCardLayer } from '../components/EndCardLayer';
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { ZoomEffect } from '../components/ZoomEffect';
 import { HighlightBox } from '../components/HighlightBox';
@@ -187,6 +188,7 @@ export const ReelComposition: React.FC<ReelProps> = ({
   scrollStopper,
   logoOverlay,
   watermark,
+  endCard,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -1173,6 +1175,9 @@ export const ReelComposition: React.FC<ReelProps> = ({
           durationSeconds={scrollStopper.durationSeconds}
         />
       )}
+
+      {/* LAYER 13: End card — library card rendered over the last N seconds */}
+      <EndCardLayer endCard={endCard} />
     </AbsoluteFill>
   );
 };

@@ -449,5 +449,15 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
     ...(brandPreset?.logoOverlay ? { logoOverlay: brandPreset.logoOverlay } : {}),
     ...(plan.sfxSegments?.length ? { sfxSegments: plan.sfxSegments } : {}),
     ...(watermark ? { watermark } : {}),
+    ...(plan.endCard
+      ? {
+          endCard: {
+            cardSlug: plan.endCard.cardSlug,
+            paletteSlug: plan.endCard.paletteSlug,
+            data: { ...plan.endCard.data },
+            durationSeconds: plan.endCard.durationSeconds ?? 3,
+          },
+        }
+      : {}),
   };
 }

@@ -44,6 +44,36 @@ Beyond effects, use these to make the reel dynamic and professional:
 
 {{layoutSection}}
 
+## CARD LIBRARY
+
+The reel can be bookended with a \`scrollStopper\` card (first 0.3-0.8s) and closed with an \`endCard\` (last 2-4s).
+Cards are styleable via palettes — every card × every palette = different brand feel.
+
+Available cards (grouped by the modes they support):
+
+{{cardSection}}
+
+Available palettes: {{palettesList}}.
+
+**When to use which mode:**
+- \`scrollStopper\`: ONE card in cta-outro mode IS NOT a scroll stopper. Use a card that supports \`cutaway\` or explicit scroll-stopper presets.
+- \`cta-outro\`: classic closing — shimmer / countdown-punch / warp-speed / stamp-slam for strong CTAs.
+- \`cutaway\`: mid-reel full-screen break — use for MOMENT cards (stat-card with big number, wave-text with hook phrase, quote-card with testimonial).
+- \`overlay-center\`: floating glass panel over the reel — use sparingly.
+
+**How to reference a card in the plan:**
+- \`endCard\`: \`{ "cardSlug": "shimmer", "paletteSlug": "ocean", "data": { "headline": "Get ReelStack", "subheadline": "Open source video", "action": "reelstack.dev" } }\`
+- \`scrollStopperCard\`: \`{ "cardSlug": "glitch-blast", "paletteSlug": "crimson", "data": { "headline": "WAIT!" } }\`
+- \`cutawayCards\`: array of \`{ startTime, durationSeconds, cardSlug, paletteSlug, data }\`
+
+**Don't overdo it.** One endCard + optional scrollStopper + 0-2 cutawayCards max per 30s reel.
+
+## SCENE TRANSITIONS (for full-scene swaps, not shot-to-shot)
+
+Beyond shot-to-shot transitions inside ReelComposition (above), we have a library of scene transitions used when composing cards or when a shot fully replaces another. Pick from:
+
+{{sceneTransitionSection}}
+
 ## PER-SHOT LAYOUT (hybrid-anchor mode)
 
 When layout is "hybrid-anchor", EACH shot can specify a "shotLayout" field:

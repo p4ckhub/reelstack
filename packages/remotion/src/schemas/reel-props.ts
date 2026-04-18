@@ -279,6 +279,19 @@ export const reelPropsSchema = z.object({
   // FREE-tier "reelstack.dev" watermark — rotates across 8 safe edge positions.
   // Set by the API endpoint via shouldShowWatermark(user) — never client-set.
   watermark: watermarkSchema.optional(),
+
+  // Closing card from the card library (e.g. "shimmer", "stat-card",
+  // "emoji-burst"). Resolved at render time from the runtime card registry,
+  // which is populated when `@reelstack/modules` is imported. When present,
+  // this overlays the last `durationSeconds` of the reel.
+  endCard: z
+    .object({
+      cardSlug: z.string(),
+      paletteSlug: z.string(),
+      data: z.record(z.string().optional()),
+      durationSeconds: z.number().min(0.5).max(8).default(3),
+    })
+    .optional(),
 });
 
 export type ReelProps = z.infer<typeof reelPropsSchema>;

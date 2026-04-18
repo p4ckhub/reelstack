@@ -160,12 +160,43 @@ export interface ProductionPlan {
     | 'comparison-split';
   readonly captionStyle?: Record<string, unknown>;
   readonly scrollStopper?: { readonly preset: string; readonly durationSeconds?: number };
+  /**
+   * Optional card from the card library to use as a scroll-stopper. When
+   * provided alongside `scrollStopper.preset`, this card takes precedence.
+   */
+  readonly scrollStopperCard?: CardSelection;
+  /** Optional closing card (overrides hardcoded shimmer CTA). */
+  readonly endCard?: CardSelection;
+  /** Optional mid-reel full-screen cards. */
+  readonly cutawayCards?: readonly CutawayCardPlan[];
   readonly sfxSegments?: readonly {
     readonly startTime: number;
     readonly sfxId: string;
     readonly volume?: number;
   }[];
   readonly reasoning: string;
+}
+
+/** Pointer to a card in the runtime card registry, fully-styled. */
+export interface CardSelection {
+  /** Card slug from the library (e.g. "shimmer", "stat-card", "emoji-burst"). */
+  readonly cardSlug: string;
+  /** Palette slug from the palette registry (e.g. "ocean", "crimson"). */
+  readonly paletteSlug: string;
+  /**
+   * Card data payload. Cards pick fields they need from this bag — common:
+   * headline, subheadline, action, emojis, audioUrl. Runtime registry has
+   * `metadata.requiredData` per card so orchestrator can validate.
+   */
+  readonly data: Readonly<Record<string, string | undefined>>;
+  /** Optional duration override in seconds. Falls back to card's default. */
+  readonly durationSeconds?: number;
+}
+
+/** Card to render mid-reel as a full-screen break. */
+export interface CutawayCardPlan extends CardSelection {
+  /** Start time in seconds from the beginning of the reel. */
+  readonly startTime: number;
 }
 
 export interface PipSegmentPlan {

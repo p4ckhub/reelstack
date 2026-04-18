@@ -13,6 +13,11 @@ import {
   SHOT_LAYOUT_CATALOG,
   BGM_CATALOG,
 } from '@reelstack/remotion/catalog';
+import { listCards, listPalettes } from '@reelstack/remotion/cards';
+// Use registry-only subpath to avoid pulling @remotion/transitions (React
+// components + TransitionSeries) into the API bundle. Agent only needs the
+// pure registry functions.
+import { listTransitions } from '@reelstack/remotion/transitions/registry';
 import { BUILT_IN_CAPTION_PRESETS } from '@reelstack/types';
 import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
 import { buildProfileGuidelines } from './montage-profile';
@@ -73,6 +78,55 @@ function buildCatalogSections(manifest: ToolManifest) {
 
   const captionPresets = Object.keys(BUILT_IN_CAPTION_PRESETS).join(', ');
 
+  // Card library — read from runtime registry so LLM sees every card that
+  // the worker has loaded (public + private modules). Grouped by mode so the
+  // planner can quickly see which cards are valid for a given use.
+  const registeredCards = listCards();
+  const cardSection =
+    registeredCards.length === 0
+      ? 'No cards currently registered.'
+      : (() => {
+          const byMode: Record<string, string[]> = {};
+          for (const c of registeredCards) {
+            for (const mode of c.metadata.supportedModes) {
+              const key = mode;
+              if (!byMode[key]) byMode[key] = [];
+              byMode[key].push(
+                `- "${c.metadata.slug}": ${c.metadata.description}${
+                  c.metadata.requiredData.length > 0
+                    ? ` (needs: ${c.metadata.requiredData.join(', ')})`
+                    : ''
+                }`
+              );
+            }
+          }
+          return Object.entries(byMode)
+            .map(([mode, lines]) => `### ${mode}\n${lines.join('\n')}`)
+            .join('\n\n');
+        })();
+
+  const registeredPalettes = listPalettes();
+  const palettesList =
+    registeredPalettes.length === 0
+      ? 'none'
+      : registeredPalettes.map((p) => `"${p.slug}"`).join(', ');
+
+  // Scene-to-scene transitions (TransitionSeries-based). Different layer
+  // from b-roll TRANSITION_CATALOG above — those are crossfades between
+  // shots INSIDE ReelComposition, these are for full-scene swaps.
+  const registeredSceneTransitions = listTransitions();
+  const sceneTransitionSection =
+    registeredSceneTransitions.length === 0
+      ? 'No scene transitions currently registered.'
+      : registeredSceneTransitions
+          .map(
+            (t) =>
+              `- "${t.metadata.slug}": ${t.metadata.description}${
+                t.metadata.usesPalette ? ' [palette-aware]' : ''
+              }${t.metadata.supportsDirection ? ' [supports direction: left|right|up|down]' : ''}`
+          )
+          .join('\n');
+
   return {
     toolSection,
     guidelinesSection,
@@ -86,6 +140,9 @@ function buildCatalogSections(manifest: ToolManifest) {
     layoutSection,
     captionPropertySection,
     captionPresets,
+    cardSection,
+    palettesList,
+    sceneTransitionSection,
     entranceAnimations: ENTRANCE_ANIMATIONS.join(', '),
     exitAnimations: EXIT_ANIMATIONS.join(', '),
     transitionTypes: TRANSITION_TYPES.join(', '),
