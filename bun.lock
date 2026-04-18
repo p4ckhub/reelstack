@@ -185,6 +185,8 @@
         "@reelstack/transcription": "workspace:*",
         "@reelstack/tts": "workspace:*",
         "@reelstack/types": "workspace:*",
+        "@remotion/motion-blur": "4.0.431",
+        "@remotion/noise": "4.0.431",
         "playwright": "^1.58.2",
         "react": "19.2.4",
         "remotion": "4.0.431",
@@ -1128,6 +1130,10 @@
     "@remotion/media-parser": ["@remotion/media-parser@4.0.431", "", {}, "sha512-wwhVFUNB6DM11qEhIECMC1JSSxKpZZuifCBmanhUkD2BdGk34jw0tOAdDdYTLAeJLDVqtxWaxijeot00EY1ihg=="],
 
     "@remotion/media-utils": ["@remotion/media-utils@4.0.431", "", { "dependencies": { "@remotion/media-parser": "4.0.431", "@remotion/webcodecs": "4.0.431", "mediabunny": "1.35.1", "remotion": "4.0.431" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-DuGnSl5bsKk/sFeJKil+dFHAHGfsw5UnxvAMVjA83Fj8cp2/aYf0nkuQOUqhCFAi62qHAiYaAIqJNwl32xWsDQ=="],
+
+    "@remotion/motion-blur": ["@remotion/motion-blur@4.0.431", "", { "dependencies": { "remotion": "4.0.431" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-fQ50qOP+QtwvwxQBB4qLlAGhhod3fyJUe8I9G8PX5h8EUsfrt+GUkRwi5IG4CQeorEnkkc01523pD46L62xa7Q=="],
+
+    "@remotion/noise": ["@remotion/noise@4.0.431", "", { "dependencies": { "remotion": "4.0.431", "simplex-noise": "4.0.1" } }, "sha512-laSgi0xHnkuprJKfjkR9Uawht3NkKlvBzNwjYosCrIph2u17RoAMSWBbf+H/J+G1LVPg1rZLp1W43GAB+B6feg=="],
 
     "@remotion/paths": ["@remotion/paths@4.0.431", "", {}, "sha512-NJzxEcpFXOtACZFVl1xaCYPPGoKTwOr3UPSVh8FvlG+w3e14rd7XysU+h7qkywQCRzuha/BQBHugbmnTSAYlKA=="],
 
@@ -2838,6 +2844,8 @@
     "siginfo": ["siginfo@2.0.0", "", {}, "sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g=="],
 
     "signal-exit": ["signal-exit@3.0.7", "", {}, "sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ=="],
+
+    "simplex-noise": ["simplex-noise@4.0.1", "", {}, "sha512-zl/+bdSqW7HJOQ0oDbxrNYaF4F5ik0i7M6YOYmEoIJNtg16NpvWaTTM1Y7oV/7T0jFljawLgYPS81Uu2rsfo1A=="],
 
     "sisteransi": ["sisteransi@1.0.5", "", {}, "sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg=="],
 

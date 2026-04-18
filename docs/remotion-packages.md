@@ -2,7 +2,7 @@
 
 Decision guide zanim zaczniesz pisać nowy komponent/pipeline. Sprawdź najpierw tę tabelę — jeśli Remotion ma oficjalną paczkę pokrywającą 80% potrzeby, **nie pisz od zera**.
 
-Ostatni review: **2026-04-17**. Sprawdzaj przy każdym upgrade Remotion.
+Ostatni review: **2026-04-18**. Sprawdzaj przy każdym upgrade Remotion.
 
 ## Szybka ściąga
 
@@ -18,7 +18,7 @@ Ostatni review: **2026-04-17**. Sprawdzaj przy każdym upgrade Remotion.
 - Małe inline styling (nie warto dodawać deps dla 5 linijek CSS)
 - Animacja która jest unikatowa dla naszego brandu (customowy creative work)
 
-## Zainstalowane (stan na 2026-04-17)
+## Zainstalowane (stan na 2026-04-18)
 
 | Paczka                   | Wersja  | Licencja | Gdzie używana u nas                                                                      |
 | ------------------------ | ------- | -------- | ---------------------------------------------------------------------------------------- |
@@ -30,6 +30,8 @@ Ostatni review: **2026-04-17**. Sprawdzaj przy każdym upgrade Remotion.
 | `@remotion/player`       | 4.0.431 | RLA      | Zainstalowana, nieużywana (zarezerwowana dla przyszłego preview UI)                      |
 | `@remotion/google-fonts` | 4.0.301 | RLA      | Font loading: Inter, JetBrainsMono, Outfit, Montserrat, Poppins, Roboto, Ubuntu          |
 | `@remotion/transitions`  | 4.0.431 | RLA      | `packages/remotion/src/transitions/` + 21 card/transition presetów w `reelstack-modules` |
+| `@remotion/motion-blur`  | 4.0.431 | **MIT**  | `Trail` w transitions `zoom-punch`/`warp-zoom`/`push-horizontal` + karcie `warp-speed`   |
+| `@remotion/noise`        | 4.0.431 | **MIT**  | `noise2D` wobble w kartach `liquid`/`ink-splash` + VHS drift/jitter w `retro-vhs`        |
 | `@remotion/paths`        | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                      |
 | `@remotion/shapes`       | 4.0.431 | **MIT**  | Transitive (via transitions). Nie importujemy bezpośrednio jeszcze.                      |
 | `@remotion/media-parser` | 4.0.431 | RLA      | Transitive, nieużywana                                                                   |
@@ -52,13 +54,13 @@ Posortowane od **high impact / low effort**:
 
 ### Must-have — dodaj gdy dojdzie naturalny moment
 
-| Paczka                   | Licencja | Unlock                                                | Kiedy dodać                                                                                                                |
-| ------------------------ | -------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `@remotion/motion-blur`  | RLA      | True motion blur                                      | Przed kolejną iteracją `zoom-punch`, `warp-speed`, `push-horizontal`. 3 linijki w każdej karcie, cinematic upgrade.        |
-| `@remotion/noise`        | RLA      | Perlin/simplex noise (continuous)                     | Przed kolejną iteracją `liquid`, `ink-splash`, `retro-vhs`. Zamiast ręcznego `Math.sin()` wobble dostajesz organic wobble. |
-| `@remotion/lottie`       | RLA      | Renderowanie Lottie files                             | Jak tylko zechcesz dodać ikony/animacje z AE / LottieFiles. Katapulta dla szybkiego rich contentu bez rysowania od zera.   |
-| `@remotion/captions`     | RLA      | `parseSrt` / `parseVtt` / `createTikTokStyleCaptions` | Gdy user wrzuca zewnętrzne napisy. Nie potrzeba pisać parsera.                                                             |
-| `@remotion/layout-utils` | RLA      | `fitText()`                                           | Gdy headline w karcie przerośnie boks. Zamienia "hardcoded fontSize" na auto.                                              |
+| Paczka                   | Licencja | Unlock                                                          | Status                                                                                                                                               |
+| ------------------------ | -------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@remotion/motion-blur`  | MIT      | `Trail` (lightweight DOM-duplikat) + `CameraMotionBlur` (drogi) | **DONE 2026-04-18** — `Trail` w `zoom-punch`, `warp-zoom`, `push-horizontal`, `warp-speed`. `CameraMotionBlur` świadomie NIE używamy (koszt Lambda). |
+| `@remotion/noise`        | MIT      | `noise2D(seed, x, y)` — simplex noise (-1..1)                   | **DONE 2026-04-18** — zastąpił `Math.sin` wobble w `liquid`, `ink-splash`. Tracking drift + head-jitter w `retro-vhs`.                               |
+| `@remotion/lottie`       | RLA      | Renderowanie Lottie files                                       | Jak tylko zechcesz dodać ikony/animacje z AE / LottieFiles. Katapulta dla szybkiego rich contentu bez rysowania od zera.                             |
+| `@remotion/captions`     | RLA      | `parseSrt` / `parseVtt` / `createTikTokStyleCaptions`           | Gdy user wrzuca zewnętrzne napisy. Nie potrzeba pisać parsera.                                                                                       |
+| `@remotion/layout-utils` | RLA      | `fitText()`                                                     | Gdy headline w karcie przerośnie boks. Zamienia "hardcoded fontSize" na auto.                                                                        |
 
 ### Nice-to-have — specyficzne use cases
 
@@ -109,9 +111,10 @@ Przed napisaniem custom komponentu, odpowiedz sobie:
 
 ## Historia zmian
 
-| Data       | Zmiana                                                                                                                                                              |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-04-17 | Initial write-up po audycie pakietów. 7 oficjalnych zainstalowanych + 5 transitive. Custom implementacje: CaptionOverlay, Whisper pipeline, ElevenLabs integration. |
+| Data       | Zmiana                                                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-04-18 | Dodane `@remotion/motion-blur` + `@remotion/noise` (oba MIT). `Trail` w 3 transitions + 1 karcie. `noise2D` zastąpił `Math.sin` wobble w 3 kartach. Lottie odłożone. |
+| 2026-04-17 | Initial write-up po audycie pakietów. 7 oficjalnych zainstalowanych + 5 transitive. Custom implementacje: CaptionOverlay, Whisper pipeline, ElevenLabs integration.  |
 
 ## Powiązane dokumenty
 
