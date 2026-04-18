@@ -116,6 +116,55 @@ Przed napisaniem custom komponentu, odpowiedz sobie:
 | 2026-04-18 | Dodane `@remotion/motion-blur` + `@remotion/noise` (oba MIT). `Trail` w 3 transitions + 1 karcie. `noise2D` zastąpił `Math.sin` wobble w 3 kartach. Lottie odłożone. |
 | 2026-04-17 | Initial write-up po audycie pakietów. 7 oficjalnych zainstalowanych + 5 transitive. Custom implementacje: CaptionOverlay, Whisper pipeline, ElevenLabs integration.  |
 
+## Wow-factor research (2026-04-18)
+
+Wyniki audytu Remotion's own use-cases, templates, i paczek pod kątem features które dają prawdziwy "wow" dla reel-contentu.
+
+### Ranked wow-factor candidates
+
+**Tier 1 — high impact, low effort (days of work):**
+
+| Paczka                     | Wow co robi                                                                                         | Jak użyć u nas                                                                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@remotion/light-leaks`    | WebGL-based organic light leak z `seed` + `hueShift` prop. Prawdziwy filmowy efekt, nie ręczny SVG. | Dodać jako drugi wariant transition `organic-light-leak` (wersja WebGL). Porównać z naszą ręczną.                                                    |
+| `@remotion/animated-emoji` | Google Fonts animated emoji (CC BY 4.0). 🎉⭐💥❤️ jako gotowe animacje.                             | Nowa karta `emoji-burst` (confetti animowanych emoji), plus per-shot overlay `emoji-react` (float-up emoji jak Twitch). Bardzo viral w short-formie. |
+| `@remotion/layout-utils`   | `fitText()` auto-scale'uje fontSize do boksa, bez hardcoded wartości.                               | Wire w karty text-heavy (`wave-text`, `quote-card`, `stat-card`). Koniec z overflow przy długich polskich headline'ach.                              |
+| `@remotion/sfx`            | Normalized sound effects library (-3dB peak). Whoosh/impact/zip/notification/keystroke.             | Dodać SFX do transitions (whip-pan → whoosh, zoom-punch → impact, pixel-dissolve → glitch-noise). +feel, +polish, darmowe licencyjnie.               |
+
+**Tier 2 — high impact, medium effort (week):**
+
+| Paczka / Pattern        | Wow co robi                                                                                                          | Jak użyć u nas                                                                                                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@remotion/three` + R3F | Real 3D w Remotion. Template "3D phone z video inside" = ogromny wow. `useVideoTexture()` maps reel jako 3D surface. | Karta `3d-frame`: reel renderuje się w środku rotującego telefonu / laptopa / floating screen. TSA audience (solopreneurs) to kocha — "ten tool na 3D device" = premium feel. |
+| Audio-reactive cards    | `useAudioData()` + `visualizeAudio()` z `@remotion/media-utils`. Karta reaguje na voiceover amplitude.               | Karta `waveform-card`: waveform rośnie z głośnością mowy. Karta `beat-pulse`: scale pulse na każdy peak. Nowy wymiar personalizacji.                                          |
+| Banger.show patterns    | Music visualization na sterydach — 3D bars, shaders, color-reactive. Ich templates to gold.                          | Studiować ich approach przy budowie premium music-visualization pack (przyszłościowo, komercyjne).                                                                            |
+
+**Tier 3 — niche / high effort / wait for real use case:**
+
+| Paczka / Pattern      | Co daje                                                    | Dlaczego nie teraz                                                                           |
+| --------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `@remotion/skia`      | GPU 2D shaders (displacement, custom glsl, advanced blur). | Overkill dla obecnych kart. Dodać gdy pójdziemy w motion-graphics-pro pack.                  |
+| `@remotion/rive`      | Rive animations (.riv files).                              | Wait for first .riv asset z user workflow.                                                   |
+| Code Hike             | Piękne code animations z syntax highlighting.              | Idealny dla TechSkills tech tutorials, ale to osobny tool use-case, nie core ReelStack card. |
+| Watercolor Map (paid) | 2D animated map dla travel-contentu.                       | Niche — dodać jeśli user zechce robić travel / location-reveal reele.                        |
+| Remotion Recorder     | In-browser video production tool.                          | Inne narzędzie, nie karta. Rozważyć gdy dojdziemy do in-browser editor UI.                   |
+
+### Remotion templates warte podejrzenia pod inspirację
+
+- **Prompt to Video** (free) — najbliższy naszemu use case (ContentPackage → reel). Warto zrobić code-dive porównawczy.
+- **TikTok template** (free) — word-by-word captions, 9:16. Porównać z naszym `CaptionOverlay` highlight-modes.
+- **Music Visualization / Audiogram** (free) — szablon dla podcast-clip export (jeśli kiedyś dodamy).
+- **3D Starter Template** — 3D phone z video inside. Gotowy starting point dla `3d-frame` karty.
+- **Editor Starter** (paid, ~$99) — boilerplate pod video editor UI. Rozważyć gdy ReelStack dostanie pełny in-browser editor.
+
+### Proponowana kolejność wdrożenia (jak user powie "go")
+
+1. **@remotion/sfx + @remotion/animated-emoji** jednocześnie (1 dzień) — highest viral-ROI, lowest effort.
+2. **@remotion/layout-utils fitText** wire w 3 karty tekstowe (2h) — quality-of-life, kończy problem overflow.
+3. **@remotion/light-leaks** jako wariant transition (2h) — porównać z naszym, wybrać jeden albo zostawić oba.
+4. **@remotion/three 3d-frame card** (1-2 dni) — premium pack, wysoka wartość dla demo / marketingu.
+5. **Audio-reactive karta** (1-2 dni) — nowy wymiar personalizacji reeli.
+
 ## Powiązane dokumenty
 
 - `vault/brands/_shared/reference/remotion-license-strategy.md` — licensing boundaries
