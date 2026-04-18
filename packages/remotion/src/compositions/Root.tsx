@@ -4,6 +4,7 @@ import { YouTubeLongFormComposition } from './YouTubeLongFormComposition';
 import { calculateReelMetadata } from './calculate-metadata';
 import { calculateYouTubeMetadata } from './calculate-youtube-metadata';
 import { listCompositions } from './registry';
+import { withWatermark } from './with-watermark';
 
 // Import modules barrel to trigger self-registration
 import '../modules';
@@ -20,7 +21,7 @@ export const RemotionRoot: React.FC = () => {
       {/* 9:16 Vertical Reel (TikTok, Instagram, YouTube Shorts) */}
       <Composition
         id="Reel"
-        component={ReelComposition}
+        component={withWatermark(ReelComposition)}
         durationInFrames={FPS * 15}
         fps={FPS}
         width={1080}
@@ -76,7 +77,7 @@ export const RemotionRoot: React.FC = () => {
       {/* 16:9 Horizontal YouTube Long-Form */}
       <Composition
         id="YouTubeLongForm"
-        component={YouTubeLongFormComposition}
+        component={withWatermark(YouTubeLongFormComposition)}
         durationInFrames={FPS * 60}
         fps={FPS}
         width={1920}
@@ -147,7 +148,7 @@ export const RemotionRoot: React.FC = () => {
         <Composition
           key={mod.id}
           id={mod.id}
-          component={mod.component}
+          component={withWatermark(mod.component)}
           durationInFrames={mod.defaultDurationInFrames}
           fps={mod.fps}
           width={mod.width}

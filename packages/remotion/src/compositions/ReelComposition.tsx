@@ -30,7 +30,6 @@ import { HighlightBox } from '../components/HighlightBox';
 import { MultiPanelMontage } from '../components/MultiPanelMontage';
 import { ScrollStopper, useScrollStopperTransform } from '../components/ScrollStopper';
 import { LogoOverlay } from '../components/LogoOverlay';
-import { WithWatermarkOverlay } from '../components/WithWatermarkOverlay';
 import { sfxIdToUrl } from '../schemas/catalog';
 import { getEffect } from '../effects';
 
@@ -596,7 +595,6 @@ export const ReelComposition: React.FC<ReelProps> = ({
             durationSeconds={scrollStopper.durationSeconds}
           />
         )}
-        <WithWatermarkOverlay watermark={watermark} />
       </AbsoluteFill>
     );
   }
@@ -800,7 +798,6 @@ export const ReelComposition: React.FC<ReelProps> = ({
             durationSeconds={scrollStopper.durationSeconds}
           />
         )}
-        <WithWatermarkOverlay watermark={watermark} />
       </AbsoluteFill>
     );
   }
@@ -1012,7 +1009,6 @@ export const ReelComposition: React.FC<ReelProps> = ({
             durationSeconds={scrollStopper.durationSeconds}
           />
         )}
-        <WithWatermarkOverlay watermark={watermark} />
       </AbsoluteFill>
     );
   }
@@ -1177,7 +1173,6 @@ export const ReelComposition: React.FC<ReelProps> = ({
           durationSeconds={scrollStopper.durationSeconds}
         />
       )}
-      <WithWatermarkOverlay watermark={watermark} />
     </AbsoluteFill>
   );
 };
