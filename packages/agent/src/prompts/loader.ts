@@ -12,6 +12,7 @@ import { content as revisionTpl } from './templates/revision';
 import { content as supervisorTpl } from './templates/supervisor';
 import { content as promptWriterTpl } from './templates/prompt-writer';
 import { content as scriptReviewerTpl } from './templates/script-reviewer';
+import { content as scriptWriterTpl } from './templates/script-writer';
 
 // ── Partials ───────────────────────────────────────────────
 import { content as rulesHook } from './partials/rules-hook';
@@ -51,6 +52,7 @@ const TEMPLATES: Record<string, string> = {
   supervisor: supervisorTpl,
   'prompt-writer': promptWriterTpl,
   'script-reviewer': scriptReviewerTpl,
+  'script-writer': scriptWriterTpl,
 };
 
 const PARTIALS: Record<string, string> = {
