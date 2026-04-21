@@ -266,10 +266,11 @@ function createWhisperTimingStep(deps: GeneratePipelineDeps): StepDefinition {
   return {
     id: 'whisper-timing',
     name: 'Build timing reference + select montage profile',
-    dependsOn: ['tts'],
+    dependsOn: ['tts', 'script-rewrite'],
     async execute(ctx: PipelineContext) {
       const ttsResult = ctx.results.tts as TTSPipelineResult;
-      const script = ctx.input.script as string;
+      const rewriteResult = ctx.results['script-rewrite'] as { scriptForPlanning: string };
+      const script = rewriteResult.scriptForPlanning;
       const montageProfileId = ctx.input.montageProfile as string | undefined;
 
       const timingReference = deps.buildTimingReference(ttsResult.transcriptionWords);
@@ -315,7 +316,7 @@ function createSupervisorStep(deps: GeneratePipelineDeps): StepDefinition {
   return {
     id: 'supervisor',
     name: 'Supervisor review',
-    dependsOn: ['plan', 'discover-tools', 'whisper-timing', 'tts'],
+    dependsOn: ['plan', 'discover-tools', 'whisper-timing', 'tts', 'script-rewrite'],
     async execute(ctx: PipelineContext) {
       const planResult = ctx.results.plan as { plan: ProductionPlan };
       const toolsResult = ctx.results['discover-tools'] as { manifest: ToolManifest };
@@ -325,9 +326,10 @@ function createSupervisorStep(deps: GeneratePipelineDeps): StepDefinition {
         montageProfile: MontageProfileEntry;
       };
 
+      const rewriteResult = ctx.results['script-rewrite'] as { scriptForPlanning: string };
       const supervision = await deps.supervisePlan({
         plan: planResult.plan,
-        script: ctx.input.script as string,
+        script: rewriteResult.scriptForPlanning,
         audioDuration: ttsResult.audioDuration,
         style: (ctx.input.style as string) ?? 'dynamic',
         toolManifest: toolsResult.manifest,
