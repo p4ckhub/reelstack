@@ -42,6 +42,8 @@ vi.mock('remotion', () => ({
   spring: () => 1,
   noise2D: () => 0,
   Easing: { bezier: () => (t: number) => t, linear: (t: number) => t },
+  delayRender: (_label?: string) => 0,
+  continueRender: (_handle: number) => {},
 }));
 
 // ── Core composition sample props ─────────────────────────────
