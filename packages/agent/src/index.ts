@@ -49,6 +49,8 @@ export { validatePlan } from './planner/plan-validator';
 export { supervisePlan } from './planner/plan-supervisor';
 export type { SupervisorResult } from './planner/plan-supervisor';
 export { reviewScript, isScriptReviewEnabled } from './planner/script-reviewer';
+export { rewriteScript, isScriptWriterEnabled } from './planner/script-writer';
+export type { ScriptRewriteResult, ScriptRewriteAssessment } from './planner/script-writer';
 export { writePrompt, isPromptWriterEnabled } from './planner/prompt-writer';
 export { persistAssetsToStorage } from './orchestrator/asset-persistence';
 export { pollUntilDone } from './polling';

@@ -1,8 +1,9 @@
 /**
  * Generate pipeline - full auto reel from script.
  *
- * Steps: script-review -> discover-tools -> tts -> whisper-timing -> plan ->
- *        supervisor -> prompt-expansion -> asset-gen -> asset-persist -> composition
+ * Steps: script-review -> script-rewrite -> discover-tools -> tts ->
+ *        whisper-timing -> plan -> supervisor -> prompt-expansion ->
+ *        asset-gen -> asset-persist -> composition
  *
  * Each step reads from context.results (previous step outputs) and returns
  * its own output to be stored under its step ID.
@@ -17,6 +18,7 @@ import type { PipelineDefinition, StepDefinition, PipelineContext } from './pipe
 import type { TTSPipelineResult, TTSPipelineInput } from './base-orchestrator';
 import type { ProductionPlan, ToolManifest, GeneratedAsset, BrandPreset } from '../types';
 import type { ScriptReview } from '../planner/script-reviewer';
+import type { ScriptRewriteResult } from '../planner/script-writer';
 import type { SupervisorResult } from '../planner/plan-supervisor';
 import type { ToolRegistry } from '../registry/tool-registry';
 import type { AssemblyInput, AssembledProps } from './composition-assembler';
@@ -26,6 +28,7 @@ import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
 
 export const GENERATE_STEP_IDS = [
   'script-review',
+  'script-rewrite',
   'discover-tools',
   'tts',
   'whisper-timing',
@@ -44,6 +47,12 @@ export type GenerateStepId = (typeof GENERATE_STEP_IDS)[number];
 export interface GeneratePipelineDeps {
   reviewScript: (script: string) => Promise<ScriptReview>;
   isScriptReviewEnabled: () => boolean;
+  /** Script doctor: rewrites weak hooks/stakes/CTAs before planning. */
+  rewriteScript: (
+    script: string,
+    options?: { durationSeconds?: number; style?: string }
+  ) => Promise<ScriptRewriteResult>;
+  isScriptWriterEnabled: () => boolean;
   runTTSPipeline: (
     request: TTSPipelineInput,
     tmpDir: string,
@@ -124,6 +133,7 @@ export function createGeneratePipeline(deps: GeneratePipelineDeps): PipelineDefi
     name: 'Full Auto Generate',
     steps: [
       createScriptReviewStep(deps),
+      createScriptRewriteStep(deps),
       createDiscoverToolsStep(deps),
       createTTSStep(deps),
       createWhisperTimingStep(deps),
@@ -159,6 +169,46 @@ function createScriptReviewStep(deps: GeneratePipelineDeps): StepDefinition {
   };
 }
 
+function createScriptRewriteStep(deps: GeneratePipelineDeps): StepDefinition {
+  return {
+    id: 'script-rewrite',
+    name: 'Script doctor (hook / stakes / arc / CTA)',
+    dependsOn: ['script-review'],
+    async execute(ctx: PipelineContext) {
+      const reviewResult = ctx.results['script-review'] as { scriptForPlanning: string };
+      const incoming = reviewResult.scriptForPlanning;
+
+      if (!deps.isScriptWriterEnabled()) {
+        return {
+          script: incoming,
+          scriptForPlanning: incoming,
+          rewritten: false,
+          changeNotes: '',
+          assessment: {
+            hook: 'pass' as const,
+            stakes: 'pass' as const,
+            arc: 'pass' as const,
+            cta: 'pass' as const,
+            issues: [] as string[],
+          },
+        };
+      }
+
+      const durationSeconds = (ctx.input.durationSeconds as number | undefined) ?? undefined;
+      const style = (ctx.input.style as string | undefined) ?? undefined;
+      const result = await deps.rewriteScript(incoming, { durationSeconds, style });
+
+      return {
+        script: result.script,
+        scriptForPlanning: result.script,
+        rewritten: result.rewritten,
+        changeNotes: result.changeNotes,
+        assessment: result.assessment,
+      };
+    },
+  };
+}
+
 function createDiscoverToolsStep(deps: GeneratePipelineDeps): StepDefinition {
   return {
     id: 'discover-tools',
@@ -184,10 +234,10 @@ function createTTSStep(deps: GeneratePipelineDeps): StepDefinition {
   return {
     id: 'tts',
     name: 'Generate voiceover (TTS + Whisper)',
-    dependsOn: ['script-review'],
+    dependsOn: ['script-rewrite'],
     async execute(ctx: PipelineContext) {
-      const reviewResult = ctx.results['script-review'] as { scriptForPlanning: string };
-      const script = reviewResult.scriptForPlanning;
+      const rewriteResult = ctx.results['script-rewrite'] as { scriptForPlanning: string };
+      const script = rewriteResult.scriptForPlanning;
       const tmpDir = path.join(os.tmpdir(), `reelstack-pipeline-${ctx.jobId}`);
       fs.mkdirSync(tmpDir, { recursive: true });
 
@@ -234,9 +284,9 @@ function createPlanStep(deps: GeneratePipelineDeps): StepDefinition {
   return {
     id: 'plan',
     name: 'Plan production (LLM director)',
-    dependsOn: ['script-review', 'discover-tools', 'tts', 'whisper-timing'],
+    dependsOn: ['script-rewrite', 'discover-tools', 'tts', 'whisper-timing'],
     async execute(ctx: PipelineContext) {
-      const reviewResult = ctx.results['script-review'] as { scriptForPlanning: string };
+      const reviewResult = ctx.results['script-rewrite'] as { scriptForPlanning: string };
       const toolsResult = ctx.results['discover-tools'] as { manifest: ToolManifest };
       const ttsResult = ctx.results.tts as { audioDuration: number };
       const timingResult = ctx.results['whisper-timing'] as {

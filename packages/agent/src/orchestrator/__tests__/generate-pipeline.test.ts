@@ -24,6 +24,19 @@ function makeMockDeps(overrides?: Partial<GeneratePipelineDeps>): GeneratePipeli
       suggestions: [],
     }),
     isScriptReviewEnabled: vi.fn().mockReturnValue(true),
+    rewriteScript: vi.fn().mockImplementation(async (script: string) => ({
+      script,
+      rewritten: false,
+      changeNotes: '',
+      assessment: {
+        hook: 'pass',
+        stakes: 'pass',
+        arc: 'pass',
+        cta: 'pass',
+        issues: [],
+      },
+    })),
+    isScriptWriterEnabled: vi.fn().mockReturnValue(true),
     runTTSPipeline: vi.fn().mockResolvedValue({
       voiceoverPath: '/tmp/voice.mp3',
       audioDuration: 30.5,

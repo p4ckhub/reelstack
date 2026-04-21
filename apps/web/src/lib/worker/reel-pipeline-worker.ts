@@ -535,6 +535,8 @@ async function createGenerateDeps(): Promise<GeneratePipelineDeps> {
   const {
     reviewScript,
     isScriptReviewEnabled,
+    rewriteScript,
+    isScriptWriterEnabled,
     runTTSPipeline,
     buildTimingReference,
     selectMontageProfile,
@@ -555,6 +557,8 @@ async function createGenerateDeps(): Promise<GeneratePipelineDeps> {
   return {
     reviewScript,
     isScriptReviewEnabled,
+    rewriteScript,
+    isScriptWriterEnabled,
     runTTSPipeline,
     buildTimingReference,
     selectMontageProfile,
