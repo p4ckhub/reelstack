@@ -20,6 +20,12 @@ type Step = 'script' | 'style' | 'settings' | 'generating';
 interface FormData {
   mode: string;
   script: string;
+  /** slideshow / talking-object / presenter-explainer */
+  topic: string;
+  /** captions mode — URL of the existing video to caption */
+  videoUrl: string;
+  /** n8n-explainer mode — workflow URL or ID */
+  workflowUrl: string;
   layout: 'fullscreen' | 'split-screen' | 'picture-in-picture';
   style: 'dynamic' | 'calm' | 'cinematic' | 'educational';
   ttsProvider: 'edge-tts' | 'elevenlabs' | 'openai';
@@ -29,6 +35,19 @@ interface FormData {
   highlightColor: string;
   backgroundColor: string;
 }
+
+/** Which input field the mode needs as its primary source. */
+type ModeInputKind = 'script' | 'topic' | 'videoUrl' | 'workflowUrl';
+
+const MODE_INPUT: Readonly<Record<string, ModeInputKind>> = {
+  generate: 'script',
+  compose: 'script',
+  captions: 'videoUrl',
+  slideshow: 'topic',
+  'talking-object': 'topic',
+  'presenter-explainer': 'topic',
+  'n8n-explainer': 'workflowUrl',
+};
 
 interface ModuleOption {
   slug: string;
@@ -114,6 +133,9 @@ export default function ReelWizardPage() {
   const [form, setForm] = useState<FormData>({
     mode: 'generate',
     script: '',
+    topic: '',
+    videoUrl: '',
+    workflowUrl: '',
     layout: 'fullscreen',
     style: 'dynamic',
     ttsProvider: 'edge-tts',
@@ -186,12 +208,28 @@ export default function ReelWizardPage() {
     setStep('generating');
 
     try {
+      // Build the mode-specific payload — different backends need
+      // different fields (topic / videoUrl / workflowUrl / script).
+      // Empty strings must NOT be sent; the server treats them as
+      // present-but-invalid and rejects validation.
+      const inputKind = MODE_INPUT[form.mode] ?? 'script';
+      const modePayload: Record<string, unknown> = {};
+      if (inputKind === 'script' && form.script.trim()) {
+        modePayload.script = form.script;
+      } else if (inputKind === 'topic' && form.topic.trim()) {
+        modePayload.topic = form.topic;
+      } else if (inputKind === 'videoUrl' && form.videoUrl.trim()) {
+        modePayload.videoUrl = form.videoUrl;
+      } else if (inputKind === 'workflowUrl' && form.workflowUrl.trim()) {
+        modePayload.workflowUrl = form.workflowUrl;
+      }
+
       const res = await fetch('/api/v1/reel/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: form.mode,
-          script: form.script,
+          ...modePayload,
           layout: form.layout,
           style: form.style,
           tts: {
@@ -308,19 +346,79 @@ export default function ReelWizardPage() {
                 </div>
               )}
 
-              <div>
-                <Label htmlFor="script">Script</Label>
-                <textarea
-                  id="script"
-                  value={form.script}
-                  onChange={(e) => update('script', e.target.value)}
-                  placeholder="Write your reel script here. Each sentence will become a caption..."
-                  className="mt-1.5 min-h-[200px] w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {form.script.length}/10000 characters
-                </p>
-              </div>
+              {/* Mode-specific primary input — script / topic / videoUrl / workflowUrl */}
+              {(() => {
+                const inputKind = MODE_INPUT[form.mode] ?? 'script';
+                if (inputKind === 'topic') {
+                  return (
+                    <div>
+                      <Label htmlFor="topic">Topic</Label>
+                      <textarea
+                        id="topic"
+                        value={form.topic}
+                        onChange={(e) => update('topic', e.target.value)}
+                        placeholder="e.g. 3 time-saving VS Code shortcuts every developer should know"
+                        className="mt-1.5 min-h-[120px] w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        AI will generate the full reel from this topic. {form.topic.length}/1000
+                      </p>
+                    </div>
+                  );
+                }
+                if (inputKind === 'videoUrl') {
+                  return (
+                    <div>
+                      <Label htmlFor="videoUrl">Video URL</Label>
+                      <input
+                        id="videoUrl"
+                        type="url"
+                        value={form.videoUrl}
+                        onChange={(e) => update('videoUrl', e.target.value)}
+                        placeholder="https://example.com/video.mp4"
+                        className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Public URL of the existing MP4 to caption. Transcription auto-detects the
+                        audio.
+                      </p>
+                    </div>
+                  );
+                }
+                if (inputKind === 'workflowUrl') {
+                  return (
+                    <div>
+                      <Label htmlFor="workflowUrl">n8n Workflow URL</Label>
+                      <input
+                        id="workflowUrl"
+                        type="url"
+                        value={form.workflowUrl}
+                        onChange={(e) => update('workflowUrl', e.target.value)}
+                        placeholder="https://n8n.yourdomain.com/workflow/ID"
+                        className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Public n8n workflow URL. Screenshots will be auto-generated and explained.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <div>
+                    <Label htmlFor="script">Script</Label>
+                    <textarea
+                      id="script"
+                      value={form.script}
+                      onChange={(e) => update('script', e.target.value)}
+                      placeholder="Write your reel script here. Each sentence will become a caption..."
+                      className="mt-1.5 min-h-[200px] w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {form.script.length}/10000 characters
+                    </p>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -366,7 +464,18 @@ export default function ReelWizardPage() {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <Button onClick={() => setStep('style')} disabled={form.script.trim().length < 10}>
+              <Button
+                onClick={() => setStep('style')}
+                disabled={(() => {
+                  // Primary input must be filled for the selected mode.
+                  const inputKind = MODE_INPUT[form.mode] ?? 'script';
+                  if (inputKind === 'script') return form.script.trim().length < 10;
+                  if (inputKind === 'topic') return form.topic.trim().length < 3;
+                  if (inputKind === 'videoUrl') return !form.videoUrl.trim().startsWith('http');
+                  if (inputKind === 'workflowUrl') return form.workflowUrl.trim().length < 3;
+                  return true;
+                })()}
+              >
                 Next: Caption Style
               </Button>
             </div>
@@ -539,7 +648,20 @@ export default function ReelWizardPage() {
             <div className="mt-6 rounded-md bg-muted p-4">
               <h3 className="text-sm font-medium">Summary</h3>
               <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                <p>Script: {form.script.length} characters</p>
+                {(() => {
+                  const inputKind = MODE_INPUT[form.mode] ?? 'script';
+                  if (inputKind === 'topic') {
+                    return <p>Topic: {form.topic.length} characters</p>;
+                  }
+                  if (inputKind === 'videoUrl') {
+                    return <p>Video URL: {form.videoUrl || '(none)'}</p>;
+                  }
+                  if (inputKind === 'workflowUrl') {
+                    return <p>Workflow: {form.workflowUrl || '(none)'}</p>;
+                  }
+                  return <p>Script: {form.script.length} characters</p>;
+                })()}
+                <p>Mode: {form.mode}</p>
                 <p>Voice: {voices.find((v) => v.id === form.ttsVoice)?.label ?? form.ttsVoice}</p>
                 <p>Layout: {form.layout}</p>
                 <p>Style: {form.style}</p>
