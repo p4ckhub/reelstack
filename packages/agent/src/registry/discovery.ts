@@ -6,6 +6,7 @@ import { Veo3Tool } from '../tools/veo3-tool';
 import { KlingTool } from '../tools/kling-tool';
 import { SeedanceTool } from '../tools/seedance-tool';
 import { NanoBananaTool } from '../tools/nanobanana-tool';
+import { OpenAIImageTool } from '../tools/openai-image-tool';
 import { falTools } from '../tools/fal-tool';
 import { allPiapiTools } from '../tools/piapi-tool';
 import { allReplicateTools } from '../tools/replicate-tool';
@@ -51,6 +52,12 @@ export function discoverTools(): ProductionTool[] {
 
   if (process.env.NANOBANANA_API_KEY || process.env.GEMINI_API_KEY) {
     tools.push(new NanoBananaTool());
+  }
+
+  // OpenAI gpt-image-1 — same OPENAI_API_KEY we already use for TTS / LLM.
+  // No separate key needed; auto-registers when the OpenAI key is set.
+  if (process.env.OPENAI_API_KEY) {
+    tools.push(new OpenAIImageTool());
   }
 
   // fal.ai - one key, all models from catalog (video + image)

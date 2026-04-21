@@ -45,6 +45,10 @@ const TOOL_PRICING: Record<string, ToolPricing> = {
   'seedance-fal': { perSecond: 0.08 },
   seedance: { perSecond: 0.08 },
   nanobanana: { perRequest: 0.01 },
+  // OpenAI gpt-image-1: ~$0.07 per 1024x1536 medium-quality image (as of 2025
+  // pricing sheet). Override per-env via OPENAI_IMAGE_QUALITY=high if you
+  // want the better rendering at ~$0.19/image — we keep the default modest.
+  'openai-gpt-image': { perRequest: 0.07 },
   pexels: { perRequest: 0 },
   heygen: { perSecond: 0.15 },
   'heygen-agent': { perSecond: 0.0333 },

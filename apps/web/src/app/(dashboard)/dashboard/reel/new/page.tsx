@@ -34,6 +34,10 @@ interface FormData {
   captionPreset: string;
   highlightColor: string;
   backgroundColor: string;
+  /** Optional override: force a specific image-gen tool (empty = let the planner decide). */
+  preferredImageTool: string;
+  /** Optional override: force a specific video-gen tool. */
+  preferredVideoTool: string;
 }
 
 /** Which input field the mode needs as its primary source. */
@@ -63,6 +67,13 @@ interface JobStatus {
   progress: number;
   outputUrl?: string;
   error?: string;
+}
+
+interface ToolOption {
+  id: string;
+  name: string;
+  assetTypes: string[];
+  costTier: string;
 }
 
 // ── Caption Presets ───────────────────────────────────────
@@ -163,7 +174,10 @@ export default function ReelWizardPage() {
     captionPreset: 'bold-dark',
     highlightColor: '#F59E0B',
     backgroundColor: '#0E0E12',
+    preferredImageTool: '',
+    preferredVideoTool: '',
   });
+  const [tools, setTools] = useState<ToolOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState('');
@@ -175,6 +189,16 @@ export default function ReelWizardPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((resp) => setModules(resp?.data?.modules ?? []))
       .catch((err) => console.warn('[reel-wizard] modules fetch failed:', err));
+  }, []);
+
+  // Load generation tools (image / video models) so the user can optionally
+  // override the planner's default pick. Empty array = silent fallback
+  // (wizard shows no model selector, planner decides).
+  useEffect(() => {
+    fetch('/api/v1/tools')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((resp) => setTools(resp?.data?.tools ?? []))
+      .catch((err) => console.warn('[reel-wizard] tools fetch failed:', err));
   }, []);
 
   // Load saved user preferences as form defaults
@@ -249,6 +273,13 @@ export default function ReelWizardPage() {
         modePayload.workflowUrl = form.workflowUrl;
       }
 
+      // preferredToolIds is a flat array — union image + video picks if the
+      // user overrode either. Empty array is fine; server treats absence as
+      // "planner decides" (documented in reel-schemas.ts).
+      const preferredToolIds = [form.preferredImageTool, form.preferredVideoTool].filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      );
+
       const res = await fetch('/api/v1/reel/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,6 +297,7 @@ export default function ReelWizardPage() {
             highlightColor: form.highlightColor,
             backgroundColor: form.backgroundColor,
           },
+          ...(preferredToolIds.length > 0 ? { preferredToolIds } : {}),
         }),
       });
 
@@ -681,6 +713,56 @@ export default function ReelWizardPage() {
                 </Select>
               </div>
             </div>
+
+            {/* Generation model overrides — optional, otherwise planner picks */}
+            {tools.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Image Model (optional)</Label>
+                  <Select
+                    value={form.preferredImageTool || '__auto__'}
+                    onValueChange={(v) => update('preferredImageTool', v === '__auto__' ? '' : v)}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto (planner picks)</SelectItem>
+                      {tools
+                        .filter((t) => t.assetTypes.includes('ai-image'))
+                        .map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}{' '}
+                            <span className="text-xs text-muted-foreground">— {t.costTier}</span>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Video Model (optional)</Label>
+                  <Select
+                    value={form.preferredVideoTool || '__auto__'}
+                    onValueChange={(v) => update('preferredVideoTool', v === '__auto__' ? '' : v)}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Auto (planner picks)</SelectItem>
+                      {tools
+                        .filter((t) => t.assetTypes.includes('ai-video'))
+                        .map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}{' '}
+                            <span className="text-xs text-muted-foreground">— {t.costTier}</span>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             {/* Summary */}
             <div className="mt-6 rounded-md bg-muted p-4">
