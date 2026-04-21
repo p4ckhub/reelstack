@@ -148,7 +148,10 @@ async function callSupervisor(systemPrompt: string, userMessage: string): Promis
     },
     body: JSON.stringify({
       model,
-      max_tokens: 2000,
+      // 2000 was too tight: the new 20-sub-check rubric produces longer
+      // notes (per-pillar pass explanations + overlap lists). Responses
+      // were getting truncated mid-JSON, tripping the parser.
+      max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     }),
