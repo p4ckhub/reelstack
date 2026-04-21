@@ -86,7 +86,7 @@ const brandPresetSchema = z
 
 const ttsSchema = z
   .object({
-    provider: z.enum(['edge-tts', 'elevenlabs', 'openai']).default('edge-tts'),
+    provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).default('edge-tts'),
     voice: z.string().optional(),
     language: z.string().optional(),
   })
@@ -384,7 +384,7 @@ export const multiLangReelSchema = z.object({
   style: z.enum(['dynamic', 'calm', 'cinematic', 'educational']).optional(),
   tts: z
     .object({
-      provider: z.enum(['edge-tts', 'elevenlabs', 'openai']).default('edge-tts'),
+      provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).default('edge-tts'),
       voice: z.string().optional(),
     })
     .optional(),

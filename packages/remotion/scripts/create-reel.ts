@@ -78,7 +78,7 @@ async function main() {
     layout: (args['layout'] as ReelCreationRequest['layout']) ?? 'fullscreen',
     style: (args['style'] as ReelCreationRequest['style']) ?? 'dynamic',
     tts: {
-      provider: (args['tts'] as 'edge-tts' | 'elevenlabs' | 'openai') ?? 'edge-tts',
+      provider: (args['tts'] as 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts') ?? 'edge-tts',
       voice: args['voice'],
       language: args['lang'] ?? 'pl-PL',
     },

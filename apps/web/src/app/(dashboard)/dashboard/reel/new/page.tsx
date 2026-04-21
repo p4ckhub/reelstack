@@ -28,7 +28,7 @@ interface FormData {
   workflowUrl: string;
   layout: 'fullscreen' | 'split-screen' | 'picture-in-picture';
   style: 'dynamic' | 'calm' | 'cinematic' | 'educational';
-  ttsProvider: 'edge-tts' | 'elevenlabs' | 'openai';
+  ttsProvider: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
   ttsVoice: string;
   ttsLanguage: string;
   captionPreset: string;
@@ -104,6 +104,25 @@ const CAPTION_PRESETS = [
     backgroundColor: '#000000',
   },
 ] as const;
+
+/**
+ * Gemini Flash TTS voices are multilingual — every voice works for every
+ * supported locale. We expose a curated subset (those Google highlights as
+ * best-quality defaults). Full catalog is in
+ * @reelstack/tts/providers/gemini-tts.ts.
+ */
+const GEMINI_VOICES: Array<{ id: string; label: string }> = [
+  { id: 'Charon', label: 'Charon (Default, warm)' },
+  { id: 'Kore', label: 'Kore (Confident)' },
+  { id: 'Aoede', label: 'Aoede (Musical)' },
+  { id: 'Puck', label: 'Puck (Playful)' },
+  { id: 'Zephyr', label: 'Zephyr (Bright)' },
+  { id: 'Fenrir', label: 'Fenrir (Strong)' },
+  { id: 'Leda', label: 'Leda (Smooth)' },
+  { id: 'Orus', label: 'Orus (Deep)' },
+  { id: 'Achernar', label: 'Achernar (Clear)' },
+  { id: 'Despina', label: 'Despina (Gentle)' },
+];
 
 const TTS_VOICES: Record<string, Array<{ id: string; label: string }>> = {
   'en-US': [
@@ -199,8 +218,14 @@ export default function ReelWizardPage() {
     [update]
   );
 
-  // Get available voices for selected language
-  const voices = TTS_VOICES[form.ttsLanguage] ?? TTS_VOICES['en-US']!;
+  // Get available voices for selected language + provider combo.
+  // Gemini TTS voices are multilingual — same 10 voices across every
+  // language. Other providers are language-specific (edge-tts has
+  // per-locale Neural voices, OpenAI is multilingual but its own voices).
+  const voices =
+    form.ttsProvider === 'gemini-tts'
+      ? GEMINI_VOICES
+      : (TTS_VOICES[form.ttsLanguage] ?? TTS_VOICES['en-US']!);
 
   // Submit reel creation
   const handleSubmit = async () => {
@@ -630,13 +655,26 @@ export default function ReelWizardPage() {
                 <Label>TTS Provider</Label>
                 <Select
                   value={form.ttsProvider}
-                  onValueChange={(v) => update('ttsProvider', v as FormData['ttsProvider'])}
+                  onValueChange={(v) => {
+                    const provider = v as FormData['ttsProvider'];
+                    update('ttsProvider', provider);
+                    // Voice IDs differ radically between providers.
+                    // Edge TTS expects "pl-PL-MarekNeural", Gemini expects
+                    // "Charon". Auto-pick a sane default on provider swap.
+                    if (provider === 'gemini-tts') {
+                      update('ttsVoice', GEMINI_VOICES[0]!.id);
+                    } else {
+                      const langDefaults = TTS_VOICES[form.ttsLanguage];
+                      if (langDefaults?.[0]) update('ttsVoice', langDefaults[0].id);
+                    }
+                  }}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="edge-tts">Edge TTS (Free)</SelectItem>
+                    <SelectItem value="gemini-tts">Gemini Flash TTS (Preview)</SelectItem>
                     <SelectItem value="elevenlabs">ElevenLabs (Pro)</SelectItem>
                     <SelectItem value="openai">OpenAI TTS (Pro)</SelectItem>
                   </SelectContent>

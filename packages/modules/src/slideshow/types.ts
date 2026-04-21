@@ -26,7 +26,7 @@ export interface SlideshowRequest {
   highlightMode?: string;
   language?: string;
   tts?: {
-    provider?: 'edge-tts' | 'elevenlabs' | 'openai';
+    provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     voice?: string;
     language?: string;
   };

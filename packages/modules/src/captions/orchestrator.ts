@@ -52,7 +52,7 @@ export interface CaptionsRequest {
   captionStyle?: BuildCaptionsPropsInput['captionStyle'];
   language?: string;
   tts?: {
-    provider?: 'edge-tts' | 'elevenlabs' | 'openai';
+    provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     voice?: string;
     language?: string;
   };

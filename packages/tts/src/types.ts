@@ -45,7 +45,7 @@ export interface TTSProvider {
 }
 
 export interface TTSConfig {
-  readonly provider: 'elevenlabs' | 'edge-tts' | 'openai';
+  readonly provider: 'elevenlabs' | 'edge-tts' | 'openai' | 'gemini-tts';
   readonly apiKey?: string;
   readonly defaultVoice?: string;
   readonly defaultLanguage?: string;

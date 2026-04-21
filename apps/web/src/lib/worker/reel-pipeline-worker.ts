@@ -493,7 +493,11 @@ async function runLegacyGenerate(
     layout: config.layout as 'fullscreen' | 'split-screen' | 'picture-in-picture' | undefined,
     style: config.style as 'dynamic' | 'calm' | 'cinematic' | 'educational' | undefined,
     tts: config.tts as
-      | { provider?: 'edge-tts' | 'elevenlabs' | 'openai'; voice?: string; language?: string }
+      | {
+          provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
+          voice?: string;
+          language?: string;
+        }
       | undefined,
     whisper: config.whisper as
       | { provider?: 'openai' | 'cloudflare' | 'whisper-cpp' | 'synthetic'; apiKey?: string }

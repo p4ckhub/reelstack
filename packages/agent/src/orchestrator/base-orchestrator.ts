@@ -97,7 +97,7 @@ export interface TTSPipelineResult {
 export interface TTSPipelineInput {
   script: string;
   tts?: {
-    provider?: 'edge-tts' | 'elevenlabs' | 'openai';
+    provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     voice?: string;
     language?: string;
   };
@@ -123,7 +123,12 @@ export async function runTTSPipeline(
         ? process.env.ELEVENLABS_API_KEY
         : request.tts?.provider === 'openai'
           ? process.env.OPENAI_API_KEY
-          : undefined,
+          : request.tts?.provider === 'gemini-tts'
+            ? // The provider itself also picks up GOOGLE_TTS_ACCESS_TOKEN
+              // from env. We pass the API key here for the one-env-var path;
+              // either auth route is enough to instantiate the client.
+              (process.env.GOOGLE_TTS_API_KEY ?? process.env.GEMINI_API_KEY)
+            : undefined,
     defaultLanguage: request.tts?.language ?? 'en-US',
   };
   const ttsProvider = createTTSProvider(ttsConfig);

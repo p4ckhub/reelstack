@@ -7,7 +7,7 @@ export interface ReelCreationRequest {
   readonly layout: 'split-screen' | 'fullscreen' | 'picture-in-picture';
   /** TTS provider config */
   readonly tts?: {
-    readonly provider?: 'edge-tts' | 'elevenlabs' | 'openai';
+    readonly provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     readonly voice?: string;
     readonly language?: string;
   };

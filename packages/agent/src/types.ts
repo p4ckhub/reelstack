@@ -368,7 +368,7 @@ export interface ProductionRequest {
   readonly secondaryVideoUrl?: string;
   /** TTS config */
   readonly tts?: {
-    readonly provider?: 'edge-tts' | 'elevenlabs' | 'openai';
+    readonly provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     readonly voice?: string;
     readonly language?: string;
   };
