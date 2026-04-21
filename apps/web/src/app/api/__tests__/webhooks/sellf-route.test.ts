@@ -11,7 +11,9 @@ import {
   mockPrisma,
 } from '@/__test-utils__/database-mock';
 
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 const WEBHOOK_SECRET = 'test-webhook-secret';
 

@@ -9,7 +9,9 @@ import {
 } from '../api/validation';
 
 // Mock DB — getTierLimits falls back to TIER_DEFAULTS when findUnique returns null
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 describe('validateMagicBytes', () => {
   it('accepts valid MP4 (ftyp)', () => {

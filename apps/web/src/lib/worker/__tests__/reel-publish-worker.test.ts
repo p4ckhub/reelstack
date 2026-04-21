@@ -5,7 +5,9 @@ import {
   mockUpdateReelJobStatus,
 } from '@/__test-utils__/database-mock';
 
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 const mockPublish = vi.fn();
 vi.mock('@reelstack/publisher', () => ({

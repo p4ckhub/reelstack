@@ -6,7 +6,9 @@ import type { NextRequest } from 'next/server';
 import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
+vi.mock('@/lib/api/v1/middleware', async () =>
+  (await import('@/__test-utils__/middleware-mock')).middlewareMockFactory()
+);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
@@ -20,7 +22,9 @@ vi.mock('@/lib/api/v1/pipeline-helpers', () => ({
 }));
 
 import { databaseMockFactory, mockGetReelJob } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 const mockPipelineEngineGetStatus = vi.fn();
 const mockPipelineEngineRetryStep = vi.fn();
@@ -51,7 +55,9 @@ vi.mock('@reelstack/agent/pipeline', () => ({
 }));
 
 import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
-vi.mock('@reelstack/queue', queueMockFactory);
+vi.mock('@reelstack/queue', async () =>
+  (await import('@/__test-utils__/queue-mock')).queueMockFactory()
+);
 
 // ── Helpers ──────────────────────────────────────────────────
 

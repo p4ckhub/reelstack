@@ -3,7 +3,9 @@ import type { NextRequest } from 'next/server';
 import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
+vi.mock('@/lib/api/v1/middleware', async () =>
+  (await import('@/__test-utils__/middleware-mock')).middlewareMockFactory()
+);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 19 }),
 }));
@@ -14,10 +16,14 @@ import {
   mockUpdateTemplate,
   mockDeleteTemplate,
 } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 import { coreMockFactory } from '@/__test-utils__/core-mock';
-vi.mock('@reelstack/core', coreMockFactory);
+vi.mock('@reelstack/core', async () =>
+  (await import('@/__test-utils__/core-mock')).coreMockFactory()
+);
 
 const { GET, PATCH, DELETE } = await import('../../v1/templates/[id]/route');
 

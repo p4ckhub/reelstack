@@ -3,13 +3,17 @@ import type { NextRequest } from 'next/server';
 import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
+vi.mock('@/lib/api/v1/middleware', async () =>
+  (await import('@/__test-utils__/middleware-mock')).middlewareMockFactory()
+);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
 
 import { databaseMockFactory, mockRevokeApiKey } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 const { DELETE } = await import('../../v1/api-keys/[id]/route');
 

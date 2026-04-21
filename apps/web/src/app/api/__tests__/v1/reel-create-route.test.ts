@@ -3,7 +3,9 @@ import type { NextRequest } from 'next/server';
 import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
+vi.mock('@/lib/api/v1/middleware', async () =>
+  (await import('@/__test-utils__/middleware-mock')).middlewareMockFactory()
+);
 
 vi.mock('@/lib/api/validation', () => ({
   getTierLimits: () =>
@@ -24,10 +26,14 @@ import {
   mockGetModuleBySlug,
   mockIsUnlimited,
 } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
-vi.mock('@reelstack/queue', queueMockFactory);
+vi.mock('@reelstack/queue', async () =>
+  (await import('@/__test-utils__/queue-mock')).queueMockFactory()
+);
 
 const { POST } = await import('../../v1/reel/generate/route');
 

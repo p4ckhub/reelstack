@@ -8,7 +8,9 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 // Mock database
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 // Import after mocks
 const { getAuthUser } = await import('../api/auth');

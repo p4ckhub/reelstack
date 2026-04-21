@@ -3,10 +3,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'events';
 import { databaseMockFactory, mockPrisma } from '@/__test-utils__/database-mock';
 
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 import { queueMockFactory } from '@/__test-utils__/queue-mock';
-vi.mock('@reelstack/queue', queueMockFactory);
+vi.mock('@reelstack/queue', async () =>
+  (await import('@/__test-utils__/queue-mock')).queueMockFactory()
+);
 
 // --- Redis mock (net.createConnection) ---
 let mockSocketBehavior: 'pong' | 'error' | 'connect-error' = 'pong';

@@ -3,7 +3,9 @@ import type { NextRequest } from 'next/server';
 import { middlewareMockFactory, mockAuthenticate } from '@/__test-utils__/middleware-mock';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/api/v1/middleware', middlewareMockFactory);
+vi.mock('@/lib/api/v1/middleware', async () =>
+  (await import('@/__test-utils__/middleware-mock')).middlewareMockFactory()
+);
 vi.mock('@/lib/api/rate-limit', () => ({
   rateLimit: () => ({ success: true, remaining: 9 }),
 }));
@@ -14,12 +16,12 @@ import {
   mockCreateApiKey,
   mockPrisma,
 } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
-// Note: @reelstack/types passthrough — bun can't do `await import()` inside vi.mock factory.
-// Importing directly works because bun resolves workspace packages before mock hoisting.
-import * as reelstackTypes from '@reelstack/types';
-vi.mock('@reelstack/types', () => reelstackTypes);
+// @reelstack/types passthrough — re-export the real module so tests see actual enums/constants.
+vi.mock('@reelstack/types', async () => await import('@reelstack/types'));
 
 const mockGenerateApiKey = vi.fn();
 vi.mock('@/lib/api/v1/api-keys', () => ({

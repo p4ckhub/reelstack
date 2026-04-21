@@ -7,7 +7,9 @@ import {
   mockResetCallbackSent,
 } from '@/__test-utils__/database-mock';
 
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 const mockAgentProduce = vi.fn();
 const mockProduceComposition = vi.fn();
@@ -34,6 +36,8 @@ vi.mock('@reelstack/agent', () => ({
   // Functions used by createGenerateDeps()
   reviewScript: vi.fn(),
   isScriptReviewEnabled: vi.fn().mockReturnValue(false),
+  rewriteScript: vi.fn(),
+  isScriptWriterEnabled: vi.fn().mockReturnValue(false),
   runTTSPipeline: vi.fn(),
   buildTimingReference: vi.fn().mockReturnValue(''),
   selectMontageProfile: vi.fn().mockReturnValue({ id: 'default', name: 'Default' }),

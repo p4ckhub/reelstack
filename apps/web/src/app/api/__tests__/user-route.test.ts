@@ -10,7 +10,9 @@ import {
   mockGetMonthlyCreditsUsed,
   mockGetTokenBalance,
 } from '@/__test-utils__/database-mock';
-vi.mock('@reelstack/database', databaseMockFactory);
+vi.mock('@reelstack/database', async () =>
+  (await import('@/__test-utils__/database-mock')).databaseMockFactory()
+);
 
 vi.mock('@/lib/api/validation', () => ({
   getTierLimits: (tier: string) => {
