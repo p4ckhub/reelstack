@@ -219,6 +219,18 @@ Only include captionStyle if you want to override the preset for creative reason
 10. QUALITY FIRST: Always prioritize visual quality over cost. Use the best available AI tools.
     If multiple AI video tools available, pick the best for each shot type (Seedance for cinematic, Kling for action).
 
+## SELF-CRITIQUE (mandatory before output)
+
+Before you return the plan, read it back as a muted viewer scrolling past. Answer internally:
+
+- Does shot 1 earn shot 2? Would I keep watching past 3s?
+- Is there any 4+ second stretch with no visual change? (shot type, camera motion, overlay, or palette shift)
+- Does the final shot have a VISUAL punch (counter / zoom / CTA card), or does it fade into talking-head?
+- Are any two effects within 0.5s of each other? (retention killer)
+- If I muted this reel, would I still understand the arc from visuals alone?
+
+List the 3 weakest beats in the plan. Apply a concrete fix to AT LEAST TWO of them before returning the JSON (tighter timing, swap shot type, add zoom, replace b-roll query, move or merge an effect). Do not document this self-critique in the output — just ship the improved plan.
+
 ## OUTPUT FORMAT
 
 Return a JSON object (no markdown, just raw JSON):

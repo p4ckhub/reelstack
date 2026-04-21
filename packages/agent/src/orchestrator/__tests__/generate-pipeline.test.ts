@@ -178,11 +178,12 @@ describe('generatePipeline', () => {
       expect(pipeline.name).toBe('Full Auto Generate');
     });
 
-    it('defines 10 steps in correct order', () => {
-      expect(pipeline.steps).toHaveLength(10);
+    it('defines 11 steps in correct order', () => {
+      expect(pipeline.steps).toHaveLength(11);
       const ids = pipeline.steps.map((s) => s.id);
       expect(ids).toEqual([
         'script-review',
+        'script-rewrite',
         'discover-tools',
         'tts',
         'whisper-timing',
@@ -220,7 +221,7 @@ describe('generatePipeline', () => {
 
     it('exports GENERATE_STEP_IDS constant for reference', () => {
       expect(GENERATE_STEP_IDS).toBeDefined();
-      expect(GENERATE_STEP_IDS).toHaveLength(10);
+      expect(GENERATE_STEP_IDS).toHaveLength(11);
     });
   });
 
@@ -304,6 +305,7 @@ describe('generatePipeline', () => {
             approved: true,
             scriptForPlanning: 'Hello world. This is a test script.',
           },
+          'script-rewrite': { scriptForPlanning: 'Hello world. This is a test script.' },
         },
       });
       const step = pipeline.steps.find((s) => s.id === 'tts')!;
@@ -326,6 +328,7 @@ describe('generatePipeline', () => {
             approved: true,
             scriptForPlanning: 'Hello world.',
           },
+          'script-rewrite': { scriptForPlanning: 'Hello world.' },
         },
       });
       const step = pipeline.steps.find((s) => s.id === 'tts')!;
@@ -345,6 +348,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'test' },
+
+          'script-rewrite': { scriptForPlanning: 'test' },
           tts: {
             voiceoverPath: '/tmp/voice.mp3',
             audioDuration: 30.5,
@@ -378,6 +383,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'Hello world.' },
+
+          'script-rewrite': { scriptForPlanning: 'Hello world.' },
           'discover-tools': {
             manifest: { tools: [], summary: 'No tools' },
             registry: {},
@@ -408,6 +415,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'Hello world.' },
+
+          'script-rewrite': { scriptForPlanning: 'Hello world.' },
           'discover-tools': { manifest: { tools: [], summary: '' }, registry: {} },
           tts: { audioDuration: 30.5 },
           'whisper-timing': {
@@ -443,6 +452,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'Hello world.' },
+
+          'script-rewrite': { scriptForPlanning: 'Hello world.' },
           'discover-tools': {
             manifest: { tools: [], summary: '' },
             registry: {},
@@ -474,6 +485,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'Hello world.' },
+
+          'script-rewrite': { scriptForPlanning: 'Hello world.' },
           'discover-tools': { manifest: { tools: [], summary: '' }, registry: {} },
           tts: { audioDuration: 30.5 },
           'whisper-timing': {
@@ -771,7 +784,12 @@ describe('generatePipeline', () => {
       const reviewResult = await reviewStep.execute(ctx);
       ctx.results['script-review'] = reviewResult;
 
-      // Run tts - should use scriptForPlanning from review
+      // Run script-rewrite (script-doctor pass)
+      const rewriteStep = pipeline.steps.find((s) => s.id === 'script-rewrite')!;
+      const rewriteResult = await rewriteStep.execute(ctx);
+      ctx.results['script-rewrite'] = rewriteResult;
+
+      // Run tts - should use scriptForPlanning from the rewrite step
       const ttsStep = pipeline.steps.find((s) => s.id === 'tts')!;
       await ttsStep.execute(ctx);
 
@@ -794,6 +812,8 @@ describe('generatePipeline', () => {
       const ctx = makeContext({
         results: {
           'script-review': { scriptForPlanning: 'Test.' },
+
+          'script-rewrite': { scriptForPlanning: 'Test.' },
           tts: ttsOutput,
         },
         input: { script: 'Test.' },

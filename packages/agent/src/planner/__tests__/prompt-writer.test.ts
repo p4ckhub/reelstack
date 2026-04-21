@@ -205,7 +205,7 @@ describe('writePrompt', () => {
     expect(systemContent).toContain('epic');
     expect(systemContent).toContain('masterpiece');
     expect(systemContent).toContain('stunning');
-    expect(systemContent).toContain('NEVER use forbidden words');
+    expect(systemContent).toContain('FORBIDDEN WORDS');
   });
 
   it('returns brief on API error (graceful fallback)', async () => {
