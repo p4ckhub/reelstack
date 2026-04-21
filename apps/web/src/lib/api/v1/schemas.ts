@@ -71,7 +71,7 @@ export const updatePreferencesSchema = z.object({
     })
     .optional(),
   defaultLayout: z.enum(['fullscreen', 'split-screen', 'picture-in-picture']).optional(),
-  defaultTtsProvider: z.enum(['edge-tts', 'elevenlabs', 'openai' | 'gemini-tts']).optional(),
+  defaultTtsProvider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).optional(),
   defaultTtsVoice: z.string().max(100).optional(),
   defaultTtsLanguage: z.string().max(10).optional(),
   defaultVideoStyle: z.enum(['dynamic', 'calm', 'cinematic', 'educational']).optional(),

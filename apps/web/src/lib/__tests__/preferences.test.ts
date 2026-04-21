@@ -66,7 +66,7 @@ describe('updatePreferencesSchema', () => {
   });
 
   it('accepts all valid TTS providers', () => {
-    for (const provider of ['edge-tts', 'elevenlabs', 'openai' | 'gemini-tts']) {
+    for (const provider of ['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']) {
       const result = updatePreferencesSchema.safeParse({ defaultTtsProvider: provider });
       expect(result.success).toBe(true);
     }
