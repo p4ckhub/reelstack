@@ -36,4 +36,22 @@ you're briefing a photographer, not writing keywords.
   cost and is usually overkill for 2-second b-roll cuts.
 - Output: base64 PNG returned in response JSON. No URL route.
 - Knows text rendering — ok to ask for short in-frame text (under 12
-  chars) like a street sign or screen label. Don't ask for paragraphs.`;
+  chars) like a street sign or screen label. Don't ask for paragraphs.
+
+### gpt-image-2 specifics (April 2026)
+
+Same API surface as gpt-image-1, newer model string. Three practical
+differences when the brief calls for gpt-image-2:
+
+- **Text rendering is dramatically better.** Full multilingual sentences,
+  short paragraphs, infographic layouts, slide-style compositions,
+  even manga panels with legible dialogue. If the shot needs in-frame
+  text longer than a label, gpt-image-2 beats gpt-image-1 decisively.
+- **~2× faster** at equivalent sizes and quality. Drops shot generation
+  from ~20s to ~10s, useful when the pipeline has 8+ image shots.
+- **Up to 4096×4096 output** if the spec allows. For reels we stay at
+  1024x1536 because Remotion downsamples anyway; set
+  OPENAI_IMAGE_SIZE=2048x3072 when the brief needs print-grade detail.
+
+Everything else (replacement vocabulary, forbidden words, single-subject
+framing) applies identically to both models.`;

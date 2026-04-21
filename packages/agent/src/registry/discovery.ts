@@ -6,7 +6,7 @@ import { Veo3Tool } from '../tools/veo3-tool';
 import { KlingTool } from '../tools/kling-tool';
 import { SeedanceTool } from '../tools/seedance-tool';
 import { NanoBananaTool } from '../tools/nanobanana-tool';
-import { OpenAIImageTool } from '../tools/openai-image-tool';
+import { OpenAIImageTool, OPENAI_IMAGE_PRESETS } from '../tools/openai-image-tool';
 import { falTools } from '../tools/fal-tool';
 import { allPiapiTools } from '../tools/piapi-tool';
 import { allReplicateTools } from '../tools/replicate-tool';
@@ -54,10 +54,14 @@ export function discoverTools(): ProductionTool[] {
     tools.push(new NanoBananaTool());
   }
 
-  // OpenAI gpt-image-1 — same OPENAI_API_KEY we already use for TTS / LLM.
-  // No separate key needed; auto-registers when the OpenAI key is set.
+  // OpenAI image tools — same OPENAI_API_KEY we already use for TTS / LLM.
+  // Register BOTH gpt-image-1 (stable) and gpt-image-2 (April 2026 release,
+  // early-access only until the general API rollout in early May 2026).
+  // The planner will pick between them; the user can also override via the
+  // "Image Model" dropdown in the wizard.
   if (process.env.OPENAI_API_KEY) {
-    tools.push(new OpenAIImageTool());
+    tools.push(new OpenAIImageTool(OPENAI_IMAGE_PRESETS.gptImage1));
+    tools.push(new OpenAIImageTool(OPENAI_IMAGE_PRESETS.gptImage2));
   }
 
   // fal.ai - one key, all models from catalog (video + image)

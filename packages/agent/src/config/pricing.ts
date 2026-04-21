@@ -49,6 +49,10 @@ const TOOL_PRICING: Record<string, ToolPricing> = {
   // pricing sheet). Override per-env via OPENAI_IMAGE_QUALITY=high if you
   // want the better rendering at ~$0.19/image — we keep the default modest.
   'openai-gpt-image': { perRequest: 0.07 },
+  // gpt-image-2 follows the same quality × resolution curve as gpt-image-1
+  // at equivalent outputs. Higher 2K/4K tiers bump to $0.19–$0.41 per
+  // image via OPENAI_IMAGE_SIZE + OPENAI_IMAGE_QUALITY overrides.
+  'openai-gpt-image-2': { perRequest: 0.07 },
   pexels: { perRequest: 0 },
   heygen: { perSecond: 0.15 },
   'heygen-agent': { perSecond: 0.0333 },

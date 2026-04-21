@@ -1,15 +1,21 @@
 /**
- * OpenAI gpt-image-1 tool — the current-gen OpenAI image model that
- * replaced DALL-E 3 in the /v1/images/generations endpoint.
+ * OpenAI image-generation tools — one shared implementation, two
+ * registered instances (gpt-image-1 and gpt-image-2). Both talk to
+ * https://api.openai.com/v1/images/generations with different `model`
+ * strings; everything else is identical.
  *
- * Why ship it alongside NanoBanana: gpt-image-1 has measurably stronger
- * instruction-following (GPT-4-based), reliable in-frame text rendering,
- * and a different aesthetic register from Gemini. Good fallback when the
- * user's brief is dense or when NanoBanana rate-limits.
+ * gpt-image-1 — shipped April 2025, replaced DALL-E 3. Solid
+ *   instruction-following, reliable in-frame text, medium latency.
  *
- * Model override: OPENAI_IMAGE_MODEL env var. Defaults to gpt-image-1;
- * set to gpt-image-2 / dall-e-3 when OpenAI ships newer versions without
- * re-deploying.
+ * gpt-image-2 — shipped April 2026. ~2× faster, dramatically better
+ *   multilingual text rendering (magazine layouts, infographics, slides),
+ *   supports up to 4096×4096. General API rollout scheduled early May
+ *   2026; some Plus/Team/Enterprise keys have early access. Callers
+ *   whose key lacks access will see a 404 "model_not_found" — we keep
+ *   gpt-image-1 registered alongside as the drop-in fallback.
+ *
+ * Env overrides: OPENAI_IMAGE_QUALITY (low|medium|high, default medium),
+ * OPENAI_IMAGE_SIZE (exact "WxH", overrides aspect-ratio auto-pick).
  */
 
 import { randomUUID } from 'node:crypto';
@@ -26,10 +32,6 @@ import { loadGuideline } from '../prompts/loader';
 const log = createLogger('openai-image-tool');
 const OPENAI_API = 'https://api.openai.com/v1';
 
-/** 1024x1536 is the closest portrait size OpenAI offers to our 9:16 target.
- *  Remotion handles the final crop / letterbox at composition time. */
-type OpenAISize = '1024x1024' | '1024x1536' | '1536x1024';
-
 interface OpenAIImageResponse {
   readonly data?: readonly {
     readonly b64_json?: string;
@@ -39,20 +41,42 @@ interface OpenAIImageResponse {
   readonly error?: { readonly message?: string };
 }
 
+export interface OpenAIImageToolConfig {
+  /** Registry ID (e.g. "openai-gpt-image", "openai-gpt-image-2"). */
+  readonly toolId: string;
+  /** Display name surfaced in the UI dropdown. */
+  readonly displayName: string;
+  /** Exact model string sent in the API payload. */
+  readonly modelString: string;
+  /** Rough latency estimate for the planner. */
+  readonly estimatedLatencyMs: number;
+  /** How our pricing table calls this tool. */
+  readonly costTier: ToolCapability['costTier'];
+}
+
 export class OpenAIImageTool implements ProductionTool {
-  readonly id = 'openai-gpt-image';
-  readonly name = 'OpenAI (gpt-image-1)';
+  readonly id: string;
+  readonly name: string;
   readonly promptGuidelines = loadGuideline('gpt-image');
-  readonly capabilities: ToolCapability[] = [
-    {
-      assetType: 'ai-image',
-      supportsPrompt: true,
-      supportsScript: false,
-      estimatedLatencyMs: 20_000,
-      isAsync: false,
-      costTier: 'moderate',
-    },
-  ];
+  readonly capabilities: ToolCapability[];
+
+  private readonly modelString: string;
+
+  constructor(config: OpenAIImageToolConfig) {
+    this.id = config.toolId;
+    this.name = config.displayName;
+    this.modelString = config.modelString;
+    this.capabilities = [
+      {
+        assetType: 'ai-image',
+        supportsPrompt: true,
+        supportsScript: false,
+        estimatedLatencyMs: config.estimatedLatencyMs,
+        isAsync: false,
+        costTier: config.costTier,
+      },
+    ];
+  }
 
   private get apiKey(): string | undefined {
     return process.env.OPENAI_API_KEY;
@@ -79,8 +103,8 @@ export class OpenAIImageTool implements ProductionTool {
       };
     }
 
-    const model = process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1';
-    const size = resolveSize(request.aspectRatio);
+    const model = this.modelString;
+    const size = process.env.OPENAI_IMAGE_SIZE ?? resolveSize(request.aspectRatio);
     const quality = (process.env.OPENAI_IMAGE_QUALITY ?? 'medium') as 'low' | 'medium' | 'high';
 
     try {
@@ -88,6 +112,7 @@ export class OpenAIImageTool implements ProductionTool {
 
       log.info(
         {
+          toolId: this.id,
           model,
           size,
           quality,
@@ -119,7 +144,7 @@ export class OpenAIImageTool implements ProductionTool {
       if (!res.ok) {
         const errBody = await res.text();
         log.warn(
-          { status: res.status, durationMs, errorBody: errBody.substring(0, 500) },
+          { toolId: this.id, status: res.status, durationMs, errorBody: errBody.substring(0, 500) },
           'OpenAI image generate failed'
         );
         return {
@@ -141,7 +166,6 @@ export class OpenAIImageTool implements ProductionTool {
         };
       }
 
-      // Guard against absurdly large payloads before writing to disk.
       const MAX_BASE64_LENGTH = 68 * 1024 * 1024;
       if (b64.length > MAX_BASE64_LENGTH) {
         return {
@@ -152,7 +176,6 @@ export class OpenAIImageTool implements ProductionTool {
         };
       }
 
-      // OpenAI returns PNG — no MIME type in the response, it's always PNG.
       const filename = `openai-image-${randomUUID()}.png`;
       const tmpPath = path.join(os.tmpdir(), filename);
       const resolved = path.resolve(tmpPath);
@@ -168,6 +191,7 @@ export class OpenAIImageTool implements ProductionTool {
 
       log.info(
         {
+          toolId: this.id,
           path: tmpPath,
           durationMs,
           model,
@@ -205,9 +229,31 @@ export class OpenAIImageTool implements ProductionTool {
   }
 }
 
-function resolveSize(aspectRatio: string | undefined): OpenAISize {
+function resolveSize(aspectRatio: string | undefined): string {
   if (aspectRatio === '16:9') return '1536x1024';
   if (aspectRatio === '1:1') return '1024x1024';
-  // Default (9:16 / portrait / unspecified) → closest portrait OpenAI offers.
+  // Default (9:16 / portrait / unspecified) → closest portrait preset.
+  // gpt-image-2 accepts higher resolutions too (up to 4096×4096) but we
+  // keep the shared default conservative; override per-env with
+  // OPENAI_IMAGE_SIZE=2048x3072 when using gpt-image-2 at higher quality.
   return '1024x1536';
 }
+
+/** Canonical preset factories so discovery.ts stays one line per model. */
+export const OPENAI_IMAGE_PRESETS = {
+  gptImage1: {
+    toolId: 'openai-gpt-image',
+    displayName: 'OpenAI (gpt-image-1)',
+    modelString: process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1',
+    estimatedLatencyMs: 20_000,
+    costTier: 'moderate' as const,
+  },
+  gptImage2: {
+    toolId: 'openai-gpt-image-2',
+    displayName: 'OpenAI (gpt-image-2)',
+    modelString: 'gpt-image-2',
+    // ~2× faster than gpt-image-1 per OpenAI's announcement.
+    estimatedLatencyMs: 10_000,
+    costTier: 'moderate' as const,
+  },
+} as const;
