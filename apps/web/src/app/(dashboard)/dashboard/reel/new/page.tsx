@@ -223,14 +223,19 @@ export default function ReelWizardPage() {
             pollFailures = 0;
             const statusData = await statusRes.json();
             const j = statusData.data ?? statusData;
+            // API returns status lowercase ('processing' / 'completed'),
+            // but our UI state + string comparisons expect uppercase to
+            // match the DB enum (JobStatus type). Normalize here so we
+            // don't sprinkle .toUpperCase() across every template branch.
+            const status = (j.status ?? 'QUEUED').toString().toUpperCase() as JobStatus['status'];
             setJob({
               id: data.jobId,
-              status: j.status,
+              status,
               progress: j.progress ?? 0,
               outputUrl: j.outputUrl,
               error: j.error,
             });
-            if (j.status === 'COMPLETED' || j.status === 'FAILED') {
+            if (status === 'COMPLETED' || status === 'FAILED') {
               if (pollRef.current) clearInterval(pollRef.current);
             }
           }
