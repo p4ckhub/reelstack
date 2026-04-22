@@ -263,6 +263,57 @@ New visual effects from competitive analysis:
 - Screen-to-face morph transition
 - Enhanced supervisor: virality scoring, retention patterns, hook rules
 
+## Faza 11: AI Director - Short-Film Mode
+
+**Status: planned** — build in public (started 2026-04-22)
+
+Goal: a new mode where the LLM plays "director" for a 30–60s short
+film. Instead of a flat list of b-roll shots, it produces a scene
+list with a stable character sheet and world, then the pipeline
+chains scene-N's last frame into scene-N+1's `imageUrl` so the
+visual thread holds across the whole film.
+
+Why it's a flagship feature: no other short-form tool in our
+competitor scan does narrative chaining with character continuity.
+Ships as a paid module (credits scale with scene count).
+
+### MVP (first public cut)
+
+- [ ] `short-film-director.md` prompt template: characterSheet,
+      worldSheet, sceneList (opening/rising/climax/resolution)
+- [ ] New orchestrator mode `short-film` in generate-pipeline.ts
+- [ ] Force i2v tool set: prefer kling-o3-std-fal, fallback
+      seedance-img2video / veo31
+- [ ] Chain: scene N's last frame via `extractAndUploadLastFrame`
+      → scene N+1's `imageUrl`
+- [ ] CharacterSheet re-injected into every scene prompt (models
+      drift after ~3 scenes without it)
+- [ ] API schema: `mode: "short-film"`, `topic`, optional
+      `characterDescription`, `worldDescription`, `numberOfScenes` (3-10)
+- [ ] Dashboard wizard: new mode option + scene-count slider
+- [ ] Module row: `slug=short-film`, creditCost = 10 × sceneCount
+      (kling-o3 is $0.10/5s × N scenes + buffer)
+
+### Quality loop
+
+- [ ] Character-drift detection: diff first-frame embeddings between
+      scenes, flag >0.4 cosine distance for re-roll
+- [ ] Supervisor rubric extension: narrative arc (setup / conflict /
+      resolution present?), scene pacing, visual continuity
+- [ ] Fallback when i2v fails: regenerate scene with tighter
+      character description, max 2 retries
+
+### Stretch (post-MVP)
+
+- [ ] LoRA / IP-Adapter for true character identity lock (fal has
+      `fal-ai/flux-lora-portrait-trainer` — train once per character)
+- [ ] Dialog support: voice matched to character sheet gender/age,
+      Gemini TTS `voicePrompt` steers delivery per scene
+- [ ] Shot composition grammar: wide / medium / close-up rotation
+      matching scene function
+- [ ] Build-in-public thread: weekly drops on Twitter/BlueSky with
+      generated films + cost breakdown
+
 ## Future Ideas (unplanned)
 
 - Custom font uploads
