@@ -44,6 +44,8 @@ COPY packages/core/package.json packages/core/
 COPY packages/storage/package.json packages/storage/
 COPY packages/transcription/package.json packages/transcription/
 COPY packages/remotion/package.json packages/remotion/
+COPY packages/renderer/package.json packages/renderer/
+COPY packages/hyperframes/package.json packages/hyperframes/
 COPY packages/tts/package.json packages/tts/
 COPY packages/publisher/package.json packages/publisher/
 COPY packages/logger/package.json packages/logger/
@@ -58,6 +60,22 @@ RUN bun install
 # forks without the private modules don't pay the ~300MB download.
 RUN if [ -d node_modules/@playwright ]; then \
       bunx playwright install --with-deps chromium; \
+    fi
+
+# Hyperframes renderer (Faza 19.B) ships an x86_64 chrome-headless-shell
+# in its `linux_arm-*` cache directories, which crashes under Rosetta on
+# Apple Silicon Docker Desktop. Workaround: let hyperframes provision its
+# cache path, then symlink to the matching-arch playwright chromium. On
+# native x86_64 hosts (Mikrus, Cloud Run etc.) this is a no-op — the
+# symlink just points the same-arch binary at itself.
+RUN if [ -f node_modules/.bin/hyperframes ]; then \
+      node_modules/.bin/hyperframes browser ensure >/dev/null 2>&1 || true; \
+      HF_SHELL=$(ls /root/.cache/hyperframes/chrome/chrome-headless-shell/*/chrome-headless-shell-linux64/chrome-headless-shell 2>/dev/null | head -1); \
+      PW_SHELL=$(ls /root/.cache/ms-playwright/chromium_headless_shell-*/chrome-linux/headless_shell 2>/dev/null | head -1); \
+      if [ -n "$HF_SHELL" ] && [ -n "$PW_SHELL" ]; then \
+        ln -sf "$PW_SHELL" "$HF_SHELL"; \
+        echo "Hyperframes chromium linked to playwright's: $PW_SHELL"; \
+      fi; \
     fi
 
 # Generate Prisma Client at build time so the volume mount keeps it
