@@ -26,7 +26,7 @@ import { createLogger } from '@reelstack/logger';
 
 const log = createLogger('gemini-tts');
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const DEFAULT_MODEL = 'gemini-2.5-flash-preview-tts';
+const DEFAULT_MODEL = 'gemini-3.1-flash-tts-preview';
 const DEFAULT_SAMPLE_RATE = 24000;
 
 /**
@@ -76,8 +76,9 @@ export interface GeminiTTSOptions extends TTSSynthesizeOptions {
    */
   readonly voicePrompt?: string;
   /**
-   * Override the model. Defaults to `gemini-2.5-flash-preview-tts`.
-   * Swap to a GA model string once Google promotes one.
+   * Override the model. Defaults to `gemini-3.1-flash-tts-preview`.
+   * Other options as of April 2026: `gemini-2.5-flash-preview-tts`,
+   * `gemini-2.5-pro-preview-tts`.
    */
   readonly modelName?: string;
 }
