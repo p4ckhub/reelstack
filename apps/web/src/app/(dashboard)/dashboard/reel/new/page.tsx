@@ -370,7 +370,7 @@ export default function ReelWizardPage() {
       <div className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-bold">Create Reel</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Write your script and we will generate a reel with voiceover, captions, and transitions.
+          Start with the content. You'll pick captions, voice, and model settings in the next steps.
         </p>
 
         <Card className="mt-6">
@@ -476,48 +476,6 @@ export default function ReelWizardPage() {
                   </div>
                 );
               })()}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Language</Label>
-                  <Select
-                    value={form.ttsLanguage}
-                    onValueChange={(v) => {
-                      update('ttsLanguage', v);
-                      const newVoices = TTS_VOICES[v];
-                      if (newVoices?.[0]) {
-                        update('ttsVoice', newVoices[0].id);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en-US">English (US)</SelectItem>
-                      <SelectItem value="pl-PL">Polish</SelectItem>
-                      <SelectItem value="de-DE">German</SelectItem>
-                      <SelectItem value="es-ES">Spanish</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Voice</Label>
-                  <Select value={form.ttsVoice} onValueChange={(v) => update('ttsVoice', v)}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {voices.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
 
             <div className="mt-6 flex justify-end">
@@ -683,6 +641,10 @@ export default function ReelWizardPage() {
                 </Select>
               </div>
 
+              {/* Audio: Provider → Language → Voice (chained). Provider drives
+                  the voice catalog — Gemini has its own list, edge-tts is
+                  per-locale. Language + Voice live here (not on step 1)
+                  because they only make sense after Provider is chosen. */}
               <div>
                 <Label>TTS Provider</Label>
                 <Select
@@ -690,9 +652,6 @@ export default function ReelWizardPage() {
                   onValueChange={(v) => {
                     const provider = v as FormData['ttsProvider'];
                     update('ttsProvider', provider);
-                    // Voice IDs differ radically between providers.
-                    // Edge TTS expects "pl-PL-MarekNeural", Gemini expects
-                    // "Charon". Auto-pick a sane default on provider swap.
                     if (provider === 'gemini-tts') {
                       update('ttsVoice', GEMINI_VOICES[0]!.id);
                     } else {
@@ -711,6 +670,49 @@ export default function ReelWizardPage() {
                     <SelectItem value="openai">OpenAI TTS (Pro)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Language</Label>
+                  <Select
+                    value={form.ttsLanguage}
+                    onValueChange={(v) => {
+                      update('ttsLanguage', v);
+                      // Gemini voices are multilingual — don't swap on lang change.
+                      if (form.ttsProvider !== 'gemini-tts') {
+                        const newVoices = TTS_VOICES[v];
+                        if (newVoices?.[0]) update('ttsVoice', newVoices[0].id);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en-US">English (US)</SelectItem>
+                      <SelectItem value="pl-PL">Polish</SelectItem>
+                      <SelectItem value="de-DE">German</SelectItem>
+                      <SelectItem value="es-ES">Spanish</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Voice</Label>
+                  <Select value={form.ttsVoice} onValueChange={(v) => update('ttsVoice', v)}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {voices.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
