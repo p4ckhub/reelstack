@@ -33,6 +33,7 @@ export const IDEOGRAM_GUIDELINES = loadGuideline('ideogram');
 export const RECRAFT_GUIDELINES = loadGuideline('recraft');
 export const SEEDREAM_GUIDELINES = loadGuideline('seedream');
 export const QWEN_IMAGE_GUIDELINES = loadGuideline('qwen-image');
+export const GPT_IMAGE_GUIDELINES = loadGuideline('gpt-image');
 
 // ── STOCK / OTHER ───────────────────────────────────────────────
 

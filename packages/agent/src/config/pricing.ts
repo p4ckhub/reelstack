@@ -53,6 +53,11 @@ const TOOL_PRICING: Record<string, ToolPricing> = {
   // at equivalent outputs. Higher 2K/4K tiers bump to $0.19–$0.41 per
   // image via OPENAI_IMAGE_SIZE + OPENAI_IMAGE_QUALITY overrides.
   'openai-gpt-image-2': { perRequest: 0.07 },
+  // Same OpenAI gpt-image-N models proxied through fal.ai — fal adds ~15-20%
+  // markup on top of OpenAI's per-image price. Bump to $0.085 to cover it;
+  // users who care about cost should use the direct OpenAI route.
+  'gpt-image-1-fal': { perRequest: 0.085 },
+  'gpt-image-2-fal': { perRequest: 0.085 },
   pexels: { perRequest: 0 },
   heygen: { perSecond: 0.15 },
   'heygen-agent': { perSecond: 0.0333 },

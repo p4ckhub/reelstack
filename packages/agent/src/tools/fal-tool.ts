@@ -18,6 +18,7 @@ import {
   PIKA_GUIDELINES,
   LTX_GUIDELINES,
   LUMA_GUIDELINES,
+  GPT_IMAGE_GUIDELINES,
 } from './prompt-guidelines';
 
 const log = createLogger('fal-tool');
@@ -234,6 +235,14 @@ const clampDuration = (dur: number | undefined, min: number, max: number) =>
 
 const falImageSize = (aspectRatio: string | undefined) =>
   aspectRatio === '16:9' ? 'landscape_16_9' : aspectRatio === '1:1' ? 'square' : 'portrait_16_9';
+
+/**
+ * OpenAI's gpt-image models use explicit pixel-dimension strings instead of
+ * fal.ai's preset slugs. Keep shared between fal + direct OpenAI routes so
+ * the payload is identical regardless of which backend serves the call.
+ */
+const gptImageSize = (aspectRatio: string | undefined): string =>
+  aspectRatio === '16:9' ? '1536x1024' : aspectRatio === '1:1' ? '1024x1024' : '1024x1536';
 
 /** Standard video: prompt + duration (clamped) + aspect_ratio */
 const videoInput =
@@ -545,6 +554,40 @@ const FAL_MODEL_CATALOG: FalModelEntry[] = [
       negative_prompt: 'blurry, low quality, distorted, text, watermark',
       num_inference_steps: 28,
       cfg_scale: 4.5,
+    }),
+  },
+
+  // ── Image: OpenAI gpt-image-1 / gpt-image-2 (via fal proxy) ──
+  // Rationale: lets users hit OpenAI's image models without managing an
+  // OPENAI_API_KEY, and acts as a fallback when gpt-image-2 is still in
+  // OpenAI's early-access gating (fal often flips models on first, same
+  // underlying OpenAI inference). Direct route lives in openai-image-tool.ts.
+  {
+    id: 'gpt-image-1-fal',
+    name: 'OpenAI gpt-image-1 via fal.ai',
+    modelId: 'fal-ai/openai/gpt-image-1-text-to-image',
+    kind: 'image',
+    costTier: 'moderate',
+    latencyMs: 20_000,
+    promptGuidelines: GPT_IMAGE_GUIDELINES,
+    buildInput: (req) => ({
+      prompt: req.prompt ?? 'abstract background',
+      image_size: gptImageSize(req.aspectRatio),
+      quality: process.env.OPENAI_IMAGE_QUALITY ?? 'medium',
+    }),
+  },
+  {
+    id: 'gpt-image-2-fal',
+    name: 'OpenAI gpt-image-2 via fal.ai',
+    modelId: 'fal-ai/openai/gpt-image-2-text-to-image',
+    kind: 'image',
+    costTier: 'moderate',
+    latencyMs: 10_000,
+    promptGuidelines: GPT_IMAGE_GUIDELINES,
+    buildInput: (req) => ({
+      prompt: req.prompt ?? 'abstract background',
+      image_size: gptImageSize(req.aspectRatio),
+      quality: process.env.OPENAI_IMAGE_QUALITY ?? 'medium',
     }),
   },
 
