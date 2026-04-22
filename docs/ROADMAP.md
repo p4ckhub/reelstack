@@ -356,28 +356,44 @@ sharding — that can wait for HeyGen's distributed roadmap or our own fork).
 
 **Shipped in commit 05bf3eb.**
 
-### Phase B: Hyperframes harness — end-to-end hello world (2-3 days)
+### Phase B: Hyperframes harness — **mostly done (2026-04-22)**
 
-**Goal:** actually render a Hyperframes composition in our pipeline.
+- [x] `packages/hyperframes/` package with `renderer.ts`,
+      `variable-injector.ts`, `compositions/hello/`, and 13 tests
+- [x] `HyperframesRenderer.render()` spawns `npx hyperframes render`
+      subprocess with the composition dir cloned + `{{variables}}`
+      substituted at render time (string-based, not CLI flags —
+      handles nested compositions + scripts uniformly)
+- [x] Variable injection: `{{key}}` placeholders, HTML-escaped, URL
+      keys (`*Url`/`*Src`) sanitized through http(s)-only allowlist to
+      block `javascript:` URI injection; missing vars throw
+- [x] First composition `compositions/hello/index.html`: 1080×1920
+      portrait title card, GSAP fade-in stagger (badge → headline →
+      subheadline). Live rendered: 249KB MP4 in 6.7s on M4 Pro
+- [x] `compositionPath(name)` helper so modules reference bundled
+      templates via package API, not filesystem paths
+- [x] `@reelstack/renderer` HyperframesRenderer stub replaced with
+      lazy adapter — dynamic-imports `@reelstack/hyperframes` on first
+      use. Next.js API process doesn't pay load cost.
+- [x] peerDependencies on both engines marked `optional` so consumers
+      can install only one
 
-- [ ] `packages/hyperframes/` package skeleton: `compositions/`, `render/`, `cli-wrapper.ts`
-- [ ] `HyperframesRenderer.render()` implementation: spawns `npx hyperframes render`
-      subprocess with composition path + props injected as `--data-var-*`
-- [ ] Variable injection: HTML template placeholders (`data-var-headline="string"`)
-      filled from orchestrator's `PlanResult` at render time
-- [ ] Asset URL passthrough: R2/MinIO signed URLs accepted by HF `<video>`/`<img>` `src`
-- [ ] Worker dispatch: BullMQ job payload includes `moduleSlug`, worker reads
-      runtime from registry, calls dispatcher
-- [ ] Preview mode: `npx hyperframes preview` in dev for HF modules (live reload)
-- [ ] First "hello world" HF composition: `packages/hyperframes/compositions/hello.html`
-      (title + fade-in, 5s, 1080x1920)
-- [ ] Registered as module `slug=hello-hf`, `runtime='hyperframes'`
-- [ ] Integration test: full pipeline renders hello-hf to MP4 via Hyperframes,
-      uploaded to R2, downloadable via signed URL
+**Still open for the full B:**
 
-**Acceptance:** `POST /api/v1/reel/generate {mode:"hello-hf"}` → completed job,
-playable MP4, rendered by Hyperframes (logs confirm). Existing Remotion
-modules untouched.
+- [ ] Asset URL passthrough verified end-to-end (R2/MinIO signed URLs
+      via `<video>`/`<img>` `src` in a real composition — works in
+      principle via URL sanitizer, needs live proof)
+- [ ] Worker dispatch: wire BullMQ payload `moduleSlug` → runtime
+      lookup → dispatcher. Today the worker calls `createRenderer()`
+      via `renderVideo()` helper, which takes runtime arg — needs
+      module registry pass-through.
+- [ ] `hello-hf` module registered as a real `ReelModule` so
+      `POST /api/v1/reel/generate {mode:"hello-hf"}` works from API
+- [ ] Integration test in `apps/web`: enqueue hello-hf → wait for
+      completion → assert output URL serves 200
+- [ ] Preview mode wiring for HF dev workflow (`hyperframes preview`)
+
+**Shipped in commit 650a1c1.**
 
 ### Phase C: First native HF flagship — Faza 11 AI Director (1 week)
 
