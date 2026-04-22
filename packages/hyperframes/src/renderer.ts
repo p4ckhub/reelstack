@@ -1,0 +1,185 @@
+/**
+ * HyperframesRenderer — real implementation for Faza 19.B.
+ *
+ * Usage:
+ *
+ *   const r = new HyperframesRenderer();
+ *   await r.render(
+ *     { composition: '/path/to/compositions/hello', variables: { headline: 'Hi' } },
+ *     { outputPath: '/tmp/out.mp4' }
+ *   );
+ *
+ * Under the hood:
+ * 1. Clone composition directory to a temp workspace
+ * 2. Walk all *.html files and inject `{{variables}}`
+ * 3. Spawn `npx hyperframes render <temp> -o <outputPath> --quiet`
+ * 4. Return size + duration metrics
+ * 5. Clean up the temp dir
+ *
+ * The subprocess approach (instead of embedding hyperframes as a JS
+ * library) keeps the dependency tree small for every caller that does
+ * NOT render — workers only, not the Next.js API process.
+ */
+
+import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { performance } from 'node:perf_hooks';
+import { createLogger } from '@reelstack/logger';
+import type { Renderer, RenderInput, RenderOptions, RenderResult } from '@reelstack/renderer';
+import { injectVariables, type TemplateVariables } from './variable-injector';
+
+const log = createLogger('hyperframes-renderer');
+
+export interface HyperframesRendererOptions {
+  /**
+   * Override the path to the hyperframes CLI. Default: uses `npx hyperframes`
+   * (resolved from the workspace install). Tests and Docker workers may
+   * want to point at an installed binary to skip npm registry lookups.
+   */
+  readonly cliBin?: string;
+  /**
+   * Extra env vars passed to the hyperframes subprocess (e.g.
+   * `HYPERFRAMES_BROWSER` for Docker). Inherits process.env by default.
+   */
+  readonly env?: NodeJS.ProcessEnv;
+}
+
+export class HyperframesRenderer implements Renderer {
+  readonly runtime = 'hyperframes' as const;
+
+  constructor(private readonly opts: HyperframesRendererOptions = {}) {}
+
+  async render(input: RenderInput, options: RenderOptions): Promise<RenderResult> {
+    const startTime = performance.now();
+
+    const compositionDir = input.composition;
+    if (!fs.existsSync(compositionDir) || !fs.statSync(compositionDir).isDirectory()) {
+      throw new Error(`Hyperframes composition path is not a directory: ${compositionDir}`);
+    }
+
+    const workDir = path.join(os.tmpdir(), 'hyperframes-work', `render-${randomUUID()}`);
+    fs.mkdirSync(workDir, { recursive: true });
+
+    try {
+      await cloneWithVariables(compositionDir, workDir, input.variables as TemplateVariables);
+
+      log.info(
+        {
+          compositionDir,
+          workDir,
+          outputPath: options.outputPath,
+          variableKeys: Object.keys(input.variables),
+        },
+        'Hyperframes render starting'
+      );
+
+      await runHyperframesCli({
+        projectDir: workDir,
+        outputPath: options.outputPath,
+        cliBin: this.opts.cliBin,
+        env: this.opts.env,
+      });
+
+      const stat = fs.statSync(options.outputPath);
+      const durationMs = Math.round(performance.now() - startTime);
+
+      log.info(
+        {
+          outputPath: options.outputPath,
+          sizeKB: Math.round(stat.size / 1024),
+          durationMs,
+        },
+        'Hyperframes render completed'
+      );
+
+      return {
+        outputPath: options.outputPath,
+        sizeBytes: stat.size,
+        durationMs,
+      };
+    } finally {
+      // Best-effort cleanup — don't mask a render failure with a cleanup
+      // failure.
+      try {
+        fs.rmSync(workDir, { recursive: true, force: true });
+      } catch (err) {
+        log.warn({ workDir, err }, 'Failed to clean up hyperframes work dir');
+      }
+    }
+  }
+}
+
+/**
+ * Copy source directory to dest, rewriting .html files with variable
+ * substitution. Non-HTML files (CSS, JS, JSON, images) pass through
+ * unchanged.
+ */
+async function cloneWithVariables(
+  src: string,
+  dest: string,
+  vars: TemplateVariables
+): Promise<void> {
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    if (entry.isDirectory()) {
+      fs.mkdirSync(destPath, { recursive: true });
+      await cloneWithVariables(srcPath, destPath, vars);
+      continue;
+    }
+
+    if (entry.name.endsWith('.html')) {
+      const content = fs.readFileSync(srcPath, 'utf8');
+      fs.writeFileSync(destPath, injectVariables(content, vars));
+      continue;
+    }
+
+    fs.copyFileSync(srcPath, destPath);
+  }
+}
+
+interface CliArgs {
+  projectDir: string;
+  outputPath: string;
+  cliBin?: string;
+  env?: NodeJS.ProcessEnv;
+}
+
+function runHyperframesCli(args: CliArgs): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Ensure output directory exists.
+    fs.mkdirSync(path.dirname(args.outputPath), { recursive: true });
+
+    const cmd = args.cliBin ?? 'npx';
+    const cmdArgs = args.cliBin
+      ? ['render', args.projectDir, '-o', args.outputPath, '--quiet']
+      : ['--yes', 'hyperframes', 'render', args.projectDir, '-o', args.outputPath, '--quiet'];
+
+    const child = spawn(cmd, cmdArgs, {
+      env: args.env ?? process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let stderr = '';
+    child.stderr?.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(`hyperframes render exited with code ${code}. stderr: ${stderr.slice(0, 500)}`)
+        );
+      } else {
+        resolve();
+      }
+    });
+  });
+}

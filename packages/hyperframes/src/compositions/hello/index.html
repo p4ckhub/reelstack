@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: linear-gradient(160deg, #0e0e12 0%, #1a1438 100%);
+        font-family:
+          'Inter',
+          -apple-system,
+          system-ui,
+          sans-serif;
+        color: #fff;
+      }
+      #stage {
+        width: 1080px;
+        height: 1920px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0 80px;
+        gap: 32px;
+      }
+      #badge {
+        font-size: 36px;
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 999px;
+        background: rgba(124, 58, 237, 0.2);
+        border: 1px solid rgba(124, 58, 237, 0.6);
+        color: #c4b5fd;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      #headline {
+        font-size: 128px;
+        font-weight: 800;
+        text-align: center;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        background: linear-gradient(180deg, #ffffff 0%, #c4b5fd 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      #subhead {
+        font-size: 44px;
+        font-weight: 500;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.75);
+        max-width: 900px;
+        line-height: 1.35;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="hello"
+      data-start="0"
+      data-duration="{{durationSeconds}}"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div
+        id="badge"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="1"
+      >
+        {{badge}}
+      </div>
+      <div
+        id="headline"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="2"
+      >
+        {{headline}}
+      </div>
+      <div
+        id="subhead"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="3"
+      >
+        {{subheadline}}
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.from('#badge', { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out' }, 0);
+      tl.from(
+        '#headline',
+        { opacity: 0, y: 60, scale: 0.95, duration: 1.0, ease: 'power3.out' },
+        0.2
+      );
+      tl.from('#subhead', { opacity: 0, y: 20, duration: 0.8, ease: 'power2.out' }, 0.6);
+      window.__timelines['hello'] = tl;
+    </script>
+  </body>
+</html>

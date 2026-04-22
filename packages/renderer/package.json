@@ -13,7 +13,16 @@
     "@reelstack/logger": "workspace:*"
   },
   "peerDependencies": {
+    "@reelstack/hyperframes": "workspace:*",
     "@reelstack/remotion": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@reelstack/hyperframes": {
+      "optional": true
+    },
+    "@reelstack/remotion": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "typescript": "^5.9.3",

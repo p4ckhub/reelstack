@@ -1,15 +1,12 @@
 /**
- * Hyperframes renderer — stub for Faza 19.A.
+ * Hyperframes renderer — lazy adapter to the full implementation in
+ * `@reelstack/hyperframes` (Faza 19.B).
  *
- * Real implementation lands in Faza 19.B (the harness package
- * `packages/hyperframes/`). This stub exists so the dispatcher can be
- * registered today, module declarations can use `runtime: 'hyperframes'`,
- * and integration tests exercise the runtime branching.
- *
- * When B ships, we'll either:
- *   - replace this file with a thin re-export from `@reelstack/hyperframes`, or
- *   - move the subprocess-spawning implementation here (TBD based on
- *     dependency weight).
+ * We don't import `@reelstack/hyperframes` at module load time so that
+ * callers that never render hyperframes compositions (e.g. the Next.js
+ * API process, which only enqueues jobs) don't pay the cost of loading
+ * the hyperframes CLI subtree. Workers that actually render hit the
+ * dynamic import on first use.
  */
 
 import type { Renderer, RenderInput, RenderOptions, RenderResult } from './interface';
@@ -17,10 +14,15 @@ import type { Renderer, RenderInput, RenderOptions, RenderResult } from './inter
 export class HyperframesRenderer implements Renderer {
   readonly runtime = 'hyperframes' as const;
 
-  async render(_input: RenderInput, _options: RenderOptions): Promise<RenderResult> {
-    throw new Error(
-      'HyperframesRenderer is not yet implemented. Faza 19.B ships the harness; ' +
-        'until then only `runtime: "remotion"` modules can render.'
-    );
+  private inner?: Renderer;
+
+  async render(input: RenderInput, options: RenderOptions): Promise<RenderResult> {
+    if (!this.inner) {
+      const mod = (await import('@reelstack/hyperframes')) as {
+        HyperframesRenderer: new () => Renderer;
+      };
+      this.inner = new mod.HyperframesRenderer();
+    }
+    return this.inner.render(input, options);
   }
 }

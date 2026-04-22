@@ -64,12 +64,19 @@ describe('RendererDispatcher', () => {
   });
 });
 
-describe('HyperframesRenderer stub', () => {
-  it('throws NotImplemented until Faza 19.B ships', async () => {
+describe('HyperframesRenderer lazy adapter', () => {
+  it('forwards to the real implementation in @reelstack/hyperframes', async () => {
+    // Real implementation requires a valid composition directory and
+    // the hyperframes CLI. Here we just verify the adapter doesn't
+    // throw "not implemented" — it delegates, then fails at the real
+    // renderer's own validation (missing composition dir).
     const hf = new HyperframesRenderer();
     await expect(
-      hf.render({ composition: 'x.html', variables: {} }, { outputPath: '/tmp/x.mp4' })
-    ).rejects.toThrow(/not yet implemented/);
+      hf.render(
+        { composition: '/definitely-not-a-dir', variables: {} },
+        { outputPath: '/tmp/x.mp4' }
+      )
+    ).rejects.toThrow(/not a directory/);
   });
 
   it('advertises its runtime tag', () => {
