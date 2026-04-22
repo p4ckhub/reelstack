@@ -10,6 +10,7 @@
 // Public modules
 import './slideshow/module';
 import './captions/module';
+import './hello-hf/module';
 
 // Private modules (optional — only available in dev environments with access)
 // Synchronous require — works in both bun runtime and Remotion webpack bundler

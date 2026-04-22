@@ -217,6 +217,15 @@ export const MODULE_DEFAULTS: ReadonlyArray<{
     creditCost: 30,
     requiredTier: 'PRO',
   },
+  {
+    slug: 'hello-hf',
+    name: 'Hello Hyperframes (test)',
+    description: 'Renderer smoke test — portrait title card on Hyperframes runtime.',
+    category: 'experimental',
+    creditCost: 1,
+    // Owner-only while we validate the HF runtime path in prod.
+    requiredTier: 'OWNER',
+  },
 ];
 
 /**

@@ -31,11 +31,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - '${POSTGRES_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -44,11 +44,11 @@ services:
     image: redis:7-alpine
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
-      - "${REDIS_PORT}:6379"
+      - '${REDIS_PORT}:6379'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -60,17 +60,17 @@ services:
   n8n:
     image: n8nio/n8n:latest
     environment:
-      N8N_DIAGNOSTICS_ENABLED: "false"
-      N8N_TEMPLATES_ENABLED: "false"
-      N8N_PERSONALIZATION_ENABLED: "false"
-      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
-      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: 'false'
+      N8N_TEMPLATES_ENABLED: 'false'
+      N8N_PERSONALIZATION_ENABLED: 'false'
+      N8N_VERSION_NOTIFICATIONS_ENABLED: 'false'
+      N8N_SECURE_COOKIE: 'false'
     ports:
-      - "5678:5678"
+      - '5678:5678'
     volumes:
       - n8n_data:/home/node/.n8n
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:5678/healthz || exit 1"]
+      test: ['CMD-SHELL', 'wget -q -O - http://localhost:5678/healthz || exit 1']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -79,15 +79,15 @@ services:
     image: minio/minio
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_PORT}:9000"
-      - "${MINIO_CONSOLE_PORT}:9001"
+      - '${MINIO_PORT}:9000'
+      - '${MINIO_CONSOLE_PORT}:9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -109,7 +109,7 @@ services:
         mc anonymous set download local/${MINIO_BUCKET} &&
         echo 'MinIO bucket ${MINIO_BUCKET} ready.'
       "
-    restart: "no"
+    restart: 'no'
 
   # Apply the Prisma schema to the dev database (idempotent).
   db-migrate:
@@ -134,7 +134,7 @@ services:
       - .:/app
       - node_modules_root:/app/node_modules
       - node_modules_web:/app/apps/web/node_modules
-    restart: "no"
+    restart: 'no'
 
   # ──────────────────────────────────────────────────────────
   # Application services (hot reload via mounted source)
@@ -151,9 +151,9 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
-      MINIO_PORT: "9000"
+      MINIO_PORT: '9000'
     ports:
-      - "3001:3000"
+      - '3001:3000'
     volumes:
       # Mount source for hot reload. node_modules are named volumes shared
       # with the worker service — one `bun install` from the Dockerfile
@@ -174,7 +174,7 @@ services:
       db-migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
       interval: 10s
       timeout: 5s
       retries: 20
@@ -184,12 +184,17 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
     command: bun --cwd apps/web worker
+    # Chrome-headless-shell (Remotion + Hyperframes) allocates shared
+    # memory per rendering worker. Default docker shm is 64 MB which
+    # crashes Chrome under multi-worker parallel capture. 512 MB gives
+    # plenty of headroom without bloating the container.
+    shm_size: 512m
     env_file: .env.dev
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
-      MINIO_PORT: "9000"
+      MINIO_PORT: '9000'
       # Presigned URLs need to be reachable from the host (where the browser
       # lives), not just from inside the docker network. Operator points
       # this at wherever MinIO is exposed to clients.

@@ -181,6 +181,7 @@ export const reelModeSchema = z.enum([
   'talking-object',
   'n8n-explainer',
   'presenter-explainer',
+  'hello-hf',
 ]);
 
 export type ReelMode = z.infer<typeof reelModeSchema>;

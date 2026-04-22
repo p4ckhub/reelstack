@@ -156,10 +156,17 @@ function runHyperframesCli(args: CliArgs): Promise<void> {
     // Ensure output directory exists.
     fs.mkdirSync(path.dirname(args.outputPath), { recursive: true });
 
-    const cmd = args.cliBin ?? 'npx';
-    const cmdArgs = args.cliBin
-      ? ['render', args.projectDir, '-o', args.outputPath, '--quiet']
-      : ['--yes', 'hyperframes', 'render', args.projectDir, '-o', args.outputPath, '--quiet'];
+    // Prefer an explicit cliBin (test / Docker). Otherwise reach for the
+    // workspace-installed binary at node_modules/.bin/hyperframes — that
+    // path exists in both local dev (bun install) and prod workers
+    // (Dockerfile copies workspace). Falling back to `bunx` let us cope
+    // with monorepo hoisting quirks where .bin isn't where we think.
+    const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'hyperframes');
+    const cmd = args.cliBin ?? (fs.existsSync(localBin) ? localBin : 'bunx');
+    const cmdArgs =
+      args.cliBin || cmd === localBin
+        ? ['render', args.projectDir, '-o', args.outputPath, '--quiet']
+        : ['hyperframes', 'render', args.projectDir, '-o', args.outputPath, '--quiet'];
 
     const child = spawn(cmd, cmdArgs, {
       env: args.env ?? process.env,

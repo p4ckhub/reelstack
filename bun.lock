@@ -193,6 +193,7 @@
         "@react-three/fiber": "^9.4.0",
         "@reelstack/agent": "workspace:*",
         "@reelstack/ffmpeg": "workspace:*",
+        "@reelstack/hyperframes": "workspace:*",
         "@reelstack/image-gen": "workspace:*",
         "@reelstack/logger": "workspace:*",
         "@reelstack/remotion": "workspace:*",
