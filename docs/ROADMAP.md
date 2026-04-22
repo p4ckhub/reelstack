@@ -158,6 +158,11 @@ replaces it for short-film mode.
 
 **Started 2026-04-22, build in public.**
 
+**Depends on:** Faza 19 A + B (renderer abstraction + Hyperframes harness).
+Faza 11 ships as the first **native Hyperframes module** — zero Remotion
+code in the short-film path. This is why Faza 19 A/B is the first thing
+shipped even though its number is higher.
+
 Goal: a `short-film` mode where the LLM acts as director for a 30–60s
 film. Instead of a flat b-roll list, it produces a stable character
 sheet + world + scene list; the pipeline chains scene N's last frame
@@ -299,6 +304,200 @@ mapping needs verification. Without this, paid conversion is blocked.
       verify path)
 - [ ] Owner dashboard: AuditLog view for recent credit additions
 
+## Faza 19: Renderer Abstraction + Hyperframes Migration — planned
+
+**Strategic rationale:** Remotion is source-available, requires a paid
+commercial license above small-team thresholds, and that conflicts with
+the TSA brand promise of truly self-hosted tooling. [Hyperframes](https://github.com/heygen-com/hyperframes)
+(HeyGen, released 2026-03-10) ships Apache 2.0 (OSI-approved), is HTML +
+CSS + GSAP natively (LLMs produce better video compositions in HTML than
+in React/TSX per HeyGen's own evals), and has seekable library-clock
+animations (GSAP frame-accurate — Remotion plays at wall-clock during
+render). Migration unlocks: clean open-source core, plugin marketplace
+go-to-market (Faza 20), and removes the license tax on future SaaS scale.
+
+**Architecture principle:** two runtimes ship in parallel for months.
+Each module declares its own runtime (`runtime: 'remotion' | 'hyperframes'`).
+No IR/DSL translation layer — that would be over-engineering. Renderer
+dispatcher routes by runtime at queue-dispatch time. Strangler-fig
+migration, module by module, no big-bang.
+
+**Gap today:** Hyperframes is single-machine render only; we use
+`@remotion/lambda` in prod (`remotionlambda-eucentral1-m2tmqxyo5p`).
+Solved in Faza 19.E.3 with Cloud Run elastic render (not per-render
+sharding — that can wait for HeyGen's distributed roadmap or our own fork).
+
+### Phase A: Renderer dispatcher + Hyperframes stub (1-2 days)
+
+**Goal:** runtime-tagged modules + renderer picked per module. Zero
+behavioral change for existing Remotion modules.
+
+- [ ] New package `packages/renderer/` with `interface.ts`, `dispatcher.ts`
+- [ ] Move existing `LocalRenderer` + `LambdaRenderer` into
+      `packages/renderer/remotion.ts` (keep old import paths for BC via
+      re-exports from `@reelstack/remotion`)
+- [ ] `HyperframesRenderer` stub class — constructor + `render()` that
+      throws `NotImplementedError` with clear message
+- [ ] Add `runtime: 'remotion' | 'hyperframes'` field to `ProductionModule`
+      interface, default `'remotion'` on existing modules (DB migration: nullable column, default 'remotion')
+- [ ] Dispatcher: `renderModule(slug, props) → picks renderer by module.runtime`
+- [ ] Regression tests: every existing module still routes to Remotion,
+      full green test suite
+- [ ] No public API changes yet
+
+**Acceptance:** All 266+125 existing tests green. `@reelstack/renderer`
+package exists. Dispatcher active in worker (but routes 100% to Remotion).
+
+### Phase B: Hyperframes harness — end-to-end hello world (2-3 days)
+
+**Goal:** actually render a Hyperframes composition in our pipeline.
+
+- [ ] `packages/hyperframes/` package skeleton: `compositions/`, `render/`, `cli-wrapper.ts`
+- [ ] `HyperframesRenderer.render()` implementation: spawns `npx hyperframes render`
+      subprocess with composition path + props injected as `--data-var-*`
+- [ ] Variable injection: HTML template placeholders (`data-var-headline="string"`)
+      filled from orchestrator's `PlanResult` at render time
+- [ ] Asset URL passthrough: R2/MinIO signed URLs accepted by HF `<video>`/`<img>` `src`
+- [ ] Worker dispatch: BullMQ job payload includes `moduleSlug`, worker reads
+      runtime from registry, calls dispatcher
+- [ ] Preview mode: `npx hyperframes preview` in dev for HF modules (live reload)
+- [ ] First "hello world" HF composition: `packages/hyperframes/compositions/hello.html`
+      (title + fade-in, 5s, 1080x1920)
+- [ ] Registered as module `slug=hello-hf`, `runtime='hyperframes'`
+- [ ] Integration test: full pipeline renders hello-hf to MP4 via Hyperframes,
+      uploaded to R2, downloadable via signed URL
+
+**Acceptance:** `POST /api/v1/reel/generate {mode:"hello-hf"}` → completed job,
+playable MP4, rendered by Hyperframes (logs confirm). Existing Remotion
+modules untouched.
+
+### Phase C: First native HF flagship — Faza 11 AI Director (1 week)
+
+**Goal:** ship Faza 11 directly on Hyperframes, prove the stack for a
+real product feature.
+
+- [ ] All Faza 11 MVP items implemented, but composition is a Hyperframes
+      HTML template, not Remotion
+- [ ] Scene chaining via `data-composition-src` nested compositions
+      (scene-1.html → scene-2.html → ... composed by `short-film.html` root)
+- [ ] Last-frame → next-scene image_url: handled in orchestrator (no
+      renderer concern), scene HTML gets correct asset URLs injected
+- [ ] Public module: `slug=short-film`, `runtime='hyperframes'`, paid
+- [ ] Build-in-public Day 0 post ships with reel generated on Hyperframes
+
+**Acceptance:** Short-film mode works end-to-end. Zero new Remotion code
+written in this phase.
+
+### Phase D: Parallel operation + per-runtime metrics (ongoing)
+
+**Goal:** observe both engines in prod, gather data for migration priority.
+
+- [ ] Prometheus metric `reelstack_render_duration_seconds{runtime, module_slug}`
+- [ ] Prometheus metric `reelstack_render_failures_total{runtime, module_slug, error_type}`
+- [ ] Prometheus metric `reelstack_supervisor_score{runtime, module_slug}` for
+      quality comparison
+- [ ] Grafana dashboard with side-by-side panels per runtime
+- [ ] Weekly internal review: which modules would benefit most from HF port
+      (quality? speed? cost?)
+
+**Acceptance:** Dashboard shows both engines, data flowing for 2+ weeks
+before any more ports begin.
+
+### Phase E: Strangler-fig module migrations (3-6 months elapsed, ~5h each with LLM assist)
+
+**Goal:** migrate existing modules to Hyperframes one at a time,
+least-risky first. Each migration is reversible via `runtime` flag.
+
+**Order (prioritized by: simplicity + freemium-visibility + cards-first-because-27-of-them):**
+
+- [ ] **E.1** `slideshow` module (simplest, few deps, public) → HF
+- [ ] **E.2** `captions` module (highest visibility, HF has visual editor!) → HF
+- [ ] **E.3** Cloud Run renderer (replaces LambdaRenderer elastically for HF):
+      Cloud Run Job spec, queue-to-job dispatcher, cold-start mitigations,
+      cost instrumentation vs Lambda baseline. Not per-render sharding —
+      that waits for HeyGen's distributed roadmap or our fork.
+- [ ] **E.4** `n8n-explainer` module (private, complex) → HF
+- [ ] **E.5** `talking-object` module → HF
+- [ ] **E.6** `presenter-explainer` module → HF
+- [ ] **E.7** 27 cards library via LLM-assisted port:
+      prompt-per-card, ~1h each with review, ~1 week total
+- [ ] **E.8** 26 transitions library → HF GSAP timelines,
+      ~3-4 days
+- [ ] **E.9** 5 layouts (fullscreen, split-screen, anchor-bottom,
+      hybrid-anchor, comparison-split) → HF compositions
+
+**Per-module acceptance:** (1) visual regression test (pixel diff ≤ 2%
+against Remotion reference), (2) supervisor score delta within ±5 points,
+(3) feature-flag rollout 10% → 50% → 100% over 1 week with no error rate
+spike.
+
+### Phase F: Cutoff + announcement (1-2 days)
+
+**Goal:** remove Remotion, publish open-source core.
+
+- [ ] Verify: no production traffic on Remotion renderer for 2+ weeks
+- [ ] Remove `@remotion/*` dependencies from all package.json files
+- [ ] Delete `packages/remotion/` (or archive to `_archive/`)
+- [ ] Update `docker/Dockerfile.reel-worker` to drop Remotion Chrome
+      flags, bundler, fonts
+- [ ] Remove `REMOTION_RENDERER` env var from all config
+- [ ] Update README, PRODUCTION-GUIDE.md, ARCHITECTURE.md
+- [ ] **Public announcement:** "ReelStack core now fully open source
+      (Apache 2.0), zero license friction, forever."
+- [ ] Unblocks Faza 20 (Plugin Marketplace launch)
+
+**Acceptance:** `grep -rn "remotion" --include="*.ts"` returns zero hits
+in production code paths. Docker image size down. All prod reels still
+generating.
+
+## Faza 20: Open-source Core + Plugin Marketplace Go-to-Market — planned
+
+**Depends on:** Faza 19 F.
+
+**Strategic rationale:** With Apache 2.0 core shipped (Faza 19 F),
+ReelStack becomes credible "self-hosted AI reel factory" (TSA brand fit)
+while monetizing via a plugin marketplace — WordPress/Obsidian model.
+Public GitHub release turns ReelStack into organic distribution.
+
+### Launch
+
+- [ ] Make `reelstack-monorepo` repo public (currently private)
+- [ ] README reframed: "Self-host your AI reel factory. Apache 2.0 core,
+      paid modules for advanced layouts/cards/characters."
+- [ ] LICENSE_NOTICE audits across public modules (nothing bleeds
+      `reelstack-modules` proprietary code into public)
+- [ ] Launch post: Hacker News, X/BlueSky, r/selfhosted, r/LocalLLaMA,
+      PolishDev discords
+- [ ] Submit to Remotion's success-stories alternative coverage (via
+      Hyperframes team; they'd likely feature us)
+
+### Plugin marketplace
+
+- [ ] Public plugin registry (`GET /api/v1/plugins/marketplace`):
+      name, description, screenshot, price, creditCost per render
+- [ ] Checkout flow: plugin purchase → Sellf webhook → `UserModuleAccess`
+      row grants access
+- [ ] First 3 paid plugins ready on launch day:
+  - Card pack "Broadcast" ($29 one-time) — 8 cards: lower-third,
+    chapter-card, breaking-news, stat-card, pull-quote, ticker, etc.
+  - Effect pack "Cinematic" ($19/mo) — film grain, lens flares,
+    color LUTs, motion blur presets
+  - Industry pack "Dev Creator" ($49 one-time) — n8n-explainer,
+    terminal-reveal, PR-demo, commit-graph visualizer
+- [ ] Plugin SDK doc: "How to write and sell a ReelStack plugin"
+- [ ] Revenue split: 100% to plugin author for first 6 months,
+      then 80/20 (ReelStack takes 20% hosting/distribution fee)
+
+### Positioning + content
+
+- [ ] Blog: "Why we migrated from Remotion to Hyperframes"
+      (technical credibility + indirect license comparison — factual,
+      not hit-piece)
+- [ ] Blog: "Building a plugin marketplace for AI-generated video"
+      (content for build-in-public audience)
+- [ ] Case study: TSA course builds reel factory in 1 afternoon
+      using ReelStack self-hosted (eats our own dog food for brand)
+
 ## Future Ideas (unplanned)
 
 - Custom font uploads
@@ -324,18 +523,52 @@ mapping needs verification. Without this, paid conversion is blocked.
 | AI tools discoverable | 24 (with all provider keys set)                                                                                                |
 | Docker images         | 3 (web, worker, reel-worker)                                                                                                   |
 
-## Priority Queue (next 4 weeks)
+## Priority Queue (next 4-8 weeks)
 
-Ranked by business leverage given build-in-public commitment and $1M
-ARR vision in `vault/_shared/reference/reelstack-growth-playbook.md`.
+Ranked by business leverage given build-in-public commitment, $1M ARR
+vision (`vault/_shared/reference/reelstack-growth-playbook.md`), and
+the Hyperframes migration path unlocked 2026-04-22.
 
-1. **Faza 11 MVP — AI Director** (3–4 h for first end-to-end cut,
-   iterative from there). Flagship, competitive moat, already committed.
-2. **Faza 17 — Landing + waitlist + Day-0 post**. Funnel for Faza 11.
-   Day 0 post scheduled 2026-04-21 per growth playbook.
-3. **Faza 18 — Payment → credits audit**. Block-remover for paid
-   conversion. Probably already half-built; 1–2 h to verify + patch.
-4. **Smoke-test gpt-image-2 live** (15 min). Confirms early-access path
-   works on our OpenAI key before demoing to waitlist.
-5. **Dialog support in Faza 11 stretch** only after MVP has users
-   reporting voice/film mismatch. Don't pre-build.
+**Strategic shift:** Faza 19 A-B goes before Faza 11 because Faza 11
+ships natively on Hyperframes — building it on Remotion first would be
+throwaway work. Total critical-path delay is ~3-5 days for a permanent
+architectural win.
+
+1. **Faza 19.A — Renderer dispatcher + HF stub** (1-2 days).
+   Foundation. Zero behavioral change, but every future module declares
+   its runtime. Required before Faza 11.
+
+2. **Faza 19.B — Hyperframes harness + hello-world** (2-3 days).
+   Proves end-to-end HF render in our pipeline. Unblocks Faza 11.
+
+3. **Faza 11 MVP — AI Director on Hyperframes** (1 week). First
+   native HF module, first paid module on new architecture, flagship
+   build-in-public deliverable.
+
+4. **Faza 17 — Landing + waitlist + Day-0 post**. Funnel for Faza 11.
+   Day-0 post waits for a working HF-rendered demo reel (post-Faza 11
+   MVP). Content hook: "Built on Hyperframes, Apache 2.0 core, no
+   per-render fees."
+
+5. **Faza 18 — Payment → credits audit** (1-2 h). Block-remover for
+   paid conversion. Probably already half-built.
+
+6. **Smoke-test gpt-image-2 live** (15 min). Confirms early-access path
+   before demoing to waitlist.
+
+7. **Faza 19.D — per-runtime metrics dashboard** (1 day). So
+   subsequent porting decisions are data-driven, not vibes.
+
+8. **Faza 19.E — strangler porting, slideshow first** (~5h per
+   module, LLM-assisted). Then captions (visual editor win), then
+   cards via prompt-per-card script.
+
+9. **Faza 19.E.3 — Cloud Run renderer** when HF has 2-3 modules in
+   prod and single-machine render starts queuing. Not before.
+
+10. **Faza 11 Stretch (LoRA, dialog, shot grammar)** — only after
+    MVP has real users.
+
+11. **Faza 19.F + Faza 20 — public OSS launch + plugin marketplace**
+    ~3-6 months out, when HF port is >80% complete and 3 paid plugins
+    are ready.
