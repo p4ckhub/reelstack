@@ -49,12 +49,18 @@ describe('renderVideo', () => {
     );
   });
 
-  it('passes undefined compositionId when not in props (renderer defaults to Reel)', async () => {
+  it('defaults compositionId to Reel when not in props', async () => {
+    // Previously the base orchestrator passed undefined through and let
+    // the Remotion renderer default internally. With the renderer
+    // dispatcher (Faza 19.A) the composition is a required field on
+    // RenderInput, so we resolve the default at the base-orchestrator
+    // boundary instead. Net behavior unchanged (both paths end up
+    // rendering "Reel").
     const { renderVideo } = await import('../base-orchestrator');
     await renderVideo({ layout: 'fullscreen' }, '/tmp/test-out.mp4');
     expect(mockRender).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ compositionId: undefined })
+      expect.objectContaining({ compositionId: 'Reel' })
     );
   });
 });

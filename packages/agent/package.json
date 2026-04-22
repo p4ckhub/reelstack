@@ -20,6 +20,7 @@
     "@reelstack/ffmpeg": "workspace:*",
     "@reelstack/logger": "workspace:*",
     "@reelstack/remotion": "workspace:*",
+    "@reelstack/renderer": "workspace:*",
     "@reelstack/storage": "workspace:*",
     "@reelstack/transcription": "workspace:*",
     "@reelstack/tts": "workspace:*",

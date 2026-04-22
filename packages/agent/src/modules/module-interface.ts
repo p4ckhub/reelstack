@@ -52,7 +52,21 @@ export interface ReelModule {
   /** Human-readable name */
   name: string;
 
-  /** Remotion composition ID (must match what's registered in Root.tsx) */
+  /**
+   * Video runtime this module targets. Default 'remotion' for every
+   * existing module (backward-compatible). New modules can declare
+   * 'hyperframes' to ship as HTML+GSAP compositions — the pipeline
+   * dispatcher picks the correct renderer at render time.
+   *
+   * See `@reelstack/renderer` for the dispatch layer.
+   */
+  runtime?: 'remotion' | 'hyperframes';
+
+  /**
+   * Composition identifier for the chosen runtime:
+   * - `runtime: 'remotion'` → composition ID registered in Root.tsx (e.g. `'Reel'`)
+   * - `runtime: 'hyperframes'` → path to the HTML composition file
+   */
   compositionId: string;
 
   /**

@@ -103,6 +103,7 @@
         "@reelstack/ffmpeg": "workspace:*",
         "@reelstack/logger": "workspace:*",
         "@reelstack/remotion": "workspace:*",
+        "@reelstack/renderer": "workspace:*",
         "@reelstack/storage": "workspace:*",
         "@reelstack/transcription": "workspace:*",
         "@reelstack/tts": "workspace:*",
@@ -259,6 +260,20 @@
         "tsx": "^4.19.0",
         "typescript": "^5.9.3",
         "vitest": "^3.0.0",
+      },
+    },
+    "packages/renderer": {
+      "name": "@reelstack/renderer",
+      "version": "0.1.0",
+      "dependencies": {
+        "@reelstack/logger": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+        "vitest": "^3.2.4",
+      },
+      "peerDependencies": {
+        "@reelstack/remotion": "workspace:*",
       },
     },
     "packages/storage": {
@@ -1106,6 +1121,8 @@
     "@reelstack/queue": ["@reelstack/queue@workspace:packages/queue"],
 
     "@reelstack/remotion": ["@reelstack/remotion@workspace:packages/remotion"],
+
+    "@reelstack/renderer": ["@reelstack/renderer@workspace:packages/renderer"],
 
     "@reelstack/storage": ["@reelstack/storage@workspace:packages/storage"],
 

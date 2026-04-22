@@ -17,6 +17,7 @@ import {
   transcribeAudio,
 } from '@reelstack/remotion/pipeline';
 import { createRenderer } from '@reelstack/remotion/render';
+import { createDispatcher, type Runtime } from '@reelstack/renderer';
 import { createStorage } from '@reelstack/storage';
 import type { ProductionStep, BrandPreset, WhisperConfig } from '../types';
 import { BUILT_IN_CAPTION_PRESETS, DEFAULT_CAPTION_PRESET } from '@reelstack/types';
@@ -270,30 +271,52 @@ export interface RenderResult {
   step: ProductionStep;
 }
 
+// Lazily-built renderer dispatcher — both runtimes registered, picked
+// per-call by `runtime` argument. Cheap to build (just adapter instances)
+// but we memoize so workers don't rebuild it per job.
+let _dispatcher: ReturnType<typeof createDispatcher> | null = null;
+function getDispatcher() {
+  if (!_dispatcher) {
+    _dispatcher = createDispatcher();
+  }
+  return _dispatcher;
+}
+
 /**
- * Render a Remotion composition and return the output path + timing step.
+ * Render a composition and return the output path + timing step.
+ *
+ * Runtime defaults to `'remotion'` so every existing call site keeps
+ * working unchanged. Modules that declare `runtime: 'hyperframes'`
+ * pass it in via the module orchestrator.
  */
 export async function renderVideo(
   props: Record<string, unknown>,
   outputPath?: string,
-  onProgress?: (msg: string) => void
+  onProgress?: (msg: string) => void,
+  runtime: Runtime = 'remotion'
 ): Promise<RenderResult> {
   onProgress?.('Rendering video...');
   const finalPath =
     outputPath ?? path.join(os.tmpdir(), 'remotion-out', `reel-${randomUUID()}.mp4`);
-  const compositionId = typeof props.compositionId === 'string' ? props.compositionId : undefined;
-  const renderer = createRenderer();
-  const renderResult = await renderer.render(props as never, {
-    outputPath: finalPath,
-    compositionId,
-  });
+  const compositionId = typeof props.compositionId === 'string' ? props.compositionId : 'Reel';
+
+  const renderResult = await getDispatcher().render(
+    runtime,
+    { composition: compositionId, variables: props },
+    { outputPath: finalPath }
+  );
 
   return {
     outputPath: finalPath,
     step: {
-      name: 'Remotion render',
+      name: runtime === 'hyperframes' ? 'Hyperframes render' : 'Remotion render',
       durationMs: renderResult.durationMs,
       detail: `${finalPath} (${(renderResult.sizeBytes / 1024).toFixed(0)} KB)`,
     },
   };
 }
+
+// Keep the old createRenderer export alive so scripts/demo/agent-reel.ts
+// and other direct callers continue to work. New code should prefer
+// renderVideo() with a runtime argument, or use the dispatcher directly.
+export { createRenderer };
