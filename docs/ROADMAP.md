@@ -458,6 +458,62 @@ spike.
 in production code paths. Docker image size down. All prod reels still
 generating.
 
+## Faza 21: Planner LLM Cost Optimization — planned
+
+**Baseline (measured 2026-04-22):** current per-reel LLM cost
+averages **~$0.72** across one completed job:
+
+| Role                                 | Calls | Input toks | Output toks | Cost       |
+| ------------------------------------ | ----- | ---------- | ----------- | ---------- |
+| planner                              | 3     | 63,709     | 12,362      | $0.627     |
+| promptWriter                         | 8     | 14,820     | 1,930       | $0.074     |
+| scriptWriter + supervisor + reviewer | ~3    | ~3,000     | ~500        | ~$0.015    |
+| **Total per reel**                   |       | **~82k**   | **~15k**    | **~$0.72** |
+
+Planner dominates because its system prompt is ~20k tokens (full tool
+catalog + examples + rules) and runs 1–3 times per job (initial + up
+to 2 rewrite passes when supervisor rejects). Optimizing this doesn't
+touch creative quality — it just stops burning tokens on stable inputs.
+
+**Rationale:** A reel at $0.72 LLM-only (before image / video / TTS
+costs) makes the FREE tier economically painful and caps PRO margins
+at uncomfortably low levels. 60–70% reduction is achievable without
+degrading output quality. This is a pure-win optimization, orthogonal
+to the Hyperframes migration (Faza 19 doesn't change per-reel LLM cost).
+
+**Rationale for deferring:** measure twice, cut once. Prompt caching
+requires restructuring the planner system prompt to split cacheable /
+non-cacheable boundaries cleanly, and getting that wrong is a silent
+regression (still works, just costs full price). Landing the baseline
+metrics dashboard (Faza 19.D) first gives us ground truth to measure
+against.
+
+### Items
+
+- [ ] **Anthropic prompt caching** on planner + supervisor + script-writer.
+      The static catalog portion (tool list, prompt guidelines,
+      examples) marked with `cache_control: { type: "ephemeral" }`.
+      Subsequent reads within 5-min TTL pay 10% of input rate.
+      Expected saving: ~60% planner cost → $0.25–0.30/reel.
+- [ ] **Per-user catalog trimming** in planner prompt — currently
+      planner sees all 17 fal tools even when the user only has
+      FAL_KEY but no VEO3_API_KEY. Filter the catalog at prompt-build
+      time against available tools only. Expected saving: further
+      10–15% input token reduction.
+- [ ] **Supervisor early-exit** — if the first plan scores ≥ 80/100 on
+      the 20-check rubric, skip the revision loop entirely. Today we
+      revise every plan whether it needs it or not. Expected saving:
+      2/3 of planner calls eliminated on well-performing scripts.
+- [ ] **promptWriter batching** — currently 8 separate calls for 8
+      shots. Batch into one call with an array response. Expected
+      saving: 7x overhead on system prompt reads (~$0.05/reel).
+- [ ] **Cost dashboard view** in owner dashboard: per-job / per-role
+      cost breakdown, rolling 30-day average, alert when per-reel cost
+      breaches threshold. Integrates with existing `addCost()` logs.
+
+**Acceptance:** average per-reel LLM cost ≤ $0.30 across 20 consecutive
+renders (baseline $0.72). No regression in supervisor scores.
+
 ## Faza 20: Open-source Core + Plugin Marketplace Go-to-Market — planned
 
 **Depends on:** Faza 19 F.
@@ -571,12 +627,18 @@ architectural win.
    module, LLM-assisted). Then captions (visual editor win), then
    cards via prompt-per-card script.
 
-9. **Faza 19.E.3 — Cloud Run renderer** when HF has 2-3 modules in
-   prod and single-machine render starts queuing. Not before.
+9. **Faza 21 — Planner LLM cost optimization** (1-2 days). Current
+   per-reel LLM cost is ~$0.72 (measured); prompt caching + supervisor
+   early-exit should bring it under $0.30. Unlocks FREE-tier margins
+   and makes PRO viable before scaling marketing spend. Orthogonal to
+   Faza 19 — pick whichever unblocks first.
 
-10. **Faza 11 Stretch (LoRA, dialog, shot grammar)** — only after
+10. **Faza 19.E.3 — Cloud Run renderer** when HF has 2-3 modules in
+    prod and single-machine render starts queuing. Not before.
+
+11. **Faza 11 Stretch (LoRA, dialog, shot grammar)** — only after
     MVP has real users.
 
-11. **Faza 19.F + Faza 20 — public OSS launch + plugin marketplace**
+12. **Faza 19.F + Faza 20 — public OSS launch + plugin marketplace**
     ~3-6 months out, when HF port is >80% complete and 3 paid plugins
     are ready.
