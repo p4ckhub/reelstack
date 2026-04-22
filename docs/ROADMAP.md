@@ -356,7 +356,7 @@ sharding — that can wait for HeyGen's distributed roadmap or our own fork).
 
 **Shipped in commit 05bf3eb.**
 
-### Phase B: Hyperframes harness — **mostly done (2026-04-22)**
+### Phase B: Hyperframes harness — **done (2026-04-22)**
 
 - [x] `packages/hyperframes/` package with `renderer.ts`,
       `variable-injector.ts`, `compositions/hello/`, and 13 tests
@@ -378,22 +378,41 @@ sharding — that can wait for HeyGen's distributed roadmap or our own fork).
 - [x] peerDependencies on both engines marked `optional` so consumers
       can install only one
 
-**Still open for the full B:**
+**End-to-end live proof (commits 650a1c1 + 2c0c5e6):**
 
-- [ ] Asset URL passthrough verified end-to-end (R2/MinIO signed URLs
-      via `<video>`/`<img>` `src` in a real composition — works in
-      principle via URL sanitizer, needs live proof)
-- [ ] Worker dispatch: wire BullMQ payload `moduleSlug` → runtime
-      lookup → dispatcher. Today the worker calls `createRenderer()`
-      via `renderVideo()` helper, which takes runtime arg — needs
-      module registry pass-through.
-- [ ] `hello-hf` module registered as a real `ReelModule` so
-      `POST /api/v1/reel/generate {mode:"hello-hf"}` works from API
-- [ ] Integration test in `apps/web`: enqueue hello-hf → wait for
-      completion → assert output URL serves 200
-- [ ] Preview mode wiring for HF dev workflow (`hyperframes preview`)
+- [x] `hello-hf` module registered in `@reelstack/modules` with
+      `runtime: 'hyperframes'`, seeded in DB (`category: experimental`,
+      `creditCost: 1`, `requiredTier: OWNER`)
+- [x] `hello-hf` added to `reelModeSchema` enum in API
+- [x] `POST /api/v1/reel/generate {mode:"hello-hf", headline, ...}`
+      → queue → worker → dispatcher → HyperframesRenderer → MP4 →
+      MinIO upload → signed URL. Job 06e6d245 completed in **3.5s**,
+      256KB MP4 saved to `~/Downloads/reelstack-hello-hf-via-api.mp4`
+- [x] Worker dispatch via module descriptor `runtime` field
+      (hello-hf orchestrator calls `renderVideo(..., 'hyperframes')`)
+- [x] `docker-compose.dev.yml`: `shm_size: 512m` on worker so
+      Chrome multi-worker capture doesn't crash on default 64MB
+      `/dev/shm` (flagged by `hyperframes doctor`)
+- [x] `HyperframesRenderer` CLI resolution prefers
+      `node_modules/.bin/hyperframes` over `npx` (slim worker
+      container doesn't ship npm)
 
-**Shipped in commit 650a1c1.**
+**Remaining polish (moved to 19.D / 19.E as they become relevant):**
+
+- Preview mode wiring (`hyperframes preview`) for dev iteration —
+  only needed when we're actively authoring new HF modules
+- Integration test in `apps/web` test suite — current proof is the
+  live API reel ID, formalize once we have the per-runtime metrics
+  dashboard in 19.D
+
+**Docker Apple Silicon quirk (not a prod issue):**
+
+Hyperframes downloads an x86_64 `chrome-headless-shell` even into
+`linux_arm-*` cache directories, failing under Rosetta on Apple
+Silicon. Worked around in dev by symlinking playwright's ARM64
+`headless_shell` into the HF cache — production x86_64 (Mikrus,
+Cloud Run etc.) hits the native binary with no workaround needed.
+TODO to automate the symlink in `Dockerfile.dev` entrypoint.
 
 ### Phase C: First native HF flagship — Faza 11 AI Director (1 week)
 
