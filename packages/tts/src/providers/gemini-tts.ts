@@ -1,24 +1,23 @@
 /**
- * Gemini Flash TTS provider — Google Cloud Text-to-Speech with the
- * `gemini-3.1-flash-tts-preview` model.
+ * Gemini Flash TTS provider — Google's Generative Language API
+ * (`generativelanguage.googleapis.com`), model
+ * `gemini-2.5-flash-preview-tts` (the current preview at the time of
+ * writing; pass `modelName` to override).
  *
- * Why it's worth a separate provider:
- * - Multilingual out of the box (30+ voices, all voices work for every
- *   supported locale including Polish)
- * - `input.prompt` lets you STEER the voice ("Read aloud in a warm,
- *   welcoming tone.") — no other TTS in our stack does this
- * - Preview pricing is competitive with edge-tts for the quality level
+ * Why this endpoint and not Cloud TTS (`texttospeech.googleapis.com`):
+ * - AI Studio keys (what users get from aistudio.google.com) work here
+ *   out of the box, no GCP project / API enablement required.
+ * - Cloud TTS refused AI Studio keys with SERVICE_DISABLED unless the
+ *   owner had run `gcloud services enable texttospeech.googleapis.com`.
+ * - Both endpoints share the same voice catalog (Charon, Kore, Aoede,
+ *   etc.) and return 16-bit LINEAR PCM at 24 kHz, so downstream
+ *   WAV-wrapping / Whisper / FFmpeg stays identical.
  *
- * Auth strategy: Google Cloud TTS historically requires OAuth2. We
- * support three routes, in priority order:
- *   1. `GOOGLE_TTS_ACCESS_TOKEN` — pre-generated OAuth token (e.g.
- *      `gcloud auth application-default print-access-token`)
- *   2. `GOOGLE_TTS_API_KEY` — Google Cloud API key (if the user's
- *      project has API-key auth enabled for the Text-to-Speech API)
- *   3. Throws with a clear "set one of..." error
- *
- * Default output: LINEAR16 PCM wrapped in a WAV container at 24 kHz —
- * same shape the Whisper step already handles from edge-tts.
+ * Auth: API key as `?key=` query parameter. We accept it from any of
+ * (in priority order) explicit config, `GOOGLE_TTS_API_KEY`, or the
+ * same `GEMINI_API_KEY` already used by nano-banana / Veo 3.1. No
+ * OAuth path — if the user needs OAuth (enterprise GCP), they'd move
+ * to the Vertex AI endpoint, which deserves its own provider.
  */
 
 import type { TTSProvider, TTSResult, TTSSynthesizeOptions, Voice } from '../types';
@@ -26,14 +25,15 @@ import { TTSError } from '@reelstack/types';
 import { createLogger } from '@reelstack/logger';
 
 const log = createLogger('gemini-tts');
-const API_BASE = 'https://texttospeech.googleapis.com/v1';
-const DEFAULT_MODEL = 'gemini-3.1-flash-tts-preview';
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const DEFAULT_MODEL = 'gemini-2.5-flash-preview-tts';
 const DEFAULT_SAMPLE_RATE = 24000;
 
 /**
  * Full voice catalog for Gemini TTS. All voices work for every
- * supported language code (the model picks accent from the languageCode
- * field, not the voice name). Names are astronomical bodies.
+ * supported language (the model infers accent from the text itself,
+ * not from a separate languageCode field). Names are astronomical
+ * bodies.
  */
 const GEMINI_VOICES: readonly string[] = [
   'Achernar',
@@ -70,78 +70,83 @@ const GEMINI_VOICES: readonly string[] = [
 
 export interface GeminiTTSOptions extends TTSSynthesizeOptions {
   /**
-   * Voice direction / style instruction. Gemini TTS interprets this
-   * alongside the text (e.g. "Read aloud in a warm, welcoming tone.",
-   * "Speak as if recounting a tense thriller."). Optional.
+   * Voice direction / style instruction prepended to the text
+   * ("Say warmly:", "Narrate as a tense thriller:"). Gemini TTS
+   * interprets prose prefixes naturally — we just concatenate.
    */
   readonly voicePrompt?: string;
   /**
-   * Override the model. Defaults to `gemini-3.1-flash-tts-preview`.
-   * Use `gemini-2.5-flash-tts` for the GA release once preview is lifted.
+   * Override the model. Defaults to `gemini-2.5-flash-preview-tts`.
+   * Swap to a GA model string once Google promotes one.
    */
   readonly modelName?: string;
+}
+
+/**
+ * Generative Language API response shape for
+ * `/v1beta/models/{model}:generateContent` with AUDIO modality.
+ */
+interface GenerativeContentResponse {
+  readonly candidates?: readonly {
+    readonly content?: {
+      readonly parts?: readonly {
+        readonly inlineData?: { readonly mimeType?: string; readonly data?: string };
+      }[];
+    };
+  }[];
 }
 
 export class GeminiTTSProvider implements TTSProvider {
   readonly id = 'gemini-tts';
   readonly name = 'Gemini Flash TTS';
 
-  private readonly apiKey?: string;
-  private readonly accessToken?: string;
+  private readonly apiKey: string;
 
-  constructor(config: { apiKey?: string; accessToken?: string } = {}) {
-    this.apiKey = config.apiKey ?? process.env.GOOGLE_TTS_API_KEY;
-    this.accessToken = config.accessToken ?? process.env.GOOGLE_TTS_ACCESS_TOKEN;
-    if (!this.apiKey && !this.accessToken) {
-      throw new Error('Gemini TTS: set GOOGLE_TTS_ACCESS_TOKEN (preferred) or GOOGLE_TTS_API_KEY.');
+  constructor(config: { apiKey?: string } = {}) {
+    const key = config.apiKey ?? process.env.GOOGLE_TTS_API_KEY ?? process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error('Gemini TTS: set GEMINI_API_KEY (or GOOGLE_TTS_API_KEY).');
     }
+    this.apiKey = key;
   }
 
   /**
-   * Gemini TTS is multilingual — every voice covers every supported
-   * language via the `languageCode` field. Locale codes follow the
-   * BCP-47 pattern (`pl-PL`, `en-US`, etc.). We accept any well-formed
-   * code; the API will reject invalid ones at request time.
+   * Gemini TTS picks accent from the text content itself, so any
+   * well-formed BCP-47 locale is fine. We accept `pl`, `pl-PL`,
+   * `en-US`, etc. The API does not reject unknown codes — it just
+   * infers from content.
    */
   supportsLanguage(lang: string): boolean {
-    return /^[a-z]{2}(-[A-Z]{2})?$/.test(lang);
+    return /^[a-z]{2}(-[A-Za-z]{2})?$/.test(lang);
   }
 
   async synthesize(text: string, options: GeminiTTSOptions = {}): Promise<TTSResult> {
     const voice = options.voice ?? 'Charon';
-    const rate = options.rate ?? 1.0;
-    const pitchNumber = parsePitch(options.pitch);
-    // Google expects BCP-47 with uppercase region. User's sample payload
-    // used lowercase ("pl-pl") which works in practice but we normalize
-    // to the documented canonical form.
-    const languageCode = normalizeLocale(options.language ?? 'en-US');
     const modelName = options.modelName ?? DEFAULT_MODEL;
     const startTime = performance.now();
 
-    const body: Record<string, unknown> = {
-      input: {
-        text,
-        ...(options.voicePrompt ? { prompt: options.voicePrompt } : {}),
-      },
-      voice: {
-        languageCode,
-        name: voice,
-        modelName,
-      },
-      audioConfig: {
-        audioEncoding: 'LINEAR16',
-        sampleRateHertz: DEFAULT_SAMPLE_RATE,
-        speakingRate: rate,
-        pitch: pitchNumber,
+    // Prepend voice direction when present so Gemini steers delivery.
+    // Trailing colon + space is Google's documented pattern for
+    // distinguishing the instruction from the spoken text.
+    const narrationText = options.voicePrompt
+      ? `${options.voicePrompt.trim().replace(/[:.]$/, '')}: ${text}`
+      : text;
+
+    const body = {
+      contents: [{ parts: [{ text: narrationText }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+        },
       },
     };
 
-    const { url, authHeaders } = this.buildRequest();
+    const url = `${API_BASE}/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
 
     log.info(
       {
         voice,
-        languageCode,
         modelName,
         textLength: text.length,
         textPreview: text.substring(0, 200),
@@ -153,10 +158,7 @@ export class GeminiTTSProvider implements TTSProvider {
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(90_000),
       redirect: 'error',
@@ -173,22 +175,25 @@ export class GeminiTTSProvider implements TTSProvider {
       throw new TTSError(`Gemini TTS synthesis failed: ${error}`, { status: response.status });
     }
 
-    const json = (await response.json()) as { audioContent?: string };
-    if (!json.audioContent) {
-      throw new TTSError('Gemini TTS response missing audioContent field');
+    const json = (await response.json()) as GenerativeContentResponse;
+    const inlineData = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)?.inlineData;
+    if (!inlineData?.data) {
+      throw new TTSError('Gemini TTS response missing inlineData audio payload');
     }
 
-    // The API returns raw LINEAR16 PCM bytes, base64-encoded. Wrap in a
-    // WAV container so downstream FFmpeg / Whisper stays happy.
-    const pcm = Buffer.from(json.audioContent, 'base64');
-    const audioBuffer = wrapPcmAsWav(pcm, DEFAULT_SAMPLE_RATE);
+    // Gemini returns LINEAR16 PCM base64. Wrap as WAV so downstream
+    // FFmpeg / Whisper stays identical to edge-tts and OpenAI TTS paths.
+    const sampleRate = parseSampleRate(inlineData.mimeType) ?? DEFAULT_SAMPLE_RATE;
+    const pcm = Buffer.from(inlineData.data, 'base64');
+    const audioBuffer = wrapPcmAsWav(pcm, sampleRate);
 
     log.info(
       {
         durationMs,
         voice,
-        languageCode,
+        modelName,
         textLength: text.length,
+        sampleRate,
         audioSizeKB: Math.round(audioBuffer.length / 1024),
       },
       'Gemini TTS completed'
@@ -197,47 +202,28 @@ export class GeminiTTSProvider implements TTSProvider {
     return {
       audioBuffer,
       format: 'wav',
-      sampleRate: DEFAULT_SAMPLE_RATE,
+      sampleRate,
     };
   }
 
   async listVoices(_language?: string): Promise<Voice[]> {
-    // Voices are multilingual — we return the full catalog labeled as
-    // such. Callers that want to filter by a specific locale can do so
-    // with a display-hint; the API itself accepts any voice+locale combo.
     return GEMINI_VOICES.map((v) => ({
       id: v,
       name: v,
       language: 'multilingual',
     }));
   }
-
-  private buildRequest(): { url: string; authHeaders: Record<string, string> } {
-    const path = `${API_BASE}/text:synthesize`;
-    if (this.accessToken) {
-      return { url: path, authHeaders: { Authorization: `Bearer ${this.accessToken}` } };
-    }
-    // API key as query string — identical to the pattern Google uses for
-    // Gemini API; Cloud TTS supports it when the key has the right
-    // restrictions set in the GCP console.
-    const url = `${path}?key=${encodeURIComponent(this.apiKey as string)}`;
-    return { url, authHeaders: {} };
-  }
 }
 
-/** Convert legacy pitch strings ("+2st", "-1st") into the numeric
- *  semitones Google expects. Accepts a number directly too. */
-function parsePitch(pitch: string | undefined): number {
-  if (!pitch) return 0;
-  const match = pitch.toString().match(/(-?\d+(?:\.\d+)?)/);
-  if (!match) return 0;
-  return parseFloat(match[1]);
-}
-
-function normalizeLocale(locale: string): string {
-  const [lang, region] = locale.split('-');
-  if (!lang) return 'en-US';
-  return region ? `${lang.toLowerCase()}-${region.toUpperCase()}` : lang.toLowerCase();
+/**
+ * Extract sample rate from the Generative Language mime type
+ * (`audio/L16;codec=pcm;rate=24000` → 24000). Falls back to undefined
+ * when the header doesn't carry it.
+ */
+function parseSampleRate(mimeType: string | undefined): number | undefined {
+  if (!mimeType) return undefined;
+  const match = mimeType.match(/rate=(\d+)/);
+  return match ? parseInt(match[1], 10) : undefined;
 }
 
 /** Minimal PCM16 → WAV wrapper. 44-byte RIFF header + raw PCM payload. */
