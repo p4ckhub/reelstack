@@ -292,17 +292,34 @@ loop is the funnel. No marketing spend, only organic.
 - [ ] Weekly cost+film breakdown posts during MVP iteration
 - [ ] Affiliate link tracking (30% lifetime, per Submagic playbook)
 
-## Faza 18: Payment → Credits Flow — planned
+## Faza 18: Payment → Credits Flow — partial
 
-**Rationale:** Sellf webhook exists (Faza 4), but credit top-up product
-mapping needs verification. Without this, paid conversion is blocked.
+**Audited 2026-04-22** — most of the flow is already shipped from
+Faza 4. Remaining items are UI surface, not pipeline wiring.
 
-- [ ] Audit existing `POST /api/webhooks/sellf` product → action map
-- [ ] Credit top-up products in Sellf (100/500/2000 credit packs)
-- [ ] Per-product env var mapping (`SELLF_PRODUCT_100_CREDITS=prod_xyz`)
-- [ ] Email receipt + in-app credit balance update (already exists,
-      verify path)
-- [ ] Owner dashboard: AuditLog view for recent credit additions
+**Already shipped (audit findings):**
+
+- [x] `POST /api/webhooks/sellf` product → action map implemented
+      (`apps/web/src/app/api/webhooks/sellf/route.ts`)
+- [x] Per-product env var mapping: `SELLF_PRODUCT_{SOLO,PRO,AGENCY}`
+      for tier upgrades, `SELLF_PRODUCT_{10,50,150,500}_TOKENS` for
+      credit packs
+- [x] HMAC-SHA256 signature verification
+- [x] `addTokens()` call with reason `'purchase'` + reference ID
+- [x] `createAuditLog()` on both token-add and tier-upgrade paths
+- [x] In-app credit balance reads live DB (not cached) so balance
+      updates reflect instantly after webhook fires
+
+**Still open:**
+
+- [ ] Verify Sellf product slugs in the running env (pull actual IDs
+      from Sellf admin, stash in Vaultwarden under "Sellf credit
+      products")
+- [ ] Owner dashboard: AuditLog view for recent credit additions +
+      revenue attribution (per-product breakdown)
+- [ ] Email receipt path — verify Sellf itself sends it, or wire
+      Listmonk fallback
+- [ ] End-to-end smoke test with a real Sellf test-mode purchase
 
 ## Faza 19: Renderer Abstraction + Hyperframes Migration — planned
 
@@ -327,26 +344,17 @@ migration, module by module, no big-bang.
 Solved in Faza 19.E.3 with Cloud Run elastic render (not per-render
 sharding — that can wait for HeyGen's distributed roadmap or our own fork).
 
-### Phase A: Renderer dispatcher + Hyperframes stub (1-2 days)
+### Phase A: Renderer dispatcher + Hyperframes stub — **done (2026-04-22)**
 
-**Goal:** runtime-tagged modules + renderer picked per module. Zero
-behavioral change for existing Remotion modules.
+- [x] New package `packages/renderer/` with `interface.ts`, `dispatcher.ts`, `remotion-adapter.ts`, `hyperframes-renderer.ts`, `index.ts` + 8 tests
+- [x] `RemotionRendererAdapter` delegates to existing `@reelstack/remotion/render` `createRenderer()` (no move, no duplication — adapter pattern)
+- [x] `HyperframesRenderer` stub throws `NotImplementedError` with pointer to Faza 19.B
+- [x] `ReelModule.runtime?: 'remotion' | 'hyperframes'` (optional, default `'remotion'`, zero BC break across every existing module)
+- [x] `renderVideo()` in `base-orchestrator.ts` accepts optional `runtime` argument, routes through dispatcher
+- [x] `createRenderer` re-exported from `@reelstack/agent` orchestrator for direct callers (demo scripts)
+- [x] 1674 package tests + 266 web tests all green; 8 new dispatcher tests added
 
-- [ ] New package `packages/renderer/` with `interface.ts`, `dispatcher.ts`
-- [ ] Move existing `LocalRenderer` + `LambdaRenderer` into
-      `packages/renderer/remotion.ts` (keep old import paths for BC via
-      re-exports from `@reelstack/remotion`)
-- [ ] `HyperframesRenderer` stub class — constructor + `render()` that
-      throws `NotImplementedError` with clear message
-- [ ] Add `runtime: 'remotion' | 'hyperframes'` field to `ProductionModule`
-      interface, default `'remotion'` on existing modules (DB migration: nullable column, default 'remotion')
-- [ ] Dispatcher: `renderModule(slug, props) → picks renderer by module.runtime`
-- [ ] Regression tests: every existing module still routes to Remotion,
-      full green test suite
-- [ ] No public API changes yet
-
-**Acceptance:** All 266+125 existing tests green. `@reelstack/renderer`
-package exists. Dispatcher active in worker (but routes 100% to Remotion).
+**Shipped in commit 05bf3eb.**
 
 ### Phase B: Hyperframes harness — end-to-end hello world (2-3 days)
 

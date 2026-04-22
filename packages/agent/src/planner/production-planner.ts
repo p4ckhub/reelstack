@@ -491,7 +491,7 @@ function parseResponse(text: string, input: PlannerInput): ProductionPlan {
     reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : '',
   };
 
-  return enforceToolPreferences(plan, availableToolIds);
+  return enforceToolPreferences(plan, availableToolIds, input.preferredToolIds);
 }
 
 function parsePrimarySource(
@@ -935,10 +935,20 @@ function parseCtaSegments(raw: unknown): CtaPlan[] {
  * Post-process plan to enforce mandatory tool selection order.
  * LLM often ignores tool preference instructions, so we fix it programmatically.
  *
- * AI video priority: seedance2-kie > seedance2-piapi > veo31-gemini > others
- * AI image priority: nanobanana2-kie > nanobanana > flux-* > others
+ * Default priorities (used when the user didn't specify a preferredToolIds):
+ * - AI video: seedance2-kie > seedance2-piapi > veo31-gemini > others
+ * - AI image: nanobanana2-kie > nanobanana > flux-* > others
+ *
+ * User preferences always win: if preferredToolIds contains an available
+ * image tool, that's the bestImage regardless of the default priority list.
+ * Same for video. This is the fix for the bug where asking for
+ * "openai-gpt-image-2" got silently rewritten to "nanobanana2-kie".
  */
-function enforceToolPreferences(plan: ProductionPlan, availableToolIds: string[]): ProductionPlan {
+function enforceToolPreferences(
+  plan: ProductionPlan,
+  availableToolIds: string[],
+  preferredToolIds?: readonly string[]
+): ProductionPlan {
   const VIDEO_PRIORITY = [
     'seedance2-kie',
     'seedance2-fast-kie',
@@ -954,8 +964,23 @@ function enforceToolPreferences(plan: ProductionPlan, availableToolIds: string[]
   ];
   const IMAGE_PRIORITY = ['nanobanana2-kie', 'nanobanana', 'flux-kie', 'flux-piapi'];
 
-  const bestVideo = VIDEO_PRIORITY.find((id) => availableToolIds.includes(id));
-  const bestImage = IMAGE_PRIORITY.find((id) => availableToolIds.includes(id));
+  // Split user prefs into video vs image by checking which category each
+  // tool produces. If a preferred tool is unavailable we ignore it (the
+  // enforcement fall back to the default priority list for that type).
+  const userPref = (preferredToolIds ?? []).filter((id) => availableToolIds.includes(id));
+  const preferredVideo = userPref.find(
+    (id) =>
+      VIDEO_PRIORITY.includes(id) ||
+      /video|veo|kling|seedance|wan|hunyuan|hailuo|minimax|humo/.test(id)
+  );
+  const preferredImage = userPref.find(
+    (id) =>
+      IMAGE_PRIORITY.includes(id) ||
+      /image|gpt-image|banana|flux|ideogram|recraft|seedream|imagen|sd35/.test(id)
+  );
+
+  const bestVideo = preferredVideo ?? VIDEO_PRIORITY.find((id) => availableToolIds.includes(id));
+  const bestImage = preferredImage ?? IMAGE_PRIORITY.find((id) => availableToolIds.includes(id));
 
   if (!bestVideo && !bestImage) return plan;
 
