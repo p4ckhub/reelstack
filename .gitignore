@@ -9,12 +9,14 @@ out/
 .turbo/
 standalone/
 
-# Environment
+# Environment (catches .env, .env.local, .env.dev, .env.bak, etc.)
 .env
-.env.local
-.env.dev
-.env.production
-.env.*.local
+.env.*
+
+# Backup files (manual `cp foo foo.bak` workflows)
+*.bak
+*.backup
+*.orig
 
 # IDE
 .idea/
