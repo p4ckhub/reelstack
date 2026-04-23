@@ -28,6 +28,7 @@ import { regen } from './commands/regen';
 import { replace } from './commands/replace';
 import { image } from './commands/image';
 import { brandedImage } from './commands/branded-image';
+import { prompt as promptCmd } from './commands/prompt';
 
 const B = '\x1b[36m',
   Y = '\x1b[33m',
@@ -52,6 +53,7 @@ const commands: Record<string, () => Promise<void>> = {
   lipsync,
   image,
   'branded-image': brandedImage,
+  prompt: promptCmd,
 };
 
 if (!command || !commands[command]) {
@@ -92,6 +94,12 @@ ${Y}Image generation:${X}
   bun run rs image "prompt" --tool <id>     Specify tool (default: nanobanana2-kie)
   bun run rs branded-image                  List available templates and brands
   bun run rs branded-image --template tip-card --brand techskills --text "Hello"
+
+${Y}Prompt preview (debug rendered LLM prompts):${X}
+  bun run rs prompt                         List available templates
+  bun run rs prompt planner                 Render planner prompt with mock manifest
+  bun run rs prompt supervisor --out s.md   Save rendered prompt to a file
+  bun run rs prompt planner --manifest m.json   Use custom ToolManifest JSON
 
 ${Y}Lip sync (AI talking head from image):${X}
   bun run rs lipsync <image.jpg>            Generate lip-synced clips per scene
