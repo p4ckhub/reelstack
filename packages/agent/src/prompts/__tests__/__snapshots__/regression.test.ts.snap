@@ -94,7 +94,8 @@ differences when the brief calls for gpt-image-2:
   OPENAI_IMAGE_SIZE=2048x3072 when the brief needs print-grade detail.
 
 Everything else (replacement vocabulary, forbidden words, single-subject
-framing) applies identically to both models."
+framing) applies identically to both models.
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/hailuo.md matches snapshot 1`] = `
@@ -105,6 +106,7 @@ BEST AT: cinematic short clips, lifestyle, product reveals, urban/nature scenes.
 WEAK AT: in-frame text, named faces, prompts > 100 words (quality plateaus, model ignores tail).
 
 VARIANTS:
+
 - \`video-01\` — smoother, better for calm/atmospheric shots
 - \`video-01-live\` — more dynamic motion, good for action
 
@@ -133,7 +135,8 @@ DURATION: typically 6-10s. Quality optimal under 8s.
 
 ASPECT RATIOS: 9:16, 1:1, 16:9. 9:16 quality good for reels.
 
-COST NOTE: ~$0.10-0.30/clip. Solid mid-tier choice when Seedance is busy or unavailable."
+COST NOTE: ~$0.10-0.30/clip. Solid mid-tier choice when Seedance is busy or unavailable.
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/heygen.md matches snapshot 1`] = `
@@ -146,7 +149,8 @@ exports[`guidelines — content snapshot > guidelines/heygen.md matches snapshot
 - Numbers: write out "fifty thousand" not "50,000" for natural speech
 - Emphasis: CAPS for stressed words ("this is INSANE") — avatar will stress them
 - Keep segments under 90 seconds per generation to avoid quality degradation
-- The script IS the visual — no need to describe camera angles or scene"
+- The script IS the visual — no need to describe camera angles or scene
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/heygen-agent.md matches snapshot 1`] = `
@@ -155,17 +159,20 @@ exports[`guidelines — content snapshot > guidelines/heygen-agent.md matches sn
 This is a PROMPT-BASED tool, not script-based. The agent decides shots, cuts, camera angles, and B-roll automatically from your description.
 
 DISAMBIGUATION:
+
 - \`heygen-agent\` (this) → describe the VIDEO you want; agent generates multi-shot reel with avatar woven in. Backbone = Seedance 2.0 (cinematic motion, physics-accurate lighting).
 - \`heygen\` (Studio) → write the SCRIPT for the avatar to read; one continuous take. Use heygen.md for script rules.
 
 PROMPT PATTERN: describe scene + mood + visual style + what the avatar is doing. The agent interprets these into shots.
 
 GOOD prompt:
+
 \`\`\`
 A tech entrepreneur explains why self-hosting beats SaaS, walking through a modern home office with plants and a standing desk, camera follows them naturally with a slow handheld push, warm afternoon light from a large window, muted desaturated grade
 \`\`\`
 
 BAD prompt (this is a script — use heygen Studio instead):
+
 \`\`\`
 Hello, today I want to talk about why self-hosting beats SaaS...
 \`\`\`
@@ -173,6 +180,7 @@ Hello, today I want to talk about why self-hosting beats SaaS...
 UNDERLYING MODEL = SEEDANCE: see \`seedance.md\` for the full 5-layer framework, complexity levels, forbidden words, and camera/lighting vocabulary. heygen-agent inherits all of those rules — the only difference is the avatar is automatically present in the scene.
 
 CONSTRAINTS:
+
 - Max 12 seconds per Seedance clip; agent stitches up to 3 minutes total.
 - Orientation: portrait (9:16) or landscape (16:9).
 - Reference avatar must be pre-trained in HeyGen account.
@@ -199,16 +207,19 @@ PROMPT PATTERN (natural language, 50-100 words optimal):
 EXAMPLES:
 
 Lifestyle:
+
 \`\`\`
 A woman in a beige knit sweater pours hot coffee into a ceramic mug at a wooden kitchen counter, steam rising, sunlight through linen curtains, slow handheld push-in toward the cup, warm morning light from camera-right, muted desaturated grade
 \`\`\`
 
 Urban:
+
 \`\`\`
 Pedestrians cross a rain-soaked Tokyo street at night under neon signs, slow tracking shot at eye level following one figure with a red umbrella, magenta and cyan reflections on wet asphalt, anamorphic look
 \`\`\`
 
 Product:
+
 \`\`\`
 A pair of leather sneakers on a polished concrete surface, slow orbit 90 degrees clockwise, single hard key from above-right with soft fill, neutral commercial grade, sharp focus throughout
 \`\`\`
@@ -221,6 +232,7 @@ DURATION: typically 5s standard, longer variants on some hosts. Quality optimal 
 ASPECT RATIOS: 16:9 (default), 9:16, 1:1. 9:16 quality good but not as strong as Sora 2 for vertical.
 
 WHEN TO PICK HUNYUAN:
+
 - vs Seedance: Hunyuan when you need open-source / self-hostable. Seedance generally edges Hunyuan on prompt adherence and motion control vocabulary.
 - vs WAN 2.2: Hunyuan for more cinematic look. WAN for more natural lifestyle look + multi-shot in a single prompt.
 - vs LTX-2: Hunyuan for higher quality. LTX-2 for native audio + faster gen.
@@ -250,21 +262,25 @@ CORE RULES:
 PROMPT PATTERNS:
 
 Wordmark logo:
+
 \`\`\`
 a wordmark logo 'BrandName' for a [INDUSTRY], [STYLE] typeface, on a white background
 \`\`\`
 
 Poster / thumbnail:
+
 \`\`\`
 a minimalist poster with the words 'SPRING EDIT' in bold condensed sans-serif, dark navy background, centered top-third, generous negative space below
 \`\`\`
 
 Reel title card:
+
 \`\`\`
 a vertical title card 9:16 with the words 'STOP SCROLLING' in heavy display sans-serif, white text on solid crimson background, centered
 \`\`\`
 
 Mascot with text:
+
 \`\`\`
 a mascot logo of a [CHARACTER] with text 'BrandName' below, flat vector style, on a white background
 \`\`\`
@@ -297,6 +313,7 @@ A barista slams the portafilter into the espresso machine, espresso pours into a
 \`\`\`
 
 WHEN TO PICK KLING vs ALTERNATIVES:
+
 - vs Seedance: Kling for action / dramatic moments where motion is the entire shot. Seedance for multi-element narrative shots with detailed camera/lighting choreography.
 - vs Pika: Kling for higher visual fidelity per shot. Pika for rapid variations and special effects.
 - vs Veo 3.1: Kling cheaper, comparable quality on simple action. Veo 3.1 wins on dialogue-driven scenes.
@@ -305,7 +322,8 @@ DURATION: 5s or 10s clips. Quality holds well at 5s, degrades past 10s.
 
 ASPECT RATIOS: 9:16, 1:1, 16:9. Kling handles 9:16 well — strong choice for vertical reels.
 
-COST NOTE: ~$0.20-0.50/clip depending on duration and resolution."
+COST NOTE: ~$0.20-0.50/clip depending on duration and resolution.
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/ltx.md matches snapshot 1`] = `
@@ -328,21 +346,25 @@ ALWAYS include negative prompt: \`blurry, low quality, distorted, flickering, wa
 EXAMPLES:
 
 Audio-synced action:
+
 \`\`\`
 A cinematic shot of a thunderstorm over a rocky coastline at night. Lightning strikes a lone tree on the cliff. Camera locked wide, slow push-in. Cool blue ambient with white lightning flash. Audio: loud thunder crack on the lightning strike, heavy rain pouring, distant ocean waves crashing.
 \`\`\`
 
 Atmospheric B-roll:
+
 \`\`\`
 A neon-lit Tokyo alley after rain, steam rising from a manhole, slow tracking shot at eye-level, magenta and cyan signs reflected on wet pavement. Audio: distant traffic hum, faint izakaya chatter, soft rain.
 \`\`\`
 
 Nature with ambient:
+
 \`\`\`
 Sunlight breaks through tall pine trees in a misty forest, slow handheld pull-back, warm golden shafts cutting through cool blue mist, particles drifting. Audio: birdsong, distant stream, wind through pine needles.
 \`\`\`
 
 NEGATIVE PROMPT (always include):
+
 \`\`\`
 blurry, low quality, distorted, flickering, warped, oversaturated, glitch artifacts
 \`\`\`
@@ -352,6 +374,7 @@ DURATION: 5s, 10s, 15s, up to 20s. Quality holds well to 15s, slight degradation
 ASPECT RATIOS: 16:9, 9:16, 1:1. Native up to 4K (most hosts cap at 1080p).
 
 WHEN TO PICK LTX-2:
+
 - vs Veo 3.1 / Sora 2: LTX-2 when you want native audio at fraction of cost.
 - vs WAN 2.6: LTX-2 has tighter audio-visual sync (single pass). WAN 2.6 has slightly stronger visuals.
 - vs Hunyuan: LTX-2 for atmospheric / abstract / nature with audio. Hunyuan for cleaner cinematic polish without audio.
@@ -366,6 +389,7 @@ exports[`guidelines — content snapshot > guidelines/luma.md matches snapshot 1
 BEST AT: smooth naturalistic motion, fluid physics simulation (water, smoke, fabric, reflections, caustics), nature scenes, cinematic camera moves with weight and inertia. The "cinematic realism engine" of the field.
 
 UNIQUE FEATURES:
+
 - **Modify with Instructions** — revise a generated clip by describing the change in plain language ("make the camera move slower", "warmer lighting"). No re-prompt needed.
 - **Reframe** — change aspect ratio of a finished clip post-generation (e.g. 16:9 → 9:16) without regenerating.
 - **Loop mode** — generates seamless loops for backgrounds/B-roll.
@@ -381,16 +405,19 @@ PROMPT PATTERN (single scene, 30-60 words, focus on motion + light):
 EXAMPLES:
 
 Nature / atmospheric:
+
 \`\`\`
 Ocean waves crash on a rocky shore at golden hour, slow handheld pull-back, warm backlight from horizon, cool blue water, slow motion, 10s
 \`\`\`
 
 Product physics:
+
 \`\`\`
 A drop of honey falls slowly from a wooden dipper onto a stack of pancakes, macro lens, locked camera, soft morning window light, sharp focus on the strand, 5s
 \`\`\`
 
 Lifestyle motion:
+
 \`\`\`
 A woman walks through a field of tall grass at dusk, hand trailing through the seedheads, slow tracking shot from behind, golden hour rim light, naturalistic muted grade, 10s
 \`\`\`
@@ -403,6 +430,7 @@ DURATION: pass as string \`"5s"\` or \`"10s"\`.
 ASPECT RATIOS: 16:9 (default, best motion), 9:16, 1:1. Use Reframe to convert post-gen if needed.
 
 WHEN TO PICK LUMA:
+
 - vs Pika: Luma for naturalistic physics. Pika for special effects + scene ingredients.
 - vs Runway: Luma when motion needs weight (water, fabric, organics). Runway for sharper photoreal stills-in-motion.
 - vs Seedance: Luma when one beautiful naturalistic motion is the whole shot. Seedance for choreographed multi-element scenes.
@@ -511,7 +539,8 @@ VIDEO vs IMAGE search:
 - **PREFER IMAGES** for most B-roll — they get automatic Ken Burns zoom/pan animation and look more professional than random stock video
 - Use videos ONLY when you need actual motion (hands typing, walking, pouring)
 - Images work great for: establishing shots, backgrounds, tech setups, abstract concepts, data moments
-- Videos are better for: action sequences (typing, walking, cooking), dynamic lifestyle shots"
+- Videos are better for: action sequences (typing, walking, cooking), dynamic lifestyle shots
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/pika.md matches snapshot 1`] = `
@@ -520,6 +549,7 @@ exports[`guidelines — content snapshot > guidelines/pika.md matches snapshot 1
 BEST AT: rapid creative variations (great for A/B testing social campaigns), special effects, product reveals, transitions, cinematic short clips up to 1080p / 10s.
 
 UNIQUE FEATURES:
+
 - **Scene Ingredients** (Pika 2.0+) — you can pin a character, object, or style as a persistent "ingredient" that appears in multiple shots without re-describing it.
 - **Picaframes** — interpolate between two keyframe images for precise start/end control.
 - **Pika Effects** library — preset transformations (squish, melt, explode, inflate, crush) applied to a subject.
@@ -535,16 +565,19 @@ PROMPT PATTERN (lead with action, single moment, 20-50 words):
 EXAMPLES:
 
 Product reveal:
+
 \`\`\`
 A coffee cup slides into frame on a marble surface, steam curling upward, slow zoom toward the rim, soft morning window light from camera-right, warm neutral grade
 \`\`\`
 
 Action moment:
+
 \`\`\`
 A drop of ink falls into clear water and blooms into a swirling cloud, macro shot, locked camera, single hard top light, dark dramatic background
 \`\`\`
 
 Transition (entry):
+
 \`\`\`
 A page of code text materializes letter-by-letter on a dark screen, soft blue monitor glow, locked close-up, then slow pull-back revealing the developer
 \`\`\`
@@ -557,6 +590,7 @@ DURATION: 5s or 10s clips at 1080p.
 ASPECT RATIOS: 9:16, 1:1, 16:9.
 
 WHEN TO PICK PIKA:
+
 - vs Runway Gen-4: Pika for rapid iteration / variations / Pika Effects. Runway for cleaner photoreal scenes.
 - vs Luma: Pika for special effects + scene ingredients. Luma for naturalistic motion + physics.
 - vs Seedance: Pika for transitions/effects. Seedance for cinematic narrative shots.
@@ -587,6 +621,7 @@ Top-down flatlay of a leather wallet on a marble surface, surrounded by a founta
 \`\`\`
 
 WHEN TO PICK QWEN OVER SEEDREAM (similar price tier):
+
 - Qwen: when you need text in image (handles EN+CN reliably) or multi-element commercial composition.
 - Seedream: when you need 4K micro-detail (textile fibers, skin pores) or chain-of-thought reasoning for complex composition.
 
@@ -616,6 +651,7 @@ PROMPT PATTERN — describe the BRAND VISUAL LANGUAGE, not abstract adjectives:
 - GOOD: "clean Scandinavian minimalism illustration of a laptop, sage green and warm cream palette, thin line art, generous negative space"
 
 Brand-styling vocabulary that works:
+
 - "warm artisan food photography"
 - "bold athletic streetwear"
 - "calm Nordic editorial"
@@ -672,21 +708,25 @@ CAMERA MOVE VOCABULARY (Runway responds well — pick ONE):
 EXAMPLES:
 
 Product shot:
+
 \`\`\`
 A glass perfume bottle on dark marble, slow orbit 45 degrees clockwise, single overhead key light, hard shadow below, neutral cool grade, 9:16
 \`\`\`
 
 Lifestyle B-roll:
+
 \`\`\`
 A barista pulling an espresso shot at a cafe counter, slow push-in toward hands, warm window light from camera-left, muted desaturated grade
 \`\`\`
 
 Hero opener:
+
 \`\`\`
 A neon sign reading reflects on wet asphalt, slow tilt up to reveal city skyline at dusk, cool blue ambient with magenta practical lights, anamorphic look
 \`\`\`
 
 AVOID:
+
 - People's faces (especially named/famous — triggers copyright filter)
 - In-frame readable text (renders garbled)
 - Brand logos (will not reproduce)
@@ -759,7 +799,8 @@ L2 EXAMPLE (default level — copy this shape):
 A barista in a cream apron pulls an espresso shot at a sunlit cafe counter, focused on the portafilter, steam rising. Medium close-up, slow dolly push toward hands, eye level. Soft window light camera-left, warm amber tungsten fill from above-right, low-key with hard shadow on machine. Anamorphic, muted desaturated grade. 9:16 vertical, 8s.
 \`\`\`
 
-ASPECT RATIOS: 16:9, 9:16, 1:1. 9:16 quality strong (Seedance handles vertical well). Always declare aspect at the END of the prompt."
+ASPECT RATIOS: 16:9, 9:16, 1:1. 9:16 quality strong (Seedance handles vertical well). Always declare aspect at the END of the prompt.
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/seedream.md matches snapshot 1`] = `
@@ -787,6 +828,7 @@ Macro shot of a luxury watch on a slate stone surface, brushed steel case with v
 \`\`\`
 
 WHEN TO PICK SEEDREAM:
+
 - vs FLUX: Seedream when you need budget-friendly volume + 4K detail. FLUX when character must stay consistent across shots.
 - vs NanoBanana 2: Seedream when you don't need conversational edits. NanoBanana when iterating on one image.
 
@@ -814,21 +856,25 @@ PROMPT PATTERNS:
 EXAMPLES:
 
 Hero with dialogue:
+
 \`\`\`
 INT. HOME OFFICE — DAY. Shot on 35mm film, Kodak Vision3 250D. A developer leans back in her chair, staring at a stack overflow page on the monitor. She mutters: "There has to be a better way." Soft window light from camera-left, warm tungsten desk lamp backlight, shallow depth of field, slow push-in toward her face. Ambient sound: distant traffic, mechanical keyboard tap.
 \`\`\`
 
 Physics-driven moment:
+
 \`\`\`
 A glass of red wine tips off the edge of an oak table. The glass falls 80cm and shatters on the hardwood floor; wine splashes outward in a crown. Macro shot, locked low-angle, single hard key from above-right. Audio: glass shatter on impact, liquid splatter, distant heartbeat.
 \`\`\`
 
 Cinematic exterior:
+
 \`\`\`
 A lone runner crests a hill at golden hour, breath visible in cold air, distant city below. 35mm anamorphic, slow tracking shot from behind, warm horizon backlight, cool blue ambient. Audio: footsteps on gravel, wind, faint city hum.
 \`\`\`
 
 CAUSE-AND-EFFECT VOCABULARY (Sora rewards explicit physics):
+
 - "ball rolls off the table, falls 1m, bounces twice"
 - "smoke rises and dissipates in 3 seconds"
 - "fabric catches the breeze and flutters left"
@@ -867,7 +913,8 @@ ASPECT RATIOS: 16:9 (default, best motion coherence), 9:16, 1:1. 9:16 quality st
 
 DURATION: 8s standard, up to 10s on some hosts.
 
-COST NOTE: ~$0.30-0.75/clip. Reserve PATTERN A (60-150 words) for hero shots; PATTERN C (≤20 words) for filler is cheap-equivalent and still strong."
+COST NOTE: ~$0.30-0.75/clip. Reserve PATTERN A (60-150 words) for hero shots; PATTERN C (≤20 words) for filler is cheap-equivalent and still strong.
+"
 `;
 
 exports[`guidelines — content snapshot > guidelines/wan.md matches snapshot 1`] = `
@@ -916,930 +963,7 @@ DURATION: 5s standard, multi-shot prompts can stretch to 10-15s.
 ASPECT RATIOS: 16:9, 9:16, 1:1. WAN 2.6 native 720p; some hosts upscale to 1080p.
 
 WHEN TO PICK WAN:
-- vs Hunyuan: WAN for natural lifestyle / multi-shot in one prompt. Hunyuan for higher cinematic polish.
-- vs Seedance: WAN when you want fields-based prompting and don't need Seedance's L4 choreography level.
-- vs LTX-2: WAN 2.6 for stronger visual quality. LTX-2 for tighter audio sync.
 
-COST NOTE: ~$0.10-0.30/clip on hosted APIs. Self-hosted needs 24GB+ VRAM.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/flux.md matches snapshot 1`] = `
-"FLUX prompt guidelines (Black Forest Labs):
-
-BEST AT: character consistency across edits, photoreal portraits, detailed editing workflows, prompt adherence on long descriptions. Pick FLUX over NanoBanana when you need the SAME character/object across multiple shots, or precise editing of a generated image.
-
-WEAK AT: in-frame text (use Ideogram or GPT-Image-2), vector/icon work (use Recraft), 4K micro-detail (Seedream wins).
-
-VERSIONS:
-
-- FLUX.2 [pro] — flagship (Nov 2025), best photorealism + editing consistency. Use for hero shots.
-- FLUX.1 [dev] — 12B params, 28 steps, open weights. Best quality before [pro] release.
-- FLUX [schnell] — fast and cheap, 4 steps. Use for bulk B-roll stills.
-
-PROMPT STRUCTURE (sweet spot 60-100 words, comma-separated):
-
-\`\`\`
-Subject + action + environment, lens + framing, lighting direction + quality, mood/style tokens, color grade
-\`\`\`
-
-NEGATIVE PROMPT: FLUX has NO native negative prompt field. To exclude things, write "without X" or "no X" inline:
-
-\`\`\`
-A developer at a wooden desk, focused on screen, soft window light from left, no logos, no visible text on monitor, muted desaturated grade, 9:16
-\`\`\`
-
-EXAMPLE (FLUX.2 [pro]):
-
-\`\`\`
-A woman in her 30s leaning against a brick wall, leather jacket and white tee, looking off camera, golden-hour backlight from camera-right, soft fill from white reflector, 85mm portrait lens, shallow depth of field, warm pastel grade, no text, no logos, 9:16 vertical
-\`\`\`
-
-ASPECT RATIOS: native support 1:1, 4:5, 9:16, 16:9. For reels use 9:16 or 4:5. Resolution up to 2048×2048 ([pro]).
-
-COST NOTE: [schnell] ~$0.003/image, [dev] ~$0.025, [pro] ~$0.05. Pick the cheapest tier that meets quality bar — bulk B-roll rarely needs [pro].
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/gpt-image.md matches snapshot 1`] = `
-"## gpt-image-1 (OpenAI Image) prompt rules
-
-gpt-image-1 inherits GPT-4's language understanding — it follows detailed,
-natural-language descriptions better than DALL-E 3 did. Treat it like
-you're briefing a photographer, not writing keywords.
-
-### What works
-
-- **Subject + action + environment + light** in a complete sentence.
-  "Close-up of a developer's hands resting on a mechanical keyboard,
-  dark office, single warm desk lamp from camera-right, blue monitor
-  glow reflecting off the keys."
-- **Lens + camera framing tokens** (85mm portrait, shallow depth of field,
-  macro, etc.) — same vocabulary as our other image tools.
-- **Explicit negative list** inside the prompt: "no visible faces", "no
-  text overlays", "no logos" — the model respects these reliably.
-- **One clear subject per image**. gpt-image-1 handles a second element
-  but degrades when you pack 3+ distinct things into one frame.
-
-### What to avoid
-
-- Forbidden words we ban for every tool: cinematic, epic, masterpiece,
-  stunning, beautiful, 8K, 4K, hyper-realistic, photorealistic,
-  ultra-real, award-winning, breathtaking, amazing, professional.
-- Abstract metaphors without grounding ("the essence of productivity").
-  Name the concrete scene instead.
-- Over-specifying output format ("4:3", "square", "vertical") — the
-  aspect ratio is set via the API size param, not via prompt.
-
-### gpt-image-1 specifics
-
-- Sizes available: 1024x1024 (square), 1024x1536 (portrait 2:3),
-  1536x1024 (landscape 3:2). There is NO true 9:16 — for vertical reels
-  we pick 1024x1536 and crop/letterbox in Remotion.
-- Quality levels: low / medium / high. Default medium. High triples the
-  cost and is usually overkill for 2-second b-roll cuts.
-- Output: base64 PNG returned in response JSON. No URL route.
-- Knows text rendering — ok to ask for short in-frame text (under 12
-  chars) like a street sign or screen label. Don't ask for paragraphs.
-
-### gpt-image-2 specifics (April 2026)
-
-Same API surface as gpt-image-1, newer model string. Three practical
-differences when the brief calls for gpt-image-2:
-
-- **Text rendering is dramatically better.** Full multilingual sentences,
-  short paragraphs, infographic layouts, slide-style compositions,
-  even manga panels with legible dialogue. If the shot needs in-frame
-  text longer than a label, gpt-image-2 beats gpt-image-1 decisively.
-- **~2× faster** at equivalent sizes and quality. Drops shot generation
-  from ~20s to ~10s, useful when the pipeline has 8+ image shots.
-- **Up to 4096×4096 output** if the spec allows. For reels we stay at
-  1024x1536 because Remotion downsamples anyway; set
-  OPENAI_IMAGE_SIZE=2048x3072 when the brief needs print-grade detail.
-
-Everything else (replacement vocabulary, forbidden words, single-subject
-framing) applies identically to both models."
-`;
-
-exports[`guidelines — content snapshot guidelines/hailuo.md matches snapshot 1`] = `
-"MiniMax Hailuo prompt guidelines:
-
-BEST AT: cinematic short clips, lifestyle, product reveals, urban/nature scenes. Director Mode (when available) gives precise control over scene/movement/character interactions.
-
-WEAK AT: in-frame text, named faces, prompts > 100 words (quality plateaus, model ignores tail).
-
-VARIANTS:
-- \`video-01\` — smoother, better for calm/atmospheric shots
-- \`video-01-live\` — more dynamic motion, good for action
-
-PROMPT PATTERN:
-
-- Lead with SUBJECT + ACTION: "A woman walks through a neon-lit market" not "A market with a woman"
-- Camera hints respected: \`slow push-in\`, \`tracking shot\`, \`locked wide\`, \`pan left\`, \`tilt up\`
-- Sweet spot: 50-100 words. Keep under 200 (model reads but quality drops after ~100 words).
-
-EXAMPLE (lifestyle, video-01):
-
-\`\`\`
-A man in a wool coat walks slowly along a foggy beach at dawn, hands in pockets, gentle waves crashing in background. Slow tracking shot from behind at eye-level. Cool blue ambient with warm amber sunrise glow on the horizon, naturalistic muted grade, sharp focus on subject.
-\`\`\`
-
-EXAMPLE (action, video-01-live):
-
-\`\`\`
-A skateboarder kicks the board into a 360-degree spin in an empty city plaza at golden hour. Slow-motion tracking shot orbiting around them, low angle. Warm backlight, hard shadows, anamorphic look.
-\`\`\`
-
-DIRECTOR MODE (when available on the host):
-Use to specify precise per-second scene changes, character beats, or camera moves. Prompt structure becomes timestamp-driven similar to Seedance L3.
-
-DURATION: typically 6-10s. Quality optimal under 8s.
-
-ASPECT RATIOS: 9:16, 1:1, 16:9. 9:16 quality good for reels.
-
-COST NOTE: ~$0.10-0.30/clip. Solid mid-tier choice when Seedance is busy or unavailable."
-`;
-
-exports[`guidelines — content snapshot guidelines/heygen.md matches snapshot 1`] = `
-"HeyGen avatar script guidelines:
-
-- Write natural spoken language, not written prose — contractions, short sentences
-- One idea per sentence: "This is huge. And here's why." not "This is huge because of several reasons."
-- Mark pauses with "..." or commas — HeyGen respects punctuation rhythm
-- Avoid tongue-twisters, alliteration, or complex technical abbreviations unless spelled out
-- Numbers: write out "fifty thousand" not "50,000" for natural speech
-- Emphasis: CAPS for stressed words ("this is INSANE") — avatar will stress them
-- Keep segments under 90 seconds per generation to avoid quality degradation
-- The script IS the visual — no need to describe camera angles or scene"
-`;
-
-exports[`guidelines — content snapshot guidelines/heygen-agent.md matches snapshot 1`] = `
-"HeyGen Video Agent (Seedance 2.0 backbone) prompt guidelines:
-
-This is a PROMPT-BASED tool, not script-based. The agent decides shots, cuts, camera angles, and B-roll automatically from your description.
-
-DISAMBIGUATION:
-- \`heygen-agent\` (this) → describe the VIDEO you want; agent generates multi-shot reel with avatar woven in. Backbone = Seedance 2.0 (cinematic motion, physics-accurate lighting).
-- \`heygen\` (Studio) → write the SCRIPT for the avatar to read; one continuous take. Use heygen.md for script rules.
-
-PROMPT PATTERN: describe scene + mood + visual style + what the avatar is doing. The agent interprets these into shots.
-
-GOOD prompt:
-\`\`\`
-A tech entrepreneur explains why self-hosting beats SaaS, walking through a modern home office with plants and a standing desk, camera follows them naturally with a slow handheld push, warm afternoon light from a large window, muted desaturated grade
-\`\`\`
-
-BAD prompt (this is a script — use heygen Studio instead):
-\`\`\`
-Hello, today I want to talk about why self-hosting beats SaaS...
-\`\`\`
-
-UNDERLYING MODEL = SEEDANCE: see \`seedance.md\` for the full 5-layer framework, complexity levels, forbidden words, and camera/lighting vocabulary. heygen-agent inherits all of those rules — the only difference is the avatar is automatically present in the scene.
-
-CONSTRAINTS:
-- Max 12 seconds per Seedance clip; agent stitches up to 3 minutes total.
-- Orientation: portrait (9:16) or landscape (16:9).
-- Reference avatar must be pre-trained in HeyGen account.
-
-BEST FOR: cinematic intros, dynamic B-roll with avatar, multi-shot sequences where the avatar is woven into the scene rather than centered as a talking head.
-
-NOT FOR: precise script delivery (use \`heygen\` Studio), tight script-to-frame timing, dialogue-heavy explainers.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/hunyuan.md matches snapshot 1`] = `
-"Hunyuan Video (Tencent) prompt guidelines:
-
-BEST AT: cinematic quality, strong motion realism, urban scenes, products, lifestyle. Open-source backbone — available via multiple hosted APIs at varying prices. Hunyuan Video Custom Audio variant lets a person from a reference image speak/sing using a recorded voice or song.
-
-WEAK AT: in-frame text, very fast action sequences (some motion blur artifacts), shots requiring more than ~10s coherence.
-
-PROMPT PATTERN (natural language, 50-100 words optimal):
-
-\`\`\`
-[Subject + main action], [environment + framing], [camera move], [lighting + atmosphere]
-\`\`\`
-
-EXAMPLES:
-
-Lifestyle:
-\`\`\`
-A woman in a beige knit sweater pours hot coffee into a ceramic mug at a wooden kitchen counter, steam rising, sunlight through linen curtains, slow handheld push-in toward the cup, warm morning light from camera-right, muted desaturated grade
-\`\`\`
-
-Urban:
-\`\`\`
-Pedestrians cross a rain-soaked Tokyo street at night under neon signs, slow tracking shot at eye level following one figure with a red umbrella, magenta and cyan reflections on wet asphalt, anamorphic look
-\`\`\`
-
-Product:
-\`\`\`
-A pair of leather sneakers on a polished concrete surface, slow orbit 90 degrees clockwise, single hard key from above-right with soft fill, neutral commercial grade, sharp focus throughout
-\`\`\`
-
-CUSTOM AUDIO VARIANT:
-For lip-synced output with provided voice/song, supply a reference image of the subject. The text prompt then describes scene/mood/framing/action — the audio drives mouth shapes.
-
-DURATION: typically 5s standard, longer variants on some hosts. Quality optimal under 10s.
-
-ASPECT RATIOS: 16:9 (default), 9:16, 1:1. 9:16 quality good but not as strong as Sora 2 for vertical.
-
-WHEN TO PICK HUNYUAN:
-- vs Seedance: Hunyuan when you need open-source / self-hostable. Seedance generally edges Hunyuan on prompt adherence and motion control vocabulary.
-- vs WAN 2.2: Hunyuan for more cinematic look. WAN for more natural lifestyle look + multi-shot in a single prompt.
-- vs LTX-2: Hunyuan for higher quality. LTX-2 for native audio + faster gen.
-
-COST NOTE: varies by host. Self-hosted requires significant VRAM (24GB+ for 720p). Hosted APIs ~$0.10-0.30/clip.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/ideogram.md matches snapshot 1`] = `
-"Ideogram v3 prompt guidelines:
-
-BEST AT: images WITH READABLE TEXT — titles, posters, labels, signs, thumbnails, memes, logo concepts. Highest text-rendering accuracy of all current image models (tied with GPT-Image-2). Reliable with Polish characters.
-
-WEAK AT: photoreal humans (use FLUX or Seedream), natural scenes without text (use NanoBanana 2 or Seedream).
-
-CORE RULES:
-
-1. **Quote exact text** in single quotes inside the prompt: \`a poster with the words 'SPRING EDIT' in bold condensed sans-serif\`. Unquoted text triggers character hallucination.
-2. **Describe the typography** — never the font name. Say "thin rounded bauhaus-style typeface" not "Arial".
-3. **Specify placement**: \`centered\`, \`curved above icon\`, \`bottom footer\`, \`top-third\`.
-4. **Backgrounds**: always declare \`white background\` or \`transparent background\` for logos/cards.
-5. **Short text wins** — 1-3 words renders cleanly. Long sentences degrade. For paragraphs, use GPT-Image-2.
-6. **Sweet spot**: 15-25 words total prompt.
-7. **Modes**: Design mode (vs General) increases text accuracy. Magic Prompt ON auto-enriches typography details.
-8. **When text comes out wrong**: regenerate, don't try to fix the layout in the prompt.
-
-PROMPT PATTERNS:
-
-Wordmark logo:
-\`\`\`
-a wordmark logo 'BrandName' for a [INDUSTRY], [STYLE] typeface, on a white background
-\`\`\`
-
-Poster / thumbnail:
-\`\`\`
-a minimalist poster with the words 'SPRING EDIT' in bold condensed sans-serif, dark navy background, centered top-third, generous negative space below
-\`\`\`
-
-Reel title card:
-\`\`\`
-a vertical title card 9:16 with the words 'STOP SCROLLING' in heavy display sans-serif, white text on solid crimson background, centered
-\`\`\`
-
-Mascot with text:
-\`\`\`
-a mascot logo of a [CHARACTER] with text 'BrandName' below, flat vector style, on a white background
-\`\`\`
-
-ASPECT RATIOS: 1:1 for logos, 9:16 / 4:5 for reel title cards, 16:9 for thumbnails.
-
-COST NOTE: ~$0.04-0.08/image depending on tier. Pick Ideogram when text is the WHOLE job — otherwise NanoBanana 2 or FLUX is cheaper for plain visuals.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/kling.md matches snapshot 1`] = `
-"Kling 2.6 prompt guidelines:
-
-BEST AT: dramatic gestures, product interactions, nature close-ups, urban scenes, action moments. Kling 2.6 generates synchronized audio with video (audio-visual choreographer).
-
-WEAK AT: complex multi-person scenes, long continuous shots over 8s, abstract art, in-frame text.
-
-PROMPT RULES:
-
-- Lead with the primary ACTION, not the scene: "a hand slams a coffee cup onto a desk" not "a desk with a coffee cup"
-- Short and punchy works best: 20-40 words, one clear moment
-- Subject must be unambiguous: "a young woman with dark hair runs through rain" not "a person running"
-- Motion verbs drive quality: slam, pour, explode, unfold, sweep, cascade, shatter, ripple
-- Style tags that work well: "slow motion", "macro shot" (avoid \`cinematic\`/\`4K\` — see prompt-writer.md forbidden list)
-
-EXAMPLE:
-
-\`\`\`
-A barista slams the portafilter into the espresso machine, espresso pours into a small glass cup, steam rises sharply, slow motion, macro lens, single hard top light, dark dramatic background. Audio: metallic clack on impact, hiss of steam.
-\`\`\`
-
-WHEN TO PICK KLING vs ALTERNATIVES:
-- vs Seedance: Kling for action / dramatic moments where motion is the entire shot. Seedance for multi-element narrative shots with detailed camera/lighting choreography.
-- vs Pika: Kling for higher visual fidelity per shot. Pika for rapid variations and special effects.
-- vs Veo 3.1: Kling cheaper, comparable quality on simple action. Veo 3.1 wins on dialogue-driven scenes.
-
-DURATION: 5s or 10s clips. Quality holds well at 5s, degrades past 10s.
-
-ASPECT RATIOS: 9:16, 1:1, 16:9. Kling handles 9:16 well — strong choice for vertical reels.
-
-COST NOTE: ~$0.20-0.50/clip depending on duration and resolution."
-`;
-
-exports[`guidelines — content snapshot guidelines/ltx.md matches snapshot 1`] = `
-"LTX-2.3 (Lightricks) prompt guidelines:
-
-BEST AT: open-source video with NATIVE SINGLE-PASS AUDIO — first open model to generate dialogue, lip movements, and ambient sound aligned with video in one inference pass. Up to 4K, up to 20s clips. Fast generation. Atmospheric B-roll, nature, abstract motion graphics.
-
-UNIQUE: LTX-2 understands BOTH visual and audio cues. A prompt mentioning "loud thunder crack" will sync the flash of light with the audio peak.
-
-WEAK AT: complex multi-person dialogue scenes, in-frame text, photoreal portraits at extreme close-up (Sora 2 / Veo 3.1 win there).
-
-PROMPT PATTERN — describe the SCENE + the SOUND together:
-
-\`\`\`
-[Visual scene + camera + lighting]. [Audio elements: dialogue / ambient / SFX].
-\`\`\`
-
-ALWAYS include negative prompt: \`blurry, low quality, distorted, flickering, warped\`.
-
-EXAMPLES:
-
-Audio-synced action:
-\`\`\`
-A cinematic shot of a thunderstorm over a rocky coastline at night. Lightning strikes a lone tree on the cliff. Camera locked wide, slow push-in. Cool blue ambient with white lightning flash. Audio: loud thunder crack on the lightning strike, heavy rain pouring, distant ocean waves crashing.
-\`\`\`
-
-Atmospheric B-roll:
-\`\`\`
-A neon-lit Tokyo alley after rain, steam rising from a manhole, slow tracking shot at eye-level, magenta and cyan signs reflected on wet pavement. Audio: distant traffic hum, faint izakaya chatter, soft rain.
-\`\`\`
-
-Nature with ambient:
-\`\`\`
-Sunlight breaks through tall pine trees in a misty forest, slow handheld pull-back, warm golden shafts cutting through cool blue mist, particles drifting. Audio: birdsong, distant stream, wind through pine needles.
-\`\`\`
-
-NEGATIVE PROMPT (always include):
-\`\`\`
-blurry, low quality, distorted, flickering, warped, oversaturated, glitch artifacts
-\`\`\`
-
-DURATION: 5s, 10s, 15s, up to 20s. Quality holds well to 15s, slight degradation at 20s.
-
-ASPECT RATIOS: 16:9, 9:16, 1:1. Native up to 4K (most hosts cap at 1080p).
-
-WHEN TO PICK LTX-2:
-- vs Veo 3.1 / Sora 2: LTX-2 when you want native audio at fraction of cost.
-- vs WAN 2.6: LTX-2 has tighter audio-visual sync (single pass). WAN 2.6 has slightly stronger visuals.
-- vs Hunyuan: LTX-2 for atmospheric / abstract / nature with audio. Hunyuan for cleaner cinematic polish without audio.
-
-COST NOTE: ~$0.05-0.20/clip on hosted APIs. Among the cheapest models with native audio. Excellent for atmospheric B-roll where ambient sound adds production value cheaply.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/luma.md matches snapshot 1`] = `
-"Luma Dream Machine prompt guidelines:
-
-BEST AT: smooth naturalistic motion, fluid physics simulation (water, smoke, fabric, reflections, caustics), nature scenes, cinematic camera moves with weight and inertia. The "cinematic realism engine" of the field.
-
-UNIQUE FEATURES:
-- **Modify with Instructions** — revise a generated clip by describing the change in plain language ("make the camera move slower", "warmer lighting"). No re-prompt needed.
-- **Reframe** — change aspect ratio of a finished clip post-generation (e.g. 16:9 → 9:16) without regenerating.
-- **Loop mode** — generates seamless loops for backgrounds/B-roll.
-
-WEAK AT: in-frame text, named faces, audio (no native audio), shots requiring more than one tightly-choreographed action.
-
-PROMPT PATTERN (single scene, 30-60 words, focus on motion + light):
-
-\`\`\`
-[Subject + main motion], [camera move], [lighting + atmosphere], [duration as string "5s" or "10s"]
-\`\`\`
-
-EXAMPLES:
-
-Nature / atmospheric:
-\`\`\`
-Ocean waves crash on a rocky shore at golden hour, slow handheld pull-back, warm backlight from horizon, cool blue water, slow motion, 10s
-\`\`\`
-
-Product physics:
-\`\`\`
-A drop of honey falls slowly from a wooden dipper onto a stack of pancakes, macro lens, locked camera, soft morning window light, sharp focus on the strand, 5s
-\`\`\`
-
-Lifestyle motion:
-\`\`\`
-A woman walks through a field of tall grass at dusk, hand trailing through the seedheads, slow tracking shot from behind, golden hour rim light, naturalistic muted grade, 10s
-\`\`\`
-
-CAMERA MOVE VOCABULARY Luma handles well:
-\`slow push-in\`, \`slow pull-back\`, \`tracking shot\`, \`dolly left/right\`, \`orbit\`, \`tilt up reveal\`, \`crane down\`, \`static handheld\`
-
-DURATION: pass as string \`"5s"\` or \`"10s"\`.
-
-ASPECT RATIOS: 16:9 (default, best motion), 9:16, 1:1. Use Reframe to convert post-gen if needed.
-
-WHEN TO PICK LUMA:
-- vs Pika: Luma for naturalistic physics. Pika for special effects + scene ingredients.
-- vs Runway: Luma when motion needs weight (water, fabric, organics). Runway for sharper photoreal stills-in-motion.
-- vs Seedance: Luma when one beautiful naturalistic motion is the whole shot. Seedance for choreographed multi-element scenes.
-
-COST NOTE: ~$0.30-0.50/clip. Use Modify with Instructions instead of regenerating to save ~70% on iteration cost.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/nanobanana.md matches snapshot 1`] = `
-"NanoBanana 2 (Gemini Imagen) prompt guidelines:
-
-BEST AT: photoreal scenes, infographics, conversational iterative editing (Gemini understands "make it warmer" without re-prompting), Google Search grounding (can pull real-world references like brand color schemes or recent product photos to ground generation).
-
-WEAK AT: complex JSON layouts at small sizes, vector/icon work (Recraft wins), heavy text rendering (Ideogram wins).
-
-KEY INSIGHT: Both plain text with structured sections AND JSON prompts work well. Choose based on use case:
-
-- **Structured plain text** (Pattern A): best for B-roll, lifestyle, editorial — more natural, flexible
-- **JSON prompt** (Pattern B): best for product photography, commercial shots — precise control over each aspect, prevents "concept bleeding" between adjectives
-
-ITERATIVE EDITING (unique strength): if a generation is 80% correct, do NOT regenerate from scratch. Send a follow-up like "keep everything the same but make the lighting warmer and shift the subject left" — Gemini holds context and applies the change. Saves cost vs cold regeneration.
-
-GOOGLE SEARCH GROUNDING: when describing branded/real-world subjects, you can ask the model to ground on current reality: "use the official Polestar 4 silhouette" or "match the current Apple AirPods Pro 2 form factor". Use sparingly — only for accuracy, not for replicating logos (logos are still unreliable; describe the concept).
-
-### Pattern A — Structured plain text (recommended for most shots)
-
-\`\`\`
-Scene: [brief scene description]
-Subject: [who/what, pose, expression, clothing]
-Environment: [setting, background, atmosphere]
-Lighting: [type, direction, intensity, color temperature]
-Camera: [lens mm, framing, focus/DOF]
-Negative: [what to avoid]
-\`\`\`
-
-### Pattern B — JSON prompt (recommended for product / commercial shots)
-
-\`\`\`json
-{
-  "scene_type": "commercial product photography",
-  "product": { "type": "...", "material": "...", "finish": "..." },
-  "composition": "centered / rule-of-thirds / off-center dynamic",
-  "lighting": "soft diffused studio / dramatic rim / golden hour",
-  "background": "seamless white / gradient / contextual environment",
-  "camera": "85mm macro, f/2.8 shallow depth, sharp focus on product",
-  "mood": "luxury editorial / clean minimal / aspirational lifestyle",
-  "negative": "blurry, distorted, text, watermarks, clutter"
-}
-\`\`\`
-
-LIGHTING PARAMETERS (most impactful field — always include):
-
-- Type: natural | studio | golden hour | neon | dramatic
-- Direction: front | side | back | rim
-- Intensity: soft / diffused | hard | harsh
-- Temperature: warm amber | cool blue | neutral white
-
-CAMERA PARAMETERS:
-
-- Lens: 24mm (wide) | 35mm (street) | 50mm (natural) | 85mm (portrait) | 135mm (telephoto)
-- Framing: extreme close-up | close-up | medium shot | wide shot | bird's eye
-- Focus: sharp | shallow depth of field (f/1.4–f/2.8) | tilt-shift
-- Layout: centered | rule of thirds | symmetrical | negative space on right
-
-STYLE KEYWORDS: \`documentary realism\` | \`lifestyle photography\` | \`editorial\` | \`vintage film\` | \`product shot\` | \`isometric illustration\` | \`technical blueprint\`
-
-NEGATIVE PROMPT PATTERNS (always include):
-
-- For photos: \`blurry, distorted, low quality, text, watermarks, logos, uncanny\`
-- For clean product shots: \`clutter, busy background, harsh shadows, overexposed\`
-- Add \`No text\` at the end if no text wanted in frame
-
-ASPECT RATIOS: 1:1, 4:5, 9:16, 16:9. Native up to 2048×2048 (NanoBanana 2). For reels use 9:16.
-
-Good for: thumbnails, infographics, product shots, title card backgrounds, editorial stills, iterative refinement workflows
-Avoid for: logos with text (use Ideogram), animation, vector exports (use Recraft)
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/pexels.md matches snapshot 1`] = `
-"Pexels search query guidelines:
-
-CRITICAL: Pexels is a LITERAL search engine. It matches EXACTLY what you type against video/photo tags.
-
-- Use 1-2 word CONCRETE NOUNS that describe a REAL physical object or scene
-- Good: "laptop typing", "office desk", "smartphone screen", "person coding", "server room", "whiteboard notes"
-- Bad: "magic box glowing", "checklist tasks steps", "sunrise new beginning", "creative process flowing"
-- NEVER use metaphors, adjectives, or abstract concepts — Pexels returns GARBAGE for those
-- NEVER combine unrelated nouns: "checklist tasks steps" returns cooking videos. Use "checklist" alone.
-- When in doubt, use the SIMPLEST single noun: "laptop", "phone", "office", "code", "chart"
-
-Query translation examples (script concept → Pexels query):
-
-- "automatyzacja zadań" → "laptop automation" or "image:workflow diagram"
-- "oszczędność czasu" → "image:clock time" or "person working fast"
-- "krok po kroku" → "image:step by step" or "person writing list"
-- "nowe możliwości" → "image:open laptop" or "person smartphone"
-- "wzrost efektywności" → "image:chart growth" or "image:dashboard analytics"
-
-ALWAYS write queries in ENGLISH — Pexels search works only in English.
-
-VIDEO vs IMAGE search:
-
-- To get STILL IMAGES, prefix searchQuery with "image:" (e.g. "image:laptop desk")
-- Without prefix: returns videos (e.g. "laptop typing")
-- **PREFER IMAGES** for most B-roll — they get automatic Ken Burns zoom/pan animation and look more professional than random stock video
-- Use videos ONLY when you need actual motion (hands typing, walking, pouring)
-- Images work great for: establishing shots, backgrounds, tech setups, abstract concepts, data moments
-- Videos are better for: action sequences (typing, walking, cooking), dynamic lifestyle shots"
-`;
-
-exports[`guidelines — content snapshot guidelines/pika.md matches snapshot 1`] = `
-"Pika 2.2 prompt guidelines:
-
-BEST AT: rapid creative variations (great for A/B testing social campaigns), special effects, product reveals, transitions, cinematic short clips up to 1080p / 10s.
-
-UNIQUE FEATURES:
-- **Scene Ingredients** (Pika 2.0+) — you can pin a character, object, or style as a persistent "ingredient" that appears in multiple shots without re-describing it.
-- **Picaframes** — interpolate between two keyframe images for precise start/end control.
-- **Pika Effects** library — preset transformations (squish, melt, explode, inflate, crush) applied to a subject.
-
-WEAK AT: complex multi-person scenes, dialogue (no native audio sync), long continuous shots over 10s (use Veo 3.1 or Seedance for longer).
-
-PROMPT PATTERN (lead with action, single moment, 20-50 words):
-
-\`\`\`
-[Subject does ACTION], [camera motion hint], [lighting + atmosphere]
-\`\`\`
-
-EXAMPLES:
-
-Product reveal:
-\`\`\`
-A coffee cup slides into frame on a marble surface, steam curling upward, slow zoom toward the rim, soft morning window light from camera-right, warm neutral grade
-\`\`\`
-
-Action moment:
-\`\`\`
-A drop of ink falls into clear water and blooms into a swirling cloud, macro shot, locked camera, single hard top light, dark dramatic background
-\`\`\`
-
-Transition (entry):
-\`\`\`
-A page of code text materializes letter-by-letter on a dark screen, soft blue monitor glow, locked close-up, then slow pull-back revealing the developer
-\`\`\`
-
-CAMERA MOTION HINTS Pika respects:
-\`slow zoom\`, \`pan left\`, \`pan right\`, \`tracking shot\`, \`tilt up\`, \`tilt down\`, \`static\`, \`handheld\`
-
-DURATION: 5s or 10s clips at 1080p.
-
-ASPECT RATIOS: 9:16, 1:1, 16:9.
-
-WHEN TO PICK PIKA:
-- vs Runway Gen-4: Pika for rapid iteration / variations / Pika Effects. Runway for cleaner photoreal scenes.
-- vs Luma: Pika for special effects + scene ingredients. Luma for naturalistic motion + physics.
-- vs Seedance: Pika for transitions/effects. Seedance for cinematic narrative shots.
-
-COST NOTE: ~$0.10-0.30/clip. Cheap enough for generate-3-pick-1 workflow.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/qwen-image.md matches snapshot 1`] = `
-"Qwen Image 2.0 (Alibaba) prompt guidelines:
-
-BEST AT: bilingual content (Chinese + English text in image), commercial/lifestyle photography, strong prompt adherence on multi-element scenes. Excellent value at $0.04/image.
-
-WEAK AT: consistent character across generations (FLUX wins), heavy text-poster layouts (Ideogram/GPT-Image-2), vector work (Recraft).
-
-PROMPT PATTERN: natural language. Subject + scene + lighting + style. 40-100 words optimal. No special syntax — write like you're briefing a photographer.
-
-EXAMPLE (commercial lifestyle):
-
-\`\`\`
-A woman in athletic wear stretches on a yoga mat in a sunlit loft, large windows behind her, plants in the corner, natural morning light, 35mm lens, warm pastel grade, soft focus background, sharp on subject, calm aspirational mood
-\`\`\`
-
-EXAMPLE (e-commerce product):
-
-\`\`\`
-Top-down flatlay of a leather wallet on a marble surface, surrounded by a fountain pen, brass keys, and a sprig of dried lavender, soft diffused window light from upper-left, neutral commercial grade, sharp focus throughout, generous negative space top-right for copy
-\`\`\`
-
-WHEN TO PICK QWEN OVER SEEDREAM (similar price tier):
-- Qwen: when you need text in image (handles EN+CN reliably) or multi-element commercial composition.
-- Seedream: when you need 4K micro-detail (textile fibers, skin pores) or chain-of-thought reasoning for complex composition.
-
-ASPECT RATIOS: 1:1, 4:5, 9:16, 16:9. Up to 2048×2048.
-
-COST NOTE: ~$0.04/image. Same tier as Seedream. Good fallback when Seedream queue is busy or when in-frame Chinese text is required.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/recraft.md matches snapshot 1`] = `
-"Recraft v3/v4 Pro prompt guidelines:
-
-BEST AT: vector illustrations, icons, UI mockups, infographic elements, brand-styled imagery with consistent visual language across a campaign. Recraft has direct-to-design-tool export (SVG, PNG with transparent background) — uniquely suited for design workflows.
-
-WEAK AT: photoreal humans (use FLUX or Seedream), in-frame text-heavy posters (use Ideogram or GPT-Image-2), photo editing.
-
-STYLE SUFFIX (mandatory — append to prompt):
-
-- \`realistic_image\` — photo-style output
-- \`digital_illustration\` — modern flat illustration
-- \`vector_illustration\` — SVG-ready vector look
-- \`icon\` — single-glyph icon, transparent background
-
-PROMPT PATTERN — describe the BRAND VISUAL LANGUAGE, not abstract adjectives:
-
-- BAD: "minimalist illustration of a laptop"
-- GOOD: "clean Scandinavian minimalism illustration of a laptop, sage green and warm cream palette, thin line art, generous negative space"
-
-Brand-styling vocabulary that works:
-- "warm artisan food photography"
-- "bold athletic streetwear"
-- "calm Nordic editorial"
-- "playful pastel children's-book illustration"
-- "tech editorial flat vector, monochrome with one accent color"
-
-EXAMPLE (digital_illustration):
-
-\`\`\`
-Flat illustration of an open laptop on a wooden desk, plant in the corner, side window light, calm Nordic editorial style, sage green and warm cream palette, thin line work, generous negative space top-right for headline overlay. digital_illustration
-\`\`\`
-
-EXAMPLE (icon):
-
-\`\`\`
-Single icon of a coffee cup with steam curl, monoline thin black stroke, transparent background, balanced negative space, app-icon legible at 64px. icon
-\`\`\`
-
-ASPECT RATIOS: 1:1, 4:5, 9:16, 16:9. Default 1024×1024.
-
-COST NOTE: ~$0.04/image. Cheap enough for bulk illustration. SVG export is the killer feature — pick Recraft over FLUX when output goes into Figma/Adobe.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/runway.md matches snapshot 1`] = `
-"Runway Gen-4 / Gen-4 Turbo prompt guidelines:
-
-BEST AT: cinematic camera moves, smooth transitions, photorealistic scenes, longer-form coherence (10-second shots stay consistent). Highest prompt adherence among Western video models.
-
-WEAK AT: in-frame text (no model is great here, Runway worst), specific named faces (copyright filter), audio (no native audio — generate silent and add sound separately).
-
-VERSIONS:
-
-- Gen-4 — flagship, slower (~60-90s), best quality. Use for hero shots.
-- Gen-4 Turbo — ~3× faster, slightly softer detail. Use for bulk B-roll.
-
-PROMPT PATTERN (≤50 words, single moment per shot):
-
-\`\`\`
-[Subject + action], [camera move], [lighting + atmosphere], [style/grade]
-\`\`\`
-
-CAMERA MOVE VOCABULARY (Runway responds well — pick ONE):
-
-- \`slow push-in\` — builds emphasis
-- \`slow pull-back\` — reveals environment
-- \`dolly left/right\` — lateral tracking
-- \`pan left/right\` — rotation around camera axis
-- \`tilt up/down\` — vertical pivot
-- \`orbit 45 degrees clockwise\` — 3D feel for products
-- \`handheld subtle drift\` — documentary
-- \`locked-off tripod\` — intentional stillness
-
-EXAMPLES:
-
-Product shot:
-\`\`\`
-A glass perfume bottle on dark marble, slow orbit 45 degrees clockwise, single overhead key light, hard shadow below, neutral cool grade, 9:16
-\`\`\`
-
-Lifestyle B-roll:
-\`\`\`
-A barista pulling an espresso shot at a cafe counter, slow push-in toward hands, warm window light from camera-left, muted desaturated grade
-\`\`\`
-
-Hero opener:
-\`\`\`
-A neon sign reading reflects on wet asphalt, slow tilt up to reveal city skyline at dusk, cool blue ambient with magenta practical lights, anamorphic look
-\`\`\`
-
-AVOID:
-- People's faces (especially named/famous — triggers copyright filter)
-- In-frame readable text (renders garbled)
-- Brand logos (will not reproduce)
-- Two simultaneous camera moves ("push-in AND pan" — pick one)
-
-ASPECT RATIOS: 16:9 (best quality), 9:16 (good but slightly weaker motion coherence), 1:1, 4:3. For reels, 9:16 works but expect 1-2 extra retries vs 16:9.
-
-DURATION: 5s or 10s clips.
-
-COST NOTE: Gen-4 ~$0.50-1.00/clip, Turbo ~$0.20. Use Turbo for bulk, Gen-4 for the 1-2 hero shots that carry the reel.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/seedance.md matches snapshot 1`] = `
-"Seedance 2.0 prompt framework (5 layers):
-SUBJECT + ACTION + CAMERA + STYLE + SOUND
-
-CRITICAL RULE: Subject + Action must appear in the FIRST 20-30 words. The model weights early tokens heavily.
-
-Complexity levels (use L2 for most B-roll shots):
-
-- L1 (≤30 words): atmospheric, let the model decide — "Foggy mountain lake at dawn, still water, bird call. Locked wide shot."
-- L2 (30-100 words): directed shot with clear subject + camera + lighting — DEFAULT for agent
-- L3 (100-300 words): timestamped multi-scene — "[00:00-00:05] Wide shot of city at dusk, drone descending. [00:05-00:10] Medium close-up, camera tracks subject walking. [00:10-00:15] ECU on hands typing, shallow DOF."
-- L4 (300-1000w): full choreography per shot with physics and reactions
-
-Bracket-annotated format (alternative to L2, good for complex shots):
-\\\\\`\\\\\`\\\\\`
-[Subject]: developer typing on mechanical keyboard, face lit by monitor glow
-[Camera]: medium close-up, slow dolly push, eye level, handheld drift
-[Lighting]: cool blue monitor fill from front, warm amber rim from window-right, low-key
-[Style]: digital clean, muted tones
-\\\\\`\\\\\`\\\\\`
-
-Camera parameters:
-
-- Framing: wide | medium | close-up | ECU | over-shoulder | full body
-- Movement: locked-off | dolly push | dolly pull | pan | tilt | orbit | handheld | crane | tracking
-- Speed: slow | moderate | fast | "over 8 seconds"
-- Angle: eye level | low angle | high angle | bird's eye | Dutch angle
-
-Lighting parameters:
-
-- Direction: camera-left | camera-right | above | below | behind (rim)
-- Contrast: low-key (shadows) | high-key (bright, flat)
-- Temperature: warm amber | cool blue | neutral white
-- Shadows: hard-edged | soft wrap | absent
-
-Style tokens (max 2-3): anamorphic | film grain | digital clean | muted | neon-saturated | warm/cold contrast
-
-FORBIDDEN WORDS: see master forbidden list in prompt-writer.md (the same vocabulary degrades quality across every video/image model — single source of truth there). Seedance is particularly punished by \`cinematic\`, \`epic\`, \`4K\`, \`8K\`, \`masterpiece\`, \`stunning\`. Replace with MEASURABLE descriptions:
-
-- WRONG: "cinematic lighting" → RIGHT: "45-degree hard key camera-left, warm amber, deep shadow"
-- WRONG: "epic scale" → RIGHT: "wide shot, subject occupies 10% of frame, mountain backdrop"
-- WRONG: "cinematic aerial shot" → RIGHT: "bird's eye crane descending, wide shot"
-- WRONG: "cinematic 4K" → RIGHT: "digital clean, locked wide shot"
-
-MANDATORY STRUCTURE for every prompt:
-
-1. SUBJECT + ACTION (first 20-30 words — model weights these heavily)
-2. CAMERA: framing (wide/medium/close-up/ECU) + movement (locked-off/dolly push/pan/orbit/crane) + speed + angle
-3. LIGHTING: direction (camera-left/above/behind) + contrast (low-key/high-key) + temperature (warm amber/cool blue) + shadows (hard-edged/soft wrap)
-4. STYLE: max 2-3 tokens (anamorphic, film grain, muted, neon-saturated)
-
-Good for: product reveals, lifestyle B-roll, mood pieces, architecture, social proof moments
-
-L2 EXAMPLE (default level — copy this shape):
-
-\`\`\`
-A barista in a cream apron pulls an espresso shot at a sunlit cafe counter, focused on the portafilter, steam rising. Medium close-up, slow dolly push toward hands, eye level. Soft window light camera-left, warm amber tungsten fill from above-right, low-key with hard shadow on machine. Anamorphic, muted desaturated grade. 9:16 vertical, 8s.
-\`\`\`
-
-ASPECT RATIOS: 16:9, 9:16, 1:1. 9:16 quality strong (Seedance handles vertical well). Always declare aspect at the END of the prompt."
-`;
-
-exports[`guidelines — content snapshot guidelines/seedream.md matches snapshot 1`] = `
-"Seedream 4.5 / 5.0 (ByteDance) prompt guidelines:
-
-BEST AT: photorealistic 4K with micro-detail preservation (textile fibers in clothing, pore-level skin, filament-level grass), product shots, lifestyle photos at scale. Generates in 2-3s. Seedream 5.0 Lite adds chain-of-thought visual reasoning — it can plan composition before drawing.
-
-WEAK AT: consistent character across multiple generations (FLUX wins), heavy in-frame text layouts (use Ideogram/GPT-Image-2), vector/icon (use Recraft).
-
-PROMPT PATTERN: natural language. No special syntax. Describe like you're directing a photographer.
-
-- Subject + action + environment, lens/framing, lighting, mood. 50-100 words optimal.
-- Bilingual: Chinese + English. For PL/EN content, write in English — model is trained predominantly on EN captions.
-
-EXAMPLE (lifestyle):
-
-\`\`\`
-A young barista pulls an espresso shot at a sunlit cafe counter, steam rising from the portafilter, focused expression, 50mm natural perspective, soft morning window light from camera-left, warm wood interior, muted desaturated grade, sharp focus on hands and machine
-\`\`\`
-
-EXAMPLE (product, 4K micro-detail):
-
-\`\`\`
-Macro shot of a luxury watch on a slate stone surface, brushed steel case with visible micro-grain, leather strap with stitching detail, single hard key light from above-right with soft fill, dark dramatic background, 90mm macro lens, f/8 sharp throughout, neutral commercial grade
-\`\`\`
-
-WHEN TO PICK SEEDREAM:
-- vs FLUX: Seedream when you need budget-friendly volume + 4K detail. FLUX when character must stay consistent across shots.
-- vs NanoBanana 2: Seedream when you don't need conversational edits. NanoBanana when iterating on one image.
-
-ASPECT RATIOS: 1:1, 4:5, 9:16, 16:9. Native 4MP (2048×2048).
-
-COST NOTE: ~$0.04/image at native 4MP. Among the cheapest 4K-capable models. Good for bulk reel B-roll where each shot needs polish.
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/sora.md matches snapshot 1`] = `
-"Sora 2 (OpenAI) prompt guidelines:
-
-BEST AT: state-of-the-art photorealism, accurate physics simulation (cause-and-effect, weight, momentum, fluid dynamics), and SYNCHRONIZED NATIVE AUDIO (dialogue + ambient + SFX generated together with video, lip-synced).
-
-USE FOR: hero shots only — Sora 2 is the most expensive video model in the stack. Don't burn it on filler B-roll.
-
-WEAK AT: in-frame text (still imperfect), named real people (filtered), longer than 12s (quality drops).
-
-PROMPT PATTERNS:
-
-1. **Cinematic + audio**: write dialogue and SFX in QUOTES, inline with the visual description.
-2. **Physics-aware**: describe cause-and-effect explicitly. Sora is a physics simulator — give it cues.
-3. **Cinematography vocabulary**: Sora responds strongly to "shot on 35mm film", "soft natural window light", "shallow depth of field with slow push-in", "Kodak Vision3 500T 5219".
-
-EXAMPLES:
-
-Hero with dialogue:
-\`\`\`
-INT. HOME OFFICE — DAY. Shot on 35mm film, Kodak Vision3 250D. A developer leans back in her chair, staring at a stack overflow page on the monitor. She mutters: "There has to be a better way." Soft window light from camera-left, warm tungsten desk lamp backlight, shallow depth of field, slow push-in toward her face. Ambient sound: distant traffic, mechanical keyboard tap.
-\`\`\`
-
-Physics-driven moment:
-\`\`\`
-A glass of red wine tips off the edge of an oak table. The glass falls 80cm and shatters on the hardwood floor; wine splashes outward in a crown. Macro shot, locked low-angle, single hard key from above-right. Audio: glass shatter on impact, liquid splatter, distant heartbeat.
-\`\`\`
-
-Cinematic exterior:
-\`\`\`
-A lone runner crests a hill at golden hour, breath visible in cold air, distant city below. 35mm anamorphic, slow tracking shot from behind, warm horizon backlight, cool blue ambient. Audio: footsteps on gravel, wind, faint city hum.
-\`\`\`
-
-CAUSE-AND-EFFECT VOCABULARY (Sora rewards explicit physics):
-- "ball rolls off the table, falls 1m, bounces twice"
-- "smoke rises and dissipates in 3 seconds"
-- "fabric catches the breeze and flutters left"
-- "candle flame bends as the door opens"
-
-DURATION: 5s, 10s, or 12s. 12s is the practical max before quality erosion.
-
-ASPECT RATIOS: 16:9 (best), 9:16, 1:1. 9:16 works well for reels — Sora is the strongest model in vertical.
-
-COST NOTE: ~$0.40-1.50 per clip depending on duration and resolution. Reserve for the 1-2 shots that anchor the reel emotionally. Generate Sora once, generate alternatives in cheaper models (Seedance, Pika).
-"
-`;
-
-exports[`guidelines — content snapshot guidelines/veo3.md matches snapshot 1`] = `
-"Google Veo 3.1 prompt patterns (pick one per shot):
-
-PATTERN A — Detailed cinematic direction (60-150 words):
-"Film stock: Kodak Vision3 500T 5219. INT. BASEMENT LAB — NIGHT.
-Locked medium-shot. A developer hunches over a monitor, face lit by 500-line terminal green.
-Coffee mug, circuit boards, sticky notes fill the desk. Low hum of server fans."
-Use for: hero shots, opening sequences, product reveals.
-
-PATTERN B — Film stock + camera language (30-60 words):
-"35mm, Kodak Portra 400. EXT. ROOFTOP — GOLDEN HOUR.
-Slow dolly push on a woman gazing over city skyline. Wind catches her hair. Warm backlight, lens flare."
-Use for: atmospheric B-roll, mood-setting shots.
-
-PATTERN C — Simple one-liner (≤20 words):
-"Close-up of rain hitting a neon sign, reflections on wet asphalt."
-Use for: quick filler B-roll, transitions.
-
-For person shots add negative context: "No deformed hands, no extra fingers."
-Supports native dialogue — write spoken text in quotes within prompt.
-
-ASPECT RATIOS: 16:9 (default, best motion coherence), 9:16, 1:1. 9:16 quality strong — Veo handles vertical well.
-
-DURATION: 8s standard, up to 10s on some hosts.
-
-COST NOTE: ~$0.30-0.75/clip. Reserve PATTERN A (60-150 words) for hero shots; PATTERN C (≤20 words) for filler is cheap-equivalent and still strong."
-`;
-
-exports[`guidelines — content snapshot guidelines/wan.md matches snapshot 1`] = `
-"WAN 2.2 / 2.6 (Alibaba) prompt guidelines:
-
-BEST AT: lifestyle, nature, urban scenes, multi-shot descriptions in a single prompt, multi-dimensional visual control (lighting, color, composition as explicit fields). WAN 2.6 adds native audio at 720p.
-
-ARCHITECTURE NOTE: WAN 2.2 uses MoE (Mixture of Experts) with separate high-noise and low-noise expert models — this gives stronger motion coherence on complex scenes than 2.1.
-
-WEAK AT: in-frame text, named faces, very short rapid-cut sequences (the model leans toward smoother continuous motion).
-
-PROMPT PATTERN — multi-dimensional fields work well (WAN parses these explicitly):
-
-\`\`\`
-Subject: [who/what + action]
-Environment: [setting, time, atmosphere]
-Camera: [framing + movement + speed]
-Lighting: [direction + quality + temperature]
-Color: [palette + grade]
-Composition: [layout, balance, focal point]
-\`\`\`
-
-Or natural prose with all the same elements (WAN handles both).
-
-EXAMPLE (multi-shot in one prompt — unique strength):
-
-\`\`\`
-Shot 1 (0-3s): Wide shot of a Tokyo crosswalk at dusk, drone descending slowly, neon signs igniting one by one. Shot 2 (3-7s): Medium tracking shot following a figure with a red umbrella weaving through the crowd. Shot 3 (7-10s): Close-up on rain hitting puddles, neon reflections fragmenting. Cool blue ambient with magenta practical accents, anamorphic look.
-\`\`\`
-
-EXAMPLE (single field-driven shot):
-
-\`\`\`
-Subject: A barista pulling an espresso shot, hands focused on the portafilter
-Environment: Sunlit cafe counter, blurred customers in background
-Camera: Medium close-up, slow push-in toward hands, eye-level
-Lighting: Soft morning window light camera-left, warm tungsten fill from above
-Color: Warm neutral grade, slightly muted
-Composition: Hands centered lower-third, machine fills upper-right
-\`\`\`
-
-CAMERA VOCABULARY: \`wide\`, \`medium\`, \`close-up\`, \`ECU\`, \`dolly push/pull\`, \`pan left/right\`, \`tilt up/down\`, \`orbit\`, \`tracking\`, \`handheld\`, \`crane\`.
-
-DURATION: 5s standard, multi-shot prompts can stretch to 10-15s.
-
-ASPECT RATIOS: 16:9, 9:16, 1:1. WAN 2.6 native 720p; some hosts upscale to 1080p.
-
-WHEN TO PICK WAN:
 - vs Hunyuan: WAN for natural lifestyle / multi-shot in one prompt. Hunyuan for higher cinematic polish.
 - vs Seedance: WAN when you want fields-based prompting and don't need Seedance's L4 choreography level.
 - vs LTX-2: WAN 2.6 for stronger visual quality. LTX-2 for tighter audio sync.
@@ -1914,6 +1038,7 @@ The hook is not the first shot. It's the first FIVE SECONDS of the reel: the ope
 ### First SHOT rules (visual)
 
 The first shot must do one of these:
+
 - Text-emphasis overlay with the hook word (1-3 words max) at 0.0-1.5s
 - Aggressive zoom or zoom-punch on a concrete object or screen
 - Counter spike (number ticking up) that resolves within 1s
@@ -1923,7 +1048,8 @@ NEVER start a reel with: plain talking head, slow pan, fade-in from black, gener
 
 ### Standalone test
 
-This reel must make sense for a scroller who has never seen the creator before. If the hook references "part 2" or "as I mentioned last time" — rewrite."
+This reel must make sense for a scroller who has never seen the creator before. If the hook references "part 2" or "as I mentioned last time" — rewrite.
+"
 `;
 
 exports[`partials — content snapshot > partials/rules-no-text-redundancy.md matches snapshot 1`] = `
@@ -1941,7 +1067,8 @@ GOOD: You add text-emphasis "97% ACCURACY" — a stat NOT spoken in the script. 
 text-emphasis = ONLY for stats, numbers, keywords NOT in the script.
 lower-thirds = ONLY when subtitle adds context NOT spoken (e.g. title="Tool Name" subtitle="open source, Apache 2.0" where subtitle is not in script).
 
-ONE TEXT PER MOMENT: The same word/name must NEVER appear in more than one layer at the same time. If "Gemma 4" is in a lower-third, it cannot also be in a text-emphasis. If it's in captions, it cannot be in either. Max one source of any given text on screen at any time."
+ONE TEXT PER MOMENT: The same word/name must NEVER appear in more than one layer at the same time. If "Gemma 4" is in a lower-third, it cannot also be in a text-emphasis. If it's in captions, it cannot be in either. Max one source of any given text on screen at any time.
+"
 `;
 
 exports[`partials — content snapshot > partials/rules-retention.md matches snapshot 1`] = `
@@ -1964,6 +1091,7 @@ Algorithmic push kicks in around 75% completion rate. Every second that doesn't 
 ### Contrast (the #1 retention weapon)
 
 Viewers don't bail from fast content; they bail from UNIFORM content. Alternate tempo and register:
+
 - Calm talking-head (2-3s) → burst b-roll with effects (rapid 1s cuts)
 - Wide shot → aggressive zoom
 - Silence → SFX whoosh/impact on key word
@@ -1975,6 +1103,7 @@ RULE: every 4-5 seconds something must CHANGE visually — shot type, camera mot
 ### Beat-aligned cutting
 
 Cut on EMOTIONAL or SEMANTIC beats, not fixed intervals. Listen to the script:
+
 - End of a complete thought? Cut.
 - Word of emphasis ("Primo", "73%", "broken")? Shot boundary aligned to that word.
 - Rhetorical pause? Hold one extra beat THEN cut — don't cut into the silence.
@@ -1983,6 +1112,7 @@ Cut on EMOTIONAL or SEMANTIC beats, not fixed intervals. Listen to the script:
 ### Sound-off is default
 
 80-85% of viewers watch without sound (especially first 3s). This means:
+
 - Captions MUST be on screen every second there's narration (pipeline auto-generates them)
 - Text-emphasis for hook word is MORE important than voice-over emphasis
 - Visual progression must stand on its own — someone watching muted should understand the arc
@@ -1994,170 +1124,11 @@ Cut on EMOTIONAL or SEMANTIC beats, not fixed intervals. Listen to the script:
 - Same camera angle for 3+ shots in a row (especially talking-head)
 - Effects clustered in one section and absent in another (either all dynamic or all calm — never both)
 - CTA before 80% mark — viewer didn't earn trust yet, bounces
-- Ending on talking-head — last shot must have a VISUAL punch (counter, zoom, CTA card)"
+- Ending on talking-head — last shot must have a VISUAL punch (counter, zoom, CTA card)
+"
 `;
 
 exports[`partials — content snapshot > partials/rules-text-duplication.md matches snapshot 1`] = `
-"## TEXT-CARD STYLE RULES
-
-- text-card backgrounds: use DARK gradients (e.g. "linear-gradient(135deg, #0F172A, #1E293B)"), NOT plain solid colors
-- Keep text-card content minimal: short headline (2-4 words) + optional subtitle. No emoji in headlines.
-- NEVER put the same text in both headline AND subtitle. headline = main point, subtitle = context that adds NEW information not in headline.
-
-(For text overlap rules with captions / lower-thirds / text-emphasis, see the "NO TEXT REDUNDANCY WITH CAPTIONS" section earlier in this prompt.)
-"
-`;
-
-exports[`partials — content snapshot partials/rules-broll.md matches snapshot 1`] = `
-"## B-ROLL RULES
-
-**Always prefer AI-generated content over stock footage.** AI video and AI images make the reel unique and visually striking. Stock footage looks generic and disconnected from the narration.
-
-**When to use Pexels stock (fallback only):**
-
-- No AI video/image tools available in the manifest, OR
-- One generic real-world shot needed where AI hallucinates (someone typing on a laptop, walking down a corridor) — max 1 Pexels shot per reel.
-
-**\`image:\` prefix for Pexels (PREFER over videos):**
-
-- \`image:laptop desk\` returns a still image, gets automatic Ken Burns zoom/pan animation in Remotion — looks more professional than random stock video.
-- Without the prefix Pexels returns videos.
-- Use videos ONLY when actual motion matters (hands typing, walking, pouring liquid).
-- Images work best for: establishing shots, backgrounds, tech setups, abstract concepts, data moments.
-
-**Search queries must be:**
-
-- 1-2 word concrete English nouns (more words = worse results from Pexels' literal matcher)
-- About OBJECTS or PERSONS, never abstractions ("happy man" not "happiness")
-- Evenly distributed across the timeline (not clustered in one section)
-- NEVER empty
-- Portrait-friendly content (Pexels orientation filter helps for 9:16 reels)
-
-Full search-query rules and translation examples (PL → EN concept) are in \`pexels.md\` guideline.
-"
-`;
-
-exports[`partials — content snapshot partials/rules-hook.md matches snapshot 1`] = `
-"## HOOK RULES (critical for retention — 70%+ of viewers leave in first 3s)
-
-The hook is not the first shot. It's the first FIVE SECONDS of the reel: the opening frame, the first words, the first visual punch, and what the viewer EXPECTS is coming next. You get 2s to lock attention; the next 3s convert.
-
-### Four proven hook patterns — pick ONE
-
-1. **PATTERN INTERRUPT** — contradicts what the viewer assumed. They scrolled expecting more of the same; you break the reflex.
-   - GOOD: "Przestałem płacić za SaaS-y. Zrobiłem własne."
-   - GOOD: "Ten plik zniszczy ci deploy. Nikt ci o nim nie powie."
-   - BAD: "Today I'll show you 5 cool tools" — confirms what they expected
-
-2. **CURIOSITY GAP** — names a specific outcome without revealing how.
-   - GOOD: "Jedna zmiana w package.json ścięła mi build o 40 sekund."
-   - GOOD: "Ktoś wpisał jedno słowo w Stripe i zgubił 200 zł."
-   - BAD: "Let me tell you about a cool trick I learned" — vague, no stake
-
-3. **STAKE ELEVATION** — open with what BREAKS if they ignore this, or what becomes POSSIBLE if they don't.
-   - GOOD: "Jeśli nie włączysz tego flagu, HTTPS ci nie zadziała w proxy."
-   - GOOD: "Ten endpoint zgłasza błąd po cichu. Twój monitoring o tym nie wie."
-   - BAD: "Good to know about this feature" — no stake, no loss-aversion
-
-4. **SPECIFIC NUMBER** — a concrete stat viewers can't resist verifying.
-   - GOOD: "Z 8 minut zrobiłem 47 sekund. Jeden commit."
-   - GOOD: "200 zł miesięcznie. Za feature, który możesz napisać w weekend."
-   - BAD: "Much faster than before" — vague, skip-worthy
-
-### HARD BANS for first line
-
-- Filler: "Cześć", "Hey guys", "Today", "So", "Dzisiaj"
-- Meta: "W tym filmie pokażę...", "Let me show you..."
-- Hedging: "Może słyszeliście...", "Some of you might know..."
-- Creator-centric: "Ja zrobiłem...", "Mój projekt..." — flip to "Ty zobaczysz / możesz / zaoszczędzisz"
-
-### First SHOT rules (visual)
-
-The first shot must do one of these:
-- Text-emphasis overlay with the hook word (1-3 words max) at 0.0-1.5s
-- Aggressive zoom or zoom-punch on a concrete object or screen
-- Counter spike (number ticking up) that resolves within 1s
-- Scroll-stopper preset (flash-zoom / zoom-bounce / impact-shake)
-
-NEVER start a reel with: plain talking head, slow pan, fade-in from black, generic b-roll (laptop on desk). Those bleed viewers.
-
-### Standalone test
-
-This reel must make sense for a scroller who has never seen the creator before. If the hook references "part 2" or "as I mentioned last time" — rewrite."
-`;
-
-exports[`partials — content snapshot partials/rules-no-text-redundancy.md matches snapshot 1`] = `
-"## CRITICAL: NO TEXT REDUNDANCY WITH CAPTIONS
-
-The reel ALWAYS has word-by-word captions showing EXACTLY what the narrator says. Captions are automatic and ALWAYS visible.
-
-RULE: If text appears in the script, it WILL appear in captions. Do NOT put the same text in a text-emphasis or lower-third.
-
-BAD: Narrator says "Appka nazywa się AI Edge Gallery" → you add text-emphasis "AI EDGE GALLERY" → viewer sees same words TWICE (captions + effect). This is redundant and looks broken.
-BAD: Narrator says "Gemma 4" → you add text-emphasis "GEMMA 4" → same problem.
-GOOD: Narrator says "Appka nazywa się AI Edge Gallery" → you add NO text effect for those words. Captions handle it.
-GOOD: You add text-emphasis "97% ACCURACY" — a stat NOT spoken in the script. This ADDS information.
-
-text-emphasis = ONLY for stats, numbers, keywords NOT in the script.
-lower-thirds = ONLY when subtitle adds context NOT spoken (e.g. title="Tool Name" subtitle="open source, Apache 2.0" where subtitle is not in script).
-
-ONE TEXT PER MOMENT: The same word/name must NEVER appear in more than one layer at the same time. If "Gemma 4" is in a lower-third, it cannot also be in a text-emphasis. If it's in captions, it cannot be in either. Max one source of any given text on screen at any time."
-`;
-
-exports[`partials — content snapshot partials/rules-retention.md matches snapshot 1`] = `
-"## RETENTION EDITING PATTERNS
-
-Algorithmic push kicks in around 75% completion rate. Every second that doesn't earn the next one costs you the next one.
-
-### Pacing rhythm (non-negotiable)
-
-- **0-2s (lock)**: fastest cuts. Typically one opening shot + one immediate visual punch. No breathing room yet.
-- **2-10s (payoff setup)**: tight cuts, 1.5-3s each. Keep forward momentum. Any shot ≥4s here will bleed viewers.
-- **10-20s (delivery)**: slightly relax, 2-4s shots. Let the viewer absorb a key point. But never more than ONE slow shot in a row.
-- **Last 3-5s (kicker)**: burst sequence — short cuts (0.8-1.5s) and energy spike. Counter, zoom, or CTA lands here.
-
-### GOOD vs BAD rhythm
-
-- GOOD: hook(1.5s) → reveal(2s) → demo(3s) → proof-stat(1.5s) → contrast-b-roll(2s) → CTA-burst(3s)
-- BAD: intro(4s) → talking-head(5s) → talking-head(6s) → CTA(3s) — 19 seconds of plateau, viewers gone by 7s
-
-### Contrast (the #1 retention weapon)
-
-Viewers don't bail from fast content; they bail from UNIFORM content. Alternate tempo and register:
-- Calm talking-head (2-3s) → burst b-roll with effects (rapid 1s cuts)
-- Wide shot → aggressive zoom
-- Silence → SFX whoosh/impact on key word
-- Plain background → glitch/scanline overlay for ONE beat
-- Full-screen text card → screenshot with zoom
-
-RULE: every 4-5 seconds something must CHANGE visually — shot type, camera motion, overlay, palette energy. Not just cut to next shot of same kind.
-
-### Beat-aligned cutting
-
-Cut on EMOTIONAL or SEMANTIC beats, not fixed intervals. Listen to the script:
-- End of a complete thought? Cut.
-- Word of emphasis ("Primo", "73%", "broken")? Shot boundary aligned to that word.
-- Rhetorical pause? Hold one extra beat THEN cut — don't cut into the silence.
-- Never cut mid-sentence unless it's a rapid-fire list effect.
-
-### Sound-off is default
-
-80-85% of viewers watch without sound (especially first 3s). This means:
-- Captions MUST be on screen every second there's narration (pipeline auto-generates them)
-- Text-emphasis for hook word is MORE important than voice-over emphasis
-- Visual progression must stand on its own — someone watching muted should understand the arc
-- SFX is a BONUS, not a crutch. Never rely on a whoosh to carry a beat the visual doesn't
-
-### Retention killers (hard bans)
-
-- Stalling shots: generic "person at laptop" for 4+ seconds
-- Same camera angle for 3+ shots in a row (especially talking-head)
-- Effects clustered in one section and absent in another (either all dynamic or all calm — never both)
-- CTA before 80% mark — viewer didn't earn trust yet, bounces
-- Ending on talking-head — last shot must have a VISUAL punch (counter, zoom, CTA card)"
-`;
-
-exports[`partials — content snapshot partials/rules-text-duplication.md matches snapshot 1`] = `
 "## TEXT-CARD STYLE RULES
 
 - text-card backgrounds: use DARK gradients (e.g. "linear-gradient(135deg, #0F172A, #1E293B)"), NOT plain solid colors
@@ -2191,6 +1162,7 @@ These words are model-trained-out filler — they push outputs toward generic AI
 ### Lens + framing
 
 Instead of "cinematic" or "professional", pick ONE:
+
 - \`85mm portrait lens, shallow depth of field\` — face / character close-up
 - \`35mm, natural perspective, subject-in-environment\` — product / lifestyle
 - \`24mm wide angle, immersive foreground\` — establishing / sweeping shot
@@ -2254,7 +1226,10 @@ Negative: clutter, harsh shadows, oversaturated, text artifacts, watermark
 \`\`\`json
 {
   "scene_type": "ultra-realistic commercial product photography",
-  "product": { "type": "leather-bound notebook on a marble surface", "material": "matte black leather, brass spine accent" },
+  "product": {
+    "type": "leather-bound notebook on a marble surface",
+    "material": "matte black leather, brass spine accent"
+  },
   "composition": "centered, 9:16 vertical, generous top headroom",
   "lighting": "soft diffused studio key from above-left, hard rim from behind, hard shadow below",
   "background": "polished black marble, subtle veining",
@@ -2285,7 +1260,8 @@ For models that don't accept arbitrary aspect (e.g. gpt-image-1 max vertical = 1
 
 ## TOOL-SPECIFIC GUIDELINES
 
-{{toolGuidelines}}"
+{{toolGuidelines}}
+"
 `;
 
 exports[`static templates — content snapshot > script-reviewer.md content matches snapshot 1`] = `
@@ -2305,7 +1281,8 @@ If the script is factually correct and logically consistent, approve it.
 Respond ONLY with a JSON object (no markdown, no explanation outside JSON):
 {"approved": true/false, "issues": ["issue 1", ...], "suggestions": ["suggestion 1", ...], "correctedScript": "full corrected script" or null}
 
-If approved is true, issues should be empty and correctedScript should be null."
+If approved is true, issues should be empty and correctedScript should be null.
+"
 `;
 
 exports[`static templates — content snapshot > script-writer.md content matches snapshot 1`] = `
@@ -2377,19 +1354,20 @@ Style: {{style}}
 Return a JSON object (no markdown, no explanation outside JSON):
 
 {
-  "assessment": {
-    "hook": "pass" | "weak" | "missing",
-    "stakes": "pass" | "weak" | "missing",
-    "arc": "pass" | "weak" | "missing",
-    "cta": "pass" | "weak" | "missing",
-    "issues": ["specific issue 1", "specific issue 2", ...]
-  },
-  "rewritten": true | false,
-  "script": "<the script — either unchanged if it already works, or rewritten to fix the issues. TTS-ready, just spoken words.>",
-  "changeNotes": "<If rewritten, ONE sentence per change explaining WHY. Empty if unchanged.>"
+"assessment": {
+"hook": "pass" | "weak" | "missing",
+"stakes": "pass" | "weak" | "missing",
+"arc": "pass" | "weak" | "missing",
+"cta": "pass" | "weak" | "missing",
+"issues": ["specific issue 1", "specific issue 2", ...]
+},
+"rewritten": true | false,
+"script": "<the script — either unchanged if it already works, or rewritten to fix the issues. TTS-ready, just spoken words.>",
+"changeNotes": "<If rewritten, ONE sentence per change explaining WHY. Empty if unchanged.>"
 }
 
-If rewritten is false, "script" must be the ORIGINAL script verbatim and changeNotes must be empty. Return true only when you actually changed words."
+If rewritten is false, "script" must be the ORIGINAL script verbatim and changeNotes must be empty. Return true only when you actually changed words.
+"
 `;
 
 exports[`static templates — content snapshot > short-film-director.md content matches snapshot 1`] = `
@@ -2402,18 +1380,18 @@ The scenes will be generated by an image-to-video model. Each scene's last frame
 Return a JSON object (no markdown, no explanation, just raw JSON):
 
 {
-  "title": "Short descriptive title (max 60 chars)",
-  "logline": "One-sentence emotional premise (max 180 chars)",
-  "characterSheet": "Detailed, re-usable description of the protagonist (150-250 words).",
-  "worldSheet": "Setting, style, mood, camera language (120-200 words).",
-  "scenes": [
-    {
-      "id": "scene-1",
-      "prompt": "Self-contained visual scene description (40-90 words)",
-      "purpose": "What this scene does in the arc",
-      "durationSeconds": 5
-    }
-  ]
+"title": "Short descriptive title (max 60 chars)",
+"logline": "One-sentence emotional premise (max 180 chars)",
+"characterSheet": "Detailed, re-usable description of the protagonist (150-250 words).",
+"worldSheet": "Setting, style, mood, camera language (120-200 words).",
+"scenes": [
+{
+"id": "scene-1",
+"prompt": "Self-contained visual scene description (40-90 words)",
+"purpose": "What this scene does in the arc",
+"durationSeconds": 5
+}
+]
 }
 
 ## NARRATIVE ARC
@@ -2490,36 +1468,36 @@ Each scene \`prompt\` must:
 Topic: "A freelancer closes their laptop for the first time all week and walks outside at dusk."
 
 {
-  "title": "The First Breath",
-  "logline": "A burned-out freelancer remembers what air feels like.",
-  "characterSheet": "Early-30s woman, shoulder-length auburn hair tied in a loose low bun with stray strands at the temples, round thin-wire glasses, slim build. Oversized olive-green cardigan worn over a faded grey cotton T-shirt, dark-indigo raw-denim jeans with rolled cuffs, scuffed white leather sneakers. Thin silver chain necklace, no rings. Tired, thoughtful eyes with faint dark circles.",
-  "worldSheet": "Urban apartment and neighbourhood park transitioning through golden hour into early dusk. Warm amber key light with cool blue shadows creeping in. Palette: muted olive, warm amber, dusty navy. Handheld-steady camera with slight 35mm-lens bokeh, subtle film grain, 9:16 vertical framing. Genre: quiet contemplative slice-of-life, no dialogue.",
-  "scenes": [
-    {
-      "id": "scene-1",
-      "prompt": "Close-medium shot on hands gently closing the lid of a silver laptop on a cluttered wooden desk. A half-empty ceramic mug with slow rising steam sits to the right; scattered loose papers and a small succulent pot flank the laptop. Warm golden light streams in from an off-camera window on the left. Camera holds for a beat on the closed laptop.",
-      "purpose": "Opening — close the chapter of the work week",
-      "durationSeconds": 4
-    },
-    {
-      "id": "scene-2",
-      "prompt": "Medium shot from behind as the woman stands up from a worn leather chair, one hand lingering on the chair back. She exhales visibly and turns toward a door. The apartment behind her is dim and cluttered with plants silhouetted against the amber window light. Gentle handheld push-in as she steps out of frame to the right.",
-      "purpose": "Transition — physical break from the workspace",
-      "durationSeconds": 5
-    },
-    {
-      "id": "scene-3",
-      "prompt": "Low-angle medium shot of the woman pushing open a heavy building door. She steps out into a tree-lined sidewalk drenched in late golden-hour light. Wind lightly moves her hair. She pauses on the threshold and tilts her face up toward the warm light, eyes closing briefly. Leaves on the nearby tree flutter.",
-      "purpose": "Threshold crossing — outside world enters",
-      "durationSeconds": 5
-    },
-    {
-      "id": "scene-4",
-      "prompt": "Wide-medium tracking shot along a quiet neighbourhood park path at blue-amber dusk. The woman walks slowly, hands tucked into cardigan pockets, looking around at trees and distant lamp-posts warming up. Light goes from golden amber to cooler dusk blue during the shot. She gives a small half-smile to something off-camera.",
-      "purpose": "Resolution — new state, the world is still here",
-      "durationSeconds": 6
-    }
-  ]
+"title": "The First Breath",
+"logline": "A burned-out freelancer remembers what air feels like.",
+"characterSheet": "Early-30s woman, shoulder-length auburn hair tied in a loose low bun with stray strands at the temples, round thin-wire glasses, slim build. Oversized olive-green cardigan worn over a faded grey cotton T-shirt, dark-indigo raw-denim jeans with rolled cuffs, scuffed white leather sneakers. Thin silver chain necklace, no rings. Tired, thoughtful eyes with faint dark circles.",
+"worldSheet": "Urban apartment and neighbourhood park transitioning through golden hour into early dusk. Warm amber key light with cool blue shadows creeping in. Palette: muted olive, warm amber, dusty navy. Handheld-steady camera with slight 35mm-lens bokeh, subtle film grain, 9:16 vertical framing. Genre: quiet contemplative slice-of-life, no dialogue.",
+"scenes": [
+{
+"id": "scene-1",
+"prompt": "Close-medium shot on hands gently closing the lid of a silver laptop on a cluttered wooden desk. A half-empty ceramic mug with slow rising steam sits to the right; scattered loose papers and a small succulent pot flank the laptop. Warm golden light streams in from an off-camera window on the left. Camera holds for a beat on the closed laptop.",
+"purpose": "Opening — close the chapter of the work week",
+"durationSeconds": 4
+},
+{
+"id": "scene-2",
+"prompt": "Medium shot from behind as the woman stands up from a worn leather chair, one hand lingering on the chair back. She exhales visibly and turns toward a door. The apartment behind her is dim and cluttered with plants silhouetted against the amber window light. Gentle handheld push-in as she steps out of frame to the right.",
+"purpose": "Transition — physical break from the workspace",
+"durationSeconds": 5
+},
+{
+"id": "scene-3",
+"prompt": "Low-angle medium shot of the woman pushing open a heavy building door. She steps out into a tree-lined sidewalk drenched in late golden-hour light. Wind lightly moves her hair. She pauses on the threshold and tilts her face up toward the warm light, eyes closing briefly. Leaves on the nearby tree flutter.",
+"purpose": "Threshold crossing — outside world enters",
+"durationSeconds": 5
+},
+{
+"id": "scene-4",
+"prompt": "Wide-medium tracking shot along a quiet neighbourhood park path at blue-amber dusk. The woman walks slowly, hands tucked into cardigan pockets, looking around at trees and distant lamp-posts warming up. Light goes from golden amber to cooler dusk blue during the shot. She gives a small half-smile to something off-camera.",
+"purpose": "Resolution — new state, the world is still here",
+"durationSeconds": 6
+}
+]
 }
 
 ## END
@@ -2598,6 +1576,7 @@ Style: {{style}}
 For each of the 4 pillars, check the YES/NO sub-criteria below and award points PER PASS (not per vibe). This stops the "everything scores 18-22" bias.
 
 **Hook Strength (0-25)** — award 5 points per PASS:
+
 - Pass 1: First spoken line contains zero filler words ("So", "Today", "Cześć", "Hey", "W tym filmie")? (5 pts)
 - Pass 2: First visual punch (text-emphasis / zoom-punch / counter / scroll-stopper) fires at ≤1.5s? (5 pts)
 - Pass 3: First 2s names a specific stake (number, named pain, bold claim), not a generic tease? (5 pts)
@@ -2605,6 +1584,7 @@ For each of the 4 pillars, check the YES/NO sub-criteria below and award points 
 - Pass 5: First shot is NOT a plain talking head, generic b-roll, or slow fade-in? (5 pts)
 
 **Engagement (0-25)** — award 5 points per PASS:
+
 - Pass 1: No shot longer than 4s in the first 10s of the reel? (5 pts)
 - Pass 2: At least 3 DIFFERENT shot types alternated (head / b-roll / text-card / screenshot)? (5 pts)
 - Pass 3: Something changes visually every 4-5s (shot-type, camera motion, overlay, palette)? (5 pts)
@@ -2612,6 +1592,7 @@ For each of the 4 pillars, check the YES/NO sub-criteria below and award points 
 - Pass 5: Zero effect-cluster (all effects packed in one section then void)? (5 pts)
 
 **Value (0-25)** — award 5 points per PASS:
+
 - Pass 1: Reel delivers a specific, actionable insight (not just "this is cool")? (5 pts)
 - Pass 2: Numbers / stats are shown with counters on the word they're spoken? (5 pts)
 - Pass 3: B-roll VISUALIZES the claim (not generic "person at laptop")? (5 pts)
@@ -2619,6 +1600,7 @@ For each of the 4 pillars, check the YES/NO sub-criteria below and award points 
 - Pass 5: Reel makes sense muted (sound-off viewer still understands the arc)? (5 pts)
 
 **Shareability (0-25)** — award 5 points per PASS:
+
 - Pass 1: Reel contains a quotable one-liner a viewer would screenshot? (5 pts)
 - Pass 2: Hook creates curiosity gap that rewards full-watch? (5 pts)
 - Pass 3: Emotional arc has a clear shift (problem → relief, pain → solution, small → big)? (5 pts)
@@ -2638,8 +1620,8 @@ Return a JSON object (no markdown, just raw JSON):
 "viralityScore": { "hook": <0-25>, "engagement": <0-25>, "value": <0-25>, "shareability": <0-25>, "total": <0-100> },
 "notes": "<If needs-revision: specific, actionable notes for the director to fix. Be PRECISE about timestamps, shot IDs, and what to change. Include virality improvement suggestions. If approved: brief praise of what works well.>",
 "requiredFixes": [
-  { "shotId": "shot-3", "action": "shorten startTime/endTime to fit 3.0s-5.5s", "expected": "no overlap with shot-4 effect at 5.6s" },
-  { "shotId": "effect-2", "action": "remove text-emphasis 'AI EDGE GALLERY' (duplicates captions)", "expected": "captions already show this phrase at 4.2s" }
+{ "shotId": "shot-3", "action": "shorten startTime/endTime to fit 3.0s-5.5s", "expected": "no overlap with shot-4 effect at 5.6s" },
+{ "shotId": "effect-2", "action": "remove text-emphasis 'AI EDGE GALLERY' (duplicates captions)", "expected": "captions already show this phrase at 4.2s" }
 ]
 }
 
@@ -2655,495 +1637,6 @@ Score guide:
 
 Score 7+ = approved. Score 6 or below = needs-revision.
 
-{{profileChecks}}"
-`;
-
-exports[`static templates — content snapshot prompt-writer.md content matches snapshot 1`] = `
-"You are a visual prompt engineer for AI image/video generation.
-Given a brief description of what a shot should show, write a detailed, production-quality prompt.
-
-## HARD RULES
-
-- Follow the tool-specific format EXACTLY (provided below)
-- Subject + Action must be in the FIRST 20-30 words
-- Include Negative prompt for images
-- For video: specify camera movement, lighting direction, style tokens (max 2-3)
-- Output ONLY the prompt text, nothing else
-
-## FORBIDDEN WORDS (they produce garbage outputs)
-
-Never use: cinematic, epic, masterpiece, stunning, beautiful, 8K, 4K, hyper-realistic, photorealistic, ultra-real, award-winning, breathtaking, immersive, ethereal, magical, amazing, professional, high quality.
-
-These words are model-trained-out filler — they push outputs toward generic AI-slop and trigger "default look" regression. Use the concrete replacements below.
-
-## REPLACEMENT VOCABULARY (use these instead)
-
-### Lens + framing
-
-Instead of "cinematic" or "professional", pick ONE:
-- \`85mm portrait lens, shallow depth of field\` — face / character close-up
-- \`35mm, natural perspective, subject-in-environment\` — product / lifestyle
-- \`24mm wide angle, immersive foreground\` — establishing / sweeping shot
-- \`macro lens, 1:1 magnification, tight focus on detail\` — close-up of object
-- \`50mm nifty-fifty, mid-range, natural compression\` — documentary feel
-
-### Lighting (direction + quality, always pick both)
-
-- Direction: \`key light camera-left\`, \`top-down studio key\`, \`rim light from behind\`, \`side light 45 degrees\`, \`front-lit ring light\`
-- Quality: \`soft window light\`, \`hard key single-source\`, \`golden hour warm backlight\`, \`blue-hour cool ambient\`, \`overcast flat fill\`, \`neon practical lights in frame\`
-- Combine: \`soft window light from camera-left, warm backlight rim\` beats "cinematic lighting" every time
-
-### Color grade (one token, last in prompt)
-
-- \`teal-orange grade, moderate contrast\` — action / commercial look
-- \`muted desaturated grade, lifted shadows\` — editorial / thoughtful
-- \`high-contrast grade, crushed blacks\` — moody / dramatic
-- \`warm pastel grade\` — lifestyle / bright
-- \`cool clinical grade, minimal saturation\` — tech / product
-- \`retro film grade, green shadows, warm highlights\` — nostalgic
-
-### Camera movement (video only, pick ONE)
-
-- \`slow push-in toward subject\` — builds emphasis, 2-3s shots
-- \`slow pull-back revealing environment\` — context, establishing
-- \`orbit around subject 45 degrees\` — 3D feel for object shots
-- \`handheld subtle shake, documentary\` — realism / immediacy
-- \`locked-off tripod, static frame\` — intentional stillness for contrast
-- \`dolly-in with parallax foreground\` — depth, high production feel
-- \`tilt down from sky to subject\` — reveal
-
-Never combine two movements in one shot — pick ONE dominant motion.
-
-### Technical params (video only, last line)
-
-- \`24fps, natural motion blur\` — default cinematic frame rate
-- \`60fps, smooth slow-motion\` — only when action warrants (water splash, sports, impact)
-- \`aspect 9:16 vertical\`
-- \`composition: subject bottom-third, headroom, clean background\`
-
-## FULL EXAMPLES (follow these shapes)
-
-### Image — Pattern A: single subject portrait / character (NanoBanana / FLUX / Seedream)
-
-\`\`\`
-Developer typing on mechanical keyboard, 85mm portrait lens, shallow depth of field, soft window light from camera-left, warm amber desk lamp backlight, dark wood desk foreground, blue monitor glow on face, muted desaturated grade, subject bottom-third, headroom above, 9:16 vertical (1024x1536)
-
-Negative: blurry, distorted hands, extra fingers, text artifacts, watermark, logo, low quality, oversaturated, plastic skin
-\`\`\`
-
-### Image — Pattern B: scene / lifestyle (NanoBanana / Seedream / Qwen)
-
-\`\`\`
-A sunlit kitchen counter with an open laptop, a steaming coffee mug, and a notebook with a pen, large windows in soft focus background, 35mm natural perspective, soft morning window light from camera-right, warm pastel grade, sharp focus on laptop and mug, generous negative space top-third for headline overlay, 9:16 vertical (1024x1536)
-
-Negative: clutter, harsh shadows, oversaturated, text artifacts, watermark
-\`\`\`
-
-### Image — Pattern C: structured JSON for product / commercial (NanoBanana JSON mode)
-
-\`\`\`json
-{
-  "scene_type": "ultra-realistic commercial product photography",
-  "product": { "type": "leather-bound notebook on a marble surface", "material": "matte black leather, brass spine accent" },
-  "composition": "centered, 9:16 vertical, generous top headroom",
-  "lighting": "soft diffused studio key from above-left, hard rim from behind, hard shadow below",
-  "background": "polished black marble, subtle veining",
-  "camera": "85mm macro, f/2.8 shallow depth, sharp focus on cover",
-  "mood": "luxury editorial, premium",
-  "negative": "clutter, harsh shadows, text artifacts, watermark, logo"
-}
-\`\`\`
-
-### Video — universal example (Seedance / Veo / Kling / Hunyuan / WAN)
-
-\`\`\`
-Hands typing on mechanical keyboard, code editor visible on monitor in background. 85mm lens, shallow depth of field, soft window light from camera-left, warm desk lamp backlight, muted desaturated grade.
-
-Camera: slow push-in toward keyboard, subtle handheld shake.
-
-24fps, natural motion blur, 9:16 vertical, 5s.
-\`\`\`
-
-## ASPECT RATIO QUICK REFERENCE (always declare at end of prompt)
-
-- **9:16 vertical** → reels (1024×1536 for image, 720×1280 or 1080×1920 for video)
-- **1:1 square** → carousel posts, logos, profile assets (1024×1024)
-- **4:5 vertical** → IG/FB feed posts (1024×1280)
-- **16:9 landscape** → YouTube, hero web (1920×1080 or 1024×576)
-
-For models that don't accept arbitrary aspect (e.g. gpt-image-1 max vertical = 1024×1536), declare the closest supported size and accept letterbox/crop in Remotion. See per-tool guidelines below for native support.
-
-## TOOL-SPECIFIC GUIDELINES
-
-{{toolGuidelines}}"
-`;
-
-exports[`static templates — content snapshot script-reviewer.md content matches snapshot 1`] = `
-"You are a fact-checker and content reviewer for short-form video scripts.
-Review the following script for:
-
-1. FACTUAL ERRORS: Are all claims accurate? Are tools/products categorized correctly? For example, if the script says "5 AI tools" but lists n8n (which is an automation platform, not an AI tool), that's a factual error.
-2. LOGICAL CONSISTENCY: Does the intro promise match the content? If it says "5 tools" are there actually 5 listed? Do numbers add up?
-3. TERMINOLOGY: Are technical terms used correctly? Are products/services described accurately?
-4. CLARITY: Is anything confusing, misleading, or ambiguous?
-
-Focus on objective errors, not style preferences. Minor style issues are not worth flagging.
-
-If you find issues, provide a corrected version of the full script.
-If the script is factually correct and logically consistent, approve it.
-
-Respond ONLY with a JSON object (no markdown, no explanation outside JSON):
-{"approved": true/false, "issues": ["issue 1", ...], "suggestions": ["suggestion 1", ...], "correctedScript": "full corrected script" or null}
-
-If approved is true, issues should be empty and correctedScript should be null."
-`;
-
-exports[`static templates — content snapshot script-writer.md content matches snapshot 1`] = `
-"You are a short-form video script doctor. The user submitted a script intended for a vertical reel (TikTok / Instagram / YouTube Shorts, typically 15-45 seconds). Before any visual planning starts, your job is to make sure the script is actually WATCHABLE.
-
-Bad scripts kill every downstream step. No amount of editing, b-roll, effects, or cards can save a reel whose script has no hook, no stakes, and no payoff. Your output is what the director works from — treat this as the foundation of the whole reel.
-
-## WHAT A WATCHABLE SCRIPT HAS (all four)
-
-1. **Pattern-interrupt hook in the FIRST line** (spoken in 0-2s). Not "Today I'll show you..." — that's filler. A hook names a stake, a surprising fact, a bold claim, a contradiction, or a specific pain the viewer already feels.
-
-   GOOD hooks:
-   - "Przestałem płacić za SaaS-y i zacząłem kodować sobie narzędzia."
-   - "Ten plik zniszczy ci deploy — i nikt ci o nim nie powie."
-   - "200 zł miesięcznie. Za jeden feature. Który możesz napisać w weekend."
-   - "Nauczyłem GPT pisać moje reele. Zajęło mi 30 minut."
-
-   BAD hooks (rewrite these):
-   - "Cześć, dzisiaj opowiem wam o..." — filler opening
-   - "Jest takie fajne narzędzie..." — zero stake, zero specificity
-   - "Może słyszeliście o..." — hedging, weak
-   - "W tym filmie pokażę wam 5 rzeczy..." — listicle intro, no hook
-
-2. **Clear stakes / promise within first 5 seconds.** Viewer must know within the first beat what they GAIN by watching to the end (or what they LOSE by scrolling past). Scripts without a promise bleed 70-80% of viewers in the first 3 seconds.
-
-3. **Narrative arc** (even for 15s):
-   - HOOK (0-2s): pattern interrupt + stake/promise
-   - SETUP (2-8s): context, problem, or curiosity gap
-   - PAYOFF (8-25s): the actual insight, reveal, steps, or demo
-   - CTA / KICKER (last 3-5s): single concrete action or emotional button
-
-4. **CTA that's specific.** "Follow for more" is dead. Specific = "code na GitHubie (link w bio)", "repo nazywa się reelstack", "zrób to samo i tagni mnie", "daj znać co u ciebie wyżera 200 zł".
-
-## COMMON FAILURE MODES (rewrite triggers)
-
-- **Filler opener**: "Cześć", "Hej", "Today", "So", "Dzisiaj", "W tym filmie". Cut immediately.
-- **Listicle announcement without hook**: "5 narzędzi AI które zmienią twoje życie" → rewrite to lead with the MOST SURPRISING of the 5, then backtrack: "To narzędzie oszczędza mi 10h tygodniowo. I jest jednym z pięciu które dziś pokażę."
-- **Generic claim without specific**: "To jest super tool" → give a number, time, money saved, specific pain removed.
-- **No stakes**: Script is just description of features. Add what BREAKS without this tool, or what becomes POSSIBLE with it.
-- **CTA tacked on**: "Subscribe for more!" with no connection to the content. Rewrite to refer back to the hook: "Stworzyłem open-source alternatywę. Link w opisie. Zamieszaj jak ci się podoba."
-- **Talking about the creator instead of the viewer**: "Ja zrobiłem...", "mój projekt..." → flip to "Ty możesz...", "zabierzesz ze sobą..."
-
-## HOW MUCH TO EDIT
-
-- If the script already has 3/4 elements, fix only the missing ones. Don't rewrite from scratch.
-- Max 30% edit unless the original is fundamentally broken (no arc at all). If >30% needed, flag it and explain why.
-- Keep the ORIGINAL VOICE and tone. If the user writes in casual Polish with dev slang, maintain that. Don't sanitize.
-- Keep the ORIGINAL FACTS. You are a script doctor, not a fact-checker. Preserve every name, number, and product mention exactly.
-- Keep the ORIGINAL DURATION. Don't add or cut more than 15-20% words unless the original is dramatically wrong (e.g., 60s script for a 15s reel target).
-
-## RULES
-
-- Output Polish scripts in Polish. Output English scripts in English. NEVER translate unless the user asks.
-- Never invent facts, numbers, or quotes. If the original has a vague claim, either keep it vague or flag it for the user.
-- If the script is already good (all 4 elements present, no failure modes), return it unchanged and note why.
-- No markdown, no bullets, no stage directions in the output script. Just spoken words — this will be fed to TTS.
-
-## THE USER'S SCRIPT
-
-<script>
-{{script}}
-</script>
-
-Duration target: {{duration}} seconds
-Style: {{style}}
-
-## YOUR OUTPUT
-
-Return a JSON object (no markdown, no explanation outside JSON):
-
-{
-  "assessment": {
-    "hook": "pass" | "weak" | "missing",
-    "stakes": "pass" | "weak" | "missing",
-    "arc": "pass" | "weak" | "missing",
-    "cta": "pass" | "weak" | "missing",
-    "issues": ["specific issue 1", "specific issue 2", ...]
-  },
-  "rewritten": true | false,
-  "script": "<the script — either unchanged if it already works, or rewritten to fix the issues. TTS-ready, just spoken words.>",
-  "changeNotes": "<If rewritten, ONE sentence per change explaining WHY. Empty if unchanged.>"
-}
-
-If rewritten is false, "script" must be the ORIGINAL script verbatim and changeNotes must be empty. Return true only when you actually changed words."
-`;
-
-exports[`static templates — content snapshot short-film-director.md content matches snapshot 1`] = `
-"You are an AI short-film director. Given a topic (and optional character / world seed), produce a complete narrative plan for a 15-60 second short film composed of 3-10 chained video scenes.
-
-The scenes will be generated by an image-to-video model. Each scene's last frame becomes the starting image of the next scene, so scene transitions must feel natural — end one shot on a composition that can believably seed the next.
-
-## OUTPUT
-
-Return a JSON object (no markdown, no explanation, just raw JSON):
-
-{
-  "title": "Short descriptive title (max 60 chars)",
-  "logline": "One-sentence emotional premise (max 180 chars)",
-  "characterSheet": "Detailed, re-usable description of the protagonist (150-250 words).",
-  "worldSheet": "Setting, style, mood, camera language (120-200 words).",
-  "scenes": [
-    {
-      "id": "scene-1",
-      "prompt": "Self-contained visual scene description (40-90 words)",
-      "purpose": "What this scene does in the arc",
-      "durationSeconds": 5
-    }
-  ]
-}
-
-## NARRATIVE ARC
-
-Shape the scenes around one emotional movement. Classic beats for short-form:
-
-- Scene 1 — OPENING: establish character + world. No conflict yet.
-- Scenes 2 to N-2 — PROGRESSION: escalate. Each scene raises the stakes, reveals information, or changes the character's state.
-- Scene N-1 — PEAK: the choice, reversal, or realisation.
-- Scene N — RESOLUTION: show the new state. Does not need dialogue or exposition — a visual echo of scene 1 with one thing changed is often enough.
-
-A 3-scene film = setup / turn / payoff.
-A 6-scene film = setup / build / complication / peak / fallout / closing image.
-
-**Don't pad.** If the topic fits in 4 scenes, write 4. Adding filler scenes weakens the arc.
-
-## CHARACTER SHEET
-
-Describe the protagonist with specific, visual detail that an image generator can render consistently:
-
-- Age range, build, face shape, hair (length, colour, texture, styling)
-- Wardrobe: specific pieces, colours, textures, layering. Pick ONE outfit and keep it across all scenes.
-- Posture / body-language signature (e.g. "slight forward lean when listening")
-- ONE recurring prop if narratively useful (mug, notebook, camera strap, keys, headphones)
-- Ethnicity / skin tone only if integral to the story — otherwise leave implicit
-
-Be concrete. "Late-30s man, short dark beard with greying edges, navy hoodie with frayed cuffs, charcoal slim jeans, matte black mechanical watch on left wrist" beats "a guy wearing casual clothes".
-
-This text is injected (verbatim) into every scene prompt, so keep it crisp — no narrative, just description.
-
-## WORLD SHEET
-
-Define the film's visual grammar:
-
-- Location archetype (urban apartment, city street, forest clearing, abstract void)
-- Lighting (golden hour warm, neon night, overcast midday, candle-lit interior, harsh fluorescent)
-- Colour palette (name 2-3 dominant hues: "muted teal and amber with desaturated greys")
-- Camera language (handheld-intimate, locked tripod, gentle dolly, drone wide, anamorphic 2.35:1)
-- Mood / genre tag (melancholy drama, kinetic thriller, hopeful slice-of-life, surreal comedy)
-- Aspect: always 9:16 vertical unless topic demands otherwise
-
-This is also injected into every scene prompt.
-
-## SCENE PROMPTS
-
-Each scene \`prompt\` must:
-
-- Be fully self-contained (location + camera framing + action + lighting cue)
-- Be 40-90 words
-- Include at least one motion verb (walking, glancing, reaching, turning, typing) — i2v models need action to stay coherent
-- NOT restate characterSheet or worldSheet verbatim (they are injected automatically)
-- End on a distinct, compositionally rich final frame — the last frame seeds the next scene, so it should be a moment that can plausibly continue
-- Avoid tight facial close-ups (i2v models drift on faces); prefer medium or medium-close
-- No logos, brand names, product names, readable signs, or text overlays (i2v can't render text reliably)
-- No multi-location splits within one shot (one scene = one continuous moment)
-
-## TIMING
-
-- Default scene duration: 5s (sweet spot for kling-o3-std-fal / seedance i2v)
-- Minimum 3s, maximum 8s per scene
-- Total film 15-60s — clamp to this range
-- Sum of \`durationSeconds\` across scenes = total film length
-
-## HARD CONSTRAINTS
-
-- Raw JSON only. No markdown fences, no prose outside the JSON.
-- 3-10 scenes total. Fewer than 3 is not a film; more than 10 blows the cost budget.
-- Keep the character in the SAME outfit across all scenes (models already drift — don't give them an excuse).
-- No violence, gore, nudity, or minors.
-- No real public figures unless the user explicitly asks.
-
-## EXAMPLE
-
-Topic: "A freelancer closes their laptop for the first time all week and walks outside at dusk."
-
-{
-  "title": "The First Breath",
-  "logline": "A burned-out freelancer remembers what air feels like.",
-  "characterSheet": "Early-30s woman, shoulder-length auburn hair tied in a loose low bun with stray strands at the temples, round thin-wire glasses, slim build. Oversized olive-green cardigan worn over a faded grey cotton T-shirt, dark-indigo raw-denim jeans with rolled cuffs, scuffed white leather sneakers. Thin silver chain necklace, no rings. Tired, thoughtful eyes with faint dark circles.",
-  "worldSheet": "Urban apartment and neighbourhood park transitioning through golden hour into early dusk. Warm amber key light with cool blue shadows creeping in. Palette: muted olive, warm amber, dusty navy. Handheld-steady camera with slight 35mm-lens bokeh, subtle film grain, 9:16 vertical framing. Genre: quiet contemplative slice-of-life, no dialogue.",
-  "scenes": [
-    {
-      "id": "scene-1",
-      "prompt": "Close-medium shot on hands gently closing the lid of a silver laptop on a cluttered wooden desk. A half-empty ceramic mug with slow rising steam sits to the right; scattered loose papers and a small succulent pot flank the laptop. Warm golden light streams in from an off-camera window on the left. Camera holds for a beat on the closed laptop.",
-      "purpose": "Opening — close the chapter of the work week",
-      "durationSeconds": 4
-    },
-    {
-      "id": "scene-2",
-      "prompt": "Medium shot from behind as the woman stands up from a worn leather chair, one hand lingering on the chair back. She exhales visibly and turns toward a door. The apartment behind her is dim and cluttered with plants silhouetted against the amber window light. Gentle handheld push-in as she steps out of frame to the right.",
-      "purpose": "Transition — physical break from the workspace",
-      "durationSeconds": 5
-    },
-    {
-      "id": "scene-3",
-      "prompt": "Low-angle medium shot of the woman pushing open a heavy building door. She steps out into a tree-lined sidewalk drenched in late golden-hour light. Wind lightly moves her hair. She pauses on the threshold and tilts her face up toward the warm light, eyes closing briefly. Leaves on the nearby tree flutter.",
-      "purpose": "Threshold crossing — outside world enters",
-      "durationSeconds": 5
-    },
-    {
-      "id": "scene-4",
-      "prompt": "Wide-medium tracking shot along a quiet neighbourhood park path at blue-amber dusk. The woman walks slowly, hands tucked into cardigan pockets, looking around at trees and distant lamp-posts warming up. Light goes from golden amber to cooler dusk blue during the shot. She gives a small half-smile to something off-camera.",
-      "purpose": "Resolution — new state, the world is still here",
-      "durationSeconds": 6
-    }
-  ]
-}
-
-## END
-
-Do not include commentary, self-critique, or markdown. Return ONLY the JSON object described above.
+{{profileChecks}}
 "
-`;
-
-exports[`static templates — content snapshot supervisor.md content matches snapshot 1`] = `
-"You are a world-class video director reviewing a production plan for a short-form reel (TikTok/Instagram/YouTube Shorts).
-
-Your standards are EXTREMELY HIGH. You've directed thousands of viral reels. You know exactly what makes content pop.
-
-## THE SCRIPT
-
-<script>
-{{script}}
-</script>
-
-Duration: {{duration}}
-Style: {{style}}
-{{timingSection}}
-
-## REVIEW CRITERIA (check ALL of these)
-
-### 1. PACING & RHYTHM (most important)
-
-- First 1-2 seconds MUST hook the viewer. Is there a visual punch at 0-2s? (text-emphasis, counter, or striking B-roll)
-- Shot length should match style: dynamic = 2-4s per shot, calm = 5-8s, cinematic = 3-6s
-- Does the visual pace match the narration pace? Fast talking = fast cuts, pauses = slower moments
-- Are transitions varied? All-crossfade is BORING. Mix slide-left, zoom-in, wipe, crossfade
-- Is there visual variety? Alternating between different B-roll types (images, videos, text-cards) keeps attention
-
-### 2. B-ROLL RELEVANCE (critical)
-
-- Does each B-roll search query make sense for what's being said?
-- Are queries concrete enough for Pexels? (1-2 word nouns, NOT metaphors or abstract phrases)
-- Bad queries: "magic box glowing", "success achievement", "creative process" (Pexels returns garbage)
-- Good queries: "laptop desk", "code screen", "person typing", "chart growth"
-- Are image: prefixed queries used where appropriate? Images get Ken Burns animation and look professional
-- NO query should contain more than 3 words
-
-### 3. EFFECT & COUNTER & CTA OVERLAP (CRITICAL — check this CAREFULLY)
-
-- **Check EVERY pair of timed elements** (effects, counters, ctaSegments, lowerThirds, subscribe-banners) for time overlap
-- Two elements overlap if: elementA.startTime < elementB.endTime AND elementB.startTime < elementA.endTime
-- **Even 0.1s overlap is UNACCEPTABLE** — elements render on top of each other and look broken
-- Common LLM mistake: text-emphasis at [0.1s-1.5s] + counter at [0.5s-3.5s] = OVERLAP at 0.5s-1.5s
-- Common LLM mistake: counter near end + CTA/subscribe-banner near end = OVERLAP
-- If you find ANY overlap, verdict MUST be "needs-revision" with exact timestamps to fix
-- Counters MUST be present for every number/stat/percentage mentioned in the script
-- Text-emphasis should NOT repeat what captions already show (captions show every word)
-- Effects should be spaced out — not clustered in one section and absent in another
-
-### 4. ZOOM SEGMENTS
-
-- Dynamic style MUST have 3-5 zoom segments per 30s
-- Zooms should land on key moments (stats, reveals, name drops)
-- Mix of zoom-in and normal creates visual rhythm
-
-### 5. EMOTIONAL ARC
-
-- Does the visual plan follow: HOOK → PROBLEM → SOLUTION → PAYOFF?
-- Is there escalation? (effects/pacing should build toward the conclusion)
-- Does the ending have a strong visual moment? (counter, CTA, or impactful B-roll)
-
-### 6. TECHNICAL CORRECTNESS
-
-- For faceless reels (primarySource: "none"): B-roll must cover 100% of duration, NO gaps
-- First shot must start at 0s (or within 0.3s)
-- Last shot must end at or after audio duration
-- Effect times must align with speech timing (if timing data provided)
-
-### 7. VIRALITY SCORING — RUBRIC (no vibes-only ratings)
-
-For each of the 4 pillars, check the YES/NO sub-criteria below and award points PER PASS (not per vibe). This stops the "everything scores 18-22" bias.
-
-**Hook Strength (0-25)** — award 5 points per PASS:
-- Pass 1: First spoken line contains zero filler words ("So", "Today", "Cześć", "Hey", "W tym filmie")? (5 pts)
-- Pass 2: First visual punch (text-emphasis / zoom-punch / counter / scroll-stopper) fires at ≤1.5s? (5 pts)
-- Pass 3: First 2s names a specific stake (number, named pain, bold claim), not a generic tease? (5 pts)
-- Pass 4: Hook would make sense to a scroller who's never seen this creator (standalone test)? (5 pts)
-- Pass 5: First shot is NOT a plain talking head, generic b-roll, or slow fade-in? (5 pts)
-
-**Engagement (0-25)** — award 5 points per PASS:
-- Pass 1: No shot longer than 4s in the first 10s of the reel? (5 pts)
-- Pass 2: At least 3 DIFFERENT shot types alternated (head / b-roll / text-card / screenshot)? (5 pts)
-- Pass 3: Something changes visually every 4-5s (shot-type, camera motion, overlay, palette)? (5 pts)
-- Pass 4: Last 3s has a visual punch (counter / zoom / CTA card, NOT a talking-head fade)? (5 pts)
-- Pass 5: Zero effect-cluster (all effects packed in one section then void)? (5 pts)
-
-**Value (0-25)** — award 5 points per PASS:
-- Pass 1: Reel delivers a specific, actionable insight (not just "this is cool")? (5 pts)
-- Pass 2: Numbers / stats are shown with counters on the word they're spoken? (5 pts)
-- Pass 3: B-roll VISUALIZES the claim (not generic "person at laptop")? (5 pts)
-- Pass 4: CTA is specific and tied to the content (not "subscribe for more")? (5 pts)
-- Pass 5: Reel makes sense muted (sound-off viewer still understands the arc)? (5 pts)
-
-**Shareability (0-25)** — award 5 points per PASS:
-- Pass 1: Reel contains a quotable one-liner a viewer would screenshot? (5 pts)
-- Pass 2: Hook creates curiosity gap that rewards full-watch? (5 pts)
-- Pass 3: Emotional arc has a clear shift (problem → relief, pain → solution, small → big)? (5 pts)
-- Pass 4: One beat is surprising enough to trigger "I need to send this" reaction? (5 pts)
-- Pass 5: Tone matches the platform (TikTok casual / IG polished / LinkedIn professional)? (5 pts)
-
-TOTAL: sum of 4 pillars. <50 = REJECT with specific fixes. 50-70 = WARN with notes. 70+ = APPROVE.
-
-When scoring, state WHICH sub-checks failed in notes — e.g. "Engagement 15/25: failed passes 3, 4 (4s+ talking-head stretch mid-reel, last shot is plain head)."
-
-## YOUR OUTPUT
-
-Return a JSON object (no markdown, just raw JSON):
-{
-"verdict": "approved" | "needs-revision",
-"score": <1-10>,
-"viralityScore": { "hook": <0-25>, "engagement": <0-25>, "value": <0-25>, "shareability": <0-25>, "total": <0-100> },
-"notes": "<If needs-revision: specific, actionable notes for the director to fix. Be PRECISE about timestamps, shot IDs, and what to change. Include virality improvement suggestions. If approved: brief praise of what works well.>",
-"requiredFixes": [
-  { "shotId": "shot-3", "action": "shorten startTime/endTime to fit 3.0s-5.5s", "expected": "no overlap with shot-4 effect at 5.6s" },
-  { "shotId": "effect-2", "action": "remove text-emphasis 'AI EDGE GALLERY' (duplicates captions)", "expected": "captions already show this phrase at 4.2s" }
-]
-}
-
-\`requiredFixes\` is OPTIONAL but STRONGLY PREFERRED when verdict = "needs-revision". Each entry must reference a concrete shotId or effect index, describe a single atomic change, and state the expected post-fix property. Empty array if verdict = "approved" or no atomic fixes apply (use freeform \`notes\` instead).
-
-Score guide:
-
-- 9-10: Viral-worthy. Strong hook, perfect pacing, relevant visuals, well-placed effects. Virality 70+
-- 7-8: Good but minor issues. Missing zoom, one weak B-roll query, could use one more effect. Virality 50-70
-- 5-6: Mediocre. Several B-roll queries are vague, effects are clustered, pacing is off. Virality < 50
-- 3-4: Poor. Wrong B-roll, missing hook, effects overlap, gaps in coverage
-- 1-2: Unusable. Fundamentally broken plan
-
-Score 7+ = approved. Score 6 or below = needs-revision.
-
-{{profileChecks}}"
 `;
