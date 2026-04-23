@@ -1,48 +1,60 @@
+/// <reference path="../types/md.d.ts" />
 /**
- * Template and partial loader for LLM prompts.
+ * Template / partial / guideline loader.
  *
- * All prompt content is compiled into the bundle via static imports.
- * No filesystem access at runtime — works in Next.js turbopack, Docker, Lambda.
+ * Source of truth is the markdown files in this directory tree. They are
+ * pulled in as text via import attributes (`with { type: 'text' }`) so the
+ * content is bundled at build time and no runtime filesystem access is
+ * needed — identical reach as the old `export const content = \`...\`` TS
+ * wrappers we replaced, but editable as plain markdown.
+ *
+ * Runtime support:
+ *   • Bun (worker): text imports are native since 1.1.
+ *   • Next.js turbopack: `*.md` routed through `raw-loader` in
+ *     `apps/web/next.config.ts` → yields raw string.
+ *   • Next.js webpack (`next build`): same config block adds a webpack
+ *     rule for `.md` files.
  */
 
 // ── Templates ──────────────────────────────────────────────
-import { content as plannerTpl } from './templates/planner';
-import { content as composerTpl } from './templates/composer';
-import { content as revisionTpl } from './templates/revision';
-import { content as supervisorTpl } from './templates/supervisor';
-import { content as promptWriterTpl } from './templates/prompt-writer';
-import { content as scriptReviewerTpl } from './templates/script-reviewer';
-import { content as scriptWriterTpl } from './templates/script-writer';
+import plannerTpl from './templates/planner.md' with { type: 'text' };
+import composerTpl from './templates/composer.md' with { type: 'text' };
+import revisionTpl from './templates/revision.md' with { type: 'text' };
+import supervisorTpl from './templates/supervisor.md' with { type: 'text' };
+import promptWriterTpl from './templates/prompt-writer.md' with { type: 'text' };
+import scriptReviewerTpl from './templates/script-reviewer.md' with { type: 'text' };
+import scriptWriterTpl from './templates/script-writer.md' with { type: 'text' };
+import shortFilmDirectorTpl from './templates/short-film-director.md' with { type: 'text' };
 
 // ── Partials ───────────────────────────────────────────────
-import { content as rulesHook } from './partials/rules-hook';
-import { content as rulesRetention } from './partials/rules-retention';
-import { content as rulesNoTextRedundancy } from './partials/rules-no-text-redundancy';
-import { content as rulesBroll } from './partials/rules-broll';
-import { content as rulesTextDuplication } from './partials/rules-text-duplication';
+import rulesHook from './partials/rules-hook.md' with { type: 'text' };
+import rulesRetention from './partials/rules-retention.md' with { type: 'text' };
+import rulesNoTextRedundancy from './partials/rules-no-text-redundancy.md' with { type: 'text' };
+import rulesBroll from './partials/rules-broll.md' with { type: 'text' };
+import rulesTextDuplication from './partials/rules-text-duplication.md' with { type: 'text' };
 
 // ── Guidelines (per-tool) ──────────────────────────────────
-import { content as guidelineFlux } from './guidelines/flux';
-import { content as guidelineGptImage } from './guidelines/gpt-image';
-import { content as guidelineHailuo } from './guidelines/hailuo';
-import { content as guidelineHeygenAgent } from './guidelines/heygen-agent';
-import { content as guidelineHeygen } from './guidelines/heygen';
-import { content as guidelineHunyuan } from './guidelines/hunyuan';
-import { content as guidelineIdeogram } from './guidelines/ideogram';
-import { content as guidelineKling } from './guidelines/kling';
-import { content as guidelineLtx } from './guidelines/ltx';
-import { content as guidelineLuma } from './guidelines/luma';
-import { content as guidelineNanobanana } from './guidelines/nanobanana';
-import { content as guidelinePexels } from './guidelines/pexels';
-import { content as guidelinePika } from './guidelines/pika';
-import { content as guidelineQwenImage } from './guidelines/qwen-image';
-import { content as guidelineRecraft } from './guidelines/recraft';
-import { content as guidelineRunway } from './guidelines/runway';
-import { content as guidelineSeedance } from './guidelines/seedance';
-import { content as guidelineSeedream } from './guidelines/seedream';
-import { content as guidelineSora } from './guidelines/sora';
-import { content as guidelineVeo3 } from './guidelines/veo3';
-import { content as guidelineWan } from './guidelines/wan';
+import guidelineFlux from './guidelines/flux.md' with { type: 'text' };
+import guidelineGptImage from './guidelines/gpt-image.md' with { type: 'text' };
+import guidelineHailuo from './guidelines/hailuo.md' with { type: 'text' };
+import guidelineHeygenAgent from './guidelines/heygen-agent.md' with { type: 'text' };
+import guidelineHeygen from './guidelines/heygen.md' with { type: 'text' };
+import guidelineHunyuan from './guidelines/hunyuan.md' with { type: 'text' };
+import guidelineIdeogram from './guidelines/ideogram.md' with { type: 'text' };
+import guidelineKling from './guidelines/kling.md' with { type: 'text' };
+import guidelineLtx from './guidelines/ltx.md' with { type: 'text' };
+import guidelineLuma from './guidelines/luma.md' with { type: 'text' };
+import guidelineNanobanana from './guidelines/nanobanana.md' with { type: 'text' };
+import guidelinePexels from './guidelines/pexels.md' with { type: 'text' };
+import guidelinePika from './guidelines/pika.md' with { type: 'text' };
+import guidelineQwenImage from './guidelines/qwen-image.md' with { type: 'text' };
+import guidelineRecraft from './guidelines/recraft.md' with { type: 'text' };
+import guidelineRunway from './guidelines/runway.md' with { type: 'text' };
+import guidelineSeedance from './guidelines/seedance.md' with { type: 'text' };
+import guidelineSeedream from './guidelines/seedream.md' with { type: 'text' };
+import guidelineSora from './guidelines/sora.md' with { type: 'text' };
+import guidelineVeo3 from './guidelines/veo3.md' with { type: 'text' };
+import guidelineWan from './guidelines/wan.md' with { type: 'text' };
 
 // ── Registries ─────────────────────────────────────────────
 
@@ -54,6 +66,7 @@ const TEMPLATES: Record<string, string> = {
   'prompt-writer': promptWriterTpl,
   'script-reviewer': scriptReviewerTpl,
   'script-writer': scriptWriterTpl,
+  'short-film-director': shortFilmDirectorTpl,
 };
 
 const PARTIALS: Record<string, string> = {

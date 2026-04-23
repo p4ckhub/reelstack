@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
       '*.md': { loaders: ['raw-loader'], as: '*.js' },
     },
   },
+  // Mirror the turbopack rule for `next build` (webpack). Prompts in
+  // @reelstack/agent are authored as .md files and pulled in as raw
+  // strings — both bundlers need to know how to resolve them.
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.md$/,
+      use: 'raw-loader',
+    });
+    return config;
+  },
   experimental: {
     proxyClientMaxBodySize: '500mb',
   },
