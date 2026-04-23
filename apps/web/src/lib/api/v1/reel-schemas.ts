@@ -181,6 +181,7 @@ export const reelModeSchema = z.enum([
   'talking-object',
   'n8n-explainer',
   'presenter-explainer',
+  'ai-short-film',
   'hello-hf',
 ]);
 
@@ -302,6 +303,12 @@ export const generateReelSchema = z
     numberOfSlides: z.number().int().min(2).max(10).optional(),
     /** Number of tips for ai-tips mode */
     numberOfTips: z.number().int().min(1).max(50).optional(),
+    /** Number of scenes for ai-short-film mode (3-10) */
+    numberOfScenes: z.number().int().min(3).max(10).optional(),
+    /** Optional character description seed for ai-short-film (LLM expands into full characterSheet) */
+    characterDescription: z.string().max(500).optional(),
+    /** Optional reference image URL for the protagonist (ai-short-film seed frame) */
+    characterImageUrl: publicUrlSchema.optional(),
     /** Target duration in seconds */
     targetDuration: z.number().positive().max(600).optional(),
     /** Background music URL */
@@ -325,6 +332,7 @@ export const generateReelSchema = z
       if (data.mode === 'slideshow' && !data.topic) return false;
       if (data.mode === 'talking-object' && !data.topic) return false;
       if (data.mode === 'presenter-explainer' && !data.topic) return false;
+      if (data.mode === 'ai-short-film' && !data.topic) return false;
       if (data.mode === 'n8n-explainer' && !data.workflowUrl) return false;
       return true;
     },
@@ -332,7 +340,9 @@ export const generateReelSchema = z
       message:
         data.mode === 'n8n-explainer'
           ? 'workflowUrl is required for n8n-explainer mode'
-          : ['slideshow', 'talking-object', 'presenter-explainer'].includes(data.mode ?? '')
+          : ['slideshow', 'talking-object', 'presenter-explainer', 'ai-short-film'].includes(
+                data.mode ?? ''
+              )
             ? `topic is required for ${data.mode} mode`
             : data.mode === 'captions' && !data.videoUrl
               ? 'videoUrl is required for captions mode'

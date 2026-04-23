@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@prisma/client": "~6.3.1",
+    "@reelstack/logger": "workspace:*",
     "@reelstack/types": "workspace:*"
   },
   "devDependencies": {

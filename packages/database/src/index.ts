@@ -15,5 +15,6 @@ export * from './reel-jobs';
 export * from './tier-config';
 export * from './audit';
 export * from './modules';
+export * from './api-call-log';
 
 export type * from '@prisma/client';

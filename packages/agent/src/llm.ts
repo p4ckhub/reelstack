@@ -7,7 +7,7 @@
 import { createLogger } from '@reelstack/logger';
 import { detectProvider, getModel, getApiKey } from './config/models';
 import type { ModelRole, LLMProvider } from './config/models';
-import { getJobId, addCost, logApiCall } from './context';
+import { getJobId, addCost } from './context';
 import { calculateLLMCost } from './config/pricing';
 
 const log = createLogger('llm');
@@ -173,9 +173,6 @@ async function callAnthropic(
       outputTokens,
       costUSD: costUSD.toFixed(5),
       durationMs,
-      systemPromptPreview: systemPrompt.slice(0, 200),
-      userMessagePreview: userMessage.slice(0, 200),
-      responsePreview: responseText.slice(0, 200),
     },
     'LLM call completed'
   );
@@ -188,19 +185,6 @@ async function callAnthropic(
     costUSD,
     inputUnits: inputTokens,
     outputUnits: outputTokens,
-    durationMs,
-    metadata: {
-      systemPromptPreview: systemPrompt.slice(0, 500),
-      userMessagePreview: userMessage.slice(0, 500),
-      responsePreview: responseText.slice(0, 500),
-    },
-  });
-
-  logApiCall(`llm:${opts.modelRole ?? 'unknown'}`, `anthropic-${Date.now()}`, {
-    provider: 'anthropic',
-    model,
-    request: { systemPrompt, userMessage },
-    response: { text: responseText, usage: { inputTokens, outputTokens } },
     durationMs,
   });
 
@@ -290,9 +274,6 @@ async function callOpenAICompatible(
       outputTokens,
       costUSD: costUSD.toFixed(5),
       durationMs,
-      systemPromptPreview: systemPrompt.slice(0, 200),
-      userMessagePreview: userMessage.slice(0, 200),
-      responsePreview: content.slice(0, 200),
     },
     'LLM call completed'
   );
@@ -305,19 +286,6 @@ async function callOpenAICompatible(
     costUSD,
     inputUnits: inputTokens,
     outputUnits: outputTokens,
-    durationMs,
-    metadata: {
-      systemPromptPreview: systemPrompt.slice(0, 500),
-      userMessagePreview: userMessage.slice(0, 500),
-      responsePreview: content.slice(0, 500),
-    },
-  });
-
-  logApiCall(`llm:${opts.modelRole ?? 'unknown'}`, `${provider}-${Date.now()}`, {
-    provider,
-    model,
-    request: { systemPrompt, userMessage },
-    response: { text: content, usage: { inputTokens, outputTokens } },
     durationMs,
   });
 

@@ -2,14 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ── Mocks ──────────────────────────────────────────────────────
 
-import {
-  storageMockFactory,
-  mockUpload,
-  mockGetSignedUrl,
-  mockCreateStorage,
-} from '../../__test-utils__/storage-mock';
+import { mockUpload, mockGetSignedUrl, mockCreateStorage } from '../../__test-utils__/storage-mock';
 
-vi.mock('@reelstack/storage', storageMockFactory);
+vi.mock('@reelstack/storage', async () =>
+  (await import('../../__test-utils__/storage-mock')).storageMockFactory()
+);
 mockUpload.mockResolvedValue(undefined);
 mockGetSignedUrl.mockResolvedValue('https://r2.example.com/signed-url');
 

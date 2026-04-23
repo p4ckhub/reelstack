@@ -11,14 +11,15 @@ import type {
 // ── Storage mock ──────────────────────────────────────────────
 
 import {
-  storageMockFactory,
   mockUpload,
   mockGetSignedUrl,
   mockDownload,
   mockDelete,
 } from '../../__test-utils__/storage-mock';
 
-vi.mock('@reelstack/storage', storageMockFactory);
+vi.mock('@reelstack/storage', async () =>
+  (await import('../../__test-utils__/storage-mock')).storageMockFactory()
+);
 mockUpload.mockResolvedValue('uploaded-key');
 mockGetSignedUrl.mockResolvedValue('https://signed.url');
 

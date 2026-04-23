@@ -8,16 +8,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-import {
-  storageMockFactory,
-  mockUpload,
-  mockGetSignedUrl,
-  mockDownload,
-} from '../__test-utils__/storage-mock';
+import { mockUpload, mockGetSignedUrl, mockDownload } from '../__test-utils__/storage-mock';
 
 const storedFiles = new Map<string, Buffer>();
 
-vi.mock('@reelstack/storage', storageMockFactory);
+vi.mock('@reelstack/storage', async () =>
+  (await import('../__test-utils__/storage-mock')).storageMockFactory()
+);
 
 mockUpload.mockImplementation((buf: Buffer, key: string) => {
   storedFiles.set(key, buf);
@@ -30,8 +27,9 @@ mockDownload.mockImplementation((key: string) => {
 });
 mockGetSignedUrl.mockResolvedValue('https://signed.url');
 
-import { loggerMockFactory } from '../__test-utils__/logger-mock';
-vi.mock('@reelstack/logger', loggerMockFactory);
+vi.mock('@reelstack/logger', async () =>
+  (await import('../__test-utils__/logger-mock')).loggerMockFactory()
+);
 
 import { PipelineLogger } from '../orchestrator/pipeline-logger';
 import { runWithJobId, addCost, getCostSummary, setApiCallLogger, logApiCall } from '../context';
@@ -154,18 +152,25 @@ describe('pipeline fixes', () => {
         const logger = new PipelineLogger('api-log-job');
         setApiCallLogger(logger);
 
-        logApiCall('llm:planner', 'anthropic-123', {
+        logApiCall({
+          stepId: 'llm:planner',
+          callId: 'anthropic-123',
+          kind: 'llm',
           provider: 'anthropic',
           model: 'claude-sonnet-4-6',
-          request: {
-            systemPrompt: 'You are a video planner...',
-            userMessage: 'Plan this reel: ...',
+          method: 'POST',
+          url: 'https://api.anthropic.com/v1/messages',
+          requestBody: {
+            system: 'You are a video planner...',
+            messages: [{ role: 'user', content: 'Plan this reel: ...' }],
           },
-          response: {
-            text: '{"shots": [...]}',
-            usage: { inputTokens: 1000, outputTokens: 500 },
+          responseStatus: 200,
+          responseBody: {
+            content: [{ type: 'text', text: '{"shots": [...]}' }],
+            usage: { input_tokens: 1000, output_tokens: 500 },
           },
           durationMs: 2500,
+          startedAt: Date.now(),
         });
 
         // Force flush pending uploads
@@ -182,10 +187,11 @@ describe('pipeline fixes', () => {
         const parsed = JSON.parse((apiCallUpload![0] as Buffer).toString('utf-8'));
         expect(parsed.provider).toBe('anthropic');
         expect(parsed.model).toBe('claude-sonnet-4-6');
-        expect(parsed.request.systemPrompt).toBe('You are a video planner...');
-        expect(parsed.response.text).toBe('{"shots": [...]}');
-        expect(parsed.response.usage.inputTokens).toBe(1000);
+        expect(parsed.kind).toBe('llm');
+        expect(parsed.method).toBe('POST');
+        expect(parsed.url).toBe('https://api.anthropic.com/v1/messages');
         expect(parsed.durationMs).toBe(2500);
+        expect(parsed.jobId).toBe('api-log-job');
       });
     });
 
@@ -193,12 +199,16 @@ describe('pipeline fixes', () => {
       runWithJobId('no-logger-job', () => {
         // No setApiCallLogger called — should not throw
         expect(() =>
-          logApiCall('llm:planner', 'test-1', {
+          logApiCall({
+            stepId: 'llm:planner',
+            callId: 'test-1',
+            kind: 'llm',
             provider: 'anthropic',
             model: 'test',
-            request: { systemPrompt: 'x', userMessage: 'y' },
-            response: { text: 'z' },
+            method: 'POST',
+            url: 'https://example.com',
             durationMs: 100,
+            startedAt: Date.now(),
           })
         ).not.toThrow();
       });
@@ -207,12 +217,16 @@ describe('pipeline fixes', () => {
     it('logApiCall is no-op outside job context', () => {
       // No runWithJobId — should not throw
       expect(() =>
-        logApiCall('llm:planner', 'test-1', {
+        logApiCall({
+          stepId: 'llm:planner',
+          callId: 'test-1',
+          kind: 'llm',
           provider: 'anthropic',
           model: 'test',
-          request: { systemPrompt: 'x', userMessage: 'y' },
-          response: { text: 'z' },
+          method: 'POST',
+          url: 'https://example.com',
           durationMs: 100,
+          startedAt: Date.now(),
         })
       ).not.toThrow();
     });

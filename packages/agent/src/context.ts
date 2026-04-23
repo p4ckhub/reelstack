@@ -1,78 +1,51 @@
 /**
- * Job context propagation using AsyncLocalStorage.
+ * Agent-side context helpers.
  *
- * Allows any code deep in the call stack (e.g., LLM calls, tool calls)
- * to access the current jobId and collect costs without explicit parameter threading.
+ * The job-scoped AsyncLocalStorage (`jobContext`), API-call audit logger,
+ * and the global fetch hook all live in `@reelstack/logger` so that
+ * pure-infrastructure packages (tts, transcription, storage) can use them
+ * without depending on agent.
+ *
+ * This module layers agent-specific per-job state (cost tracking) on top
+ * of the shared store via its `extras` bag.
  */
-import { AsyncLocalStorage } from 'async_hooks';
+import {
+  jobContext,
+  runWithJobContext,
+  getJobId,
+  setApiCallLogger,
+  logApiCall,
+} from '@reelstack/logger';
 import type { CostEntry, CostSummary } from './types';
 
-/** Minimal interface to avoid circular dependency with pipeline-logger module */
-interface ApiCallLogger {
-  saveApiCall(
-    stepId: string,
-    callId: string,
-    data: {
-      provider: string;
-      model: string;
-      request: { systemPrompt: string; userMessage: string };
-      response: { text: string; usage?: { inputTokens: number; outputTokens: number } };
-      durationMs: number;
-    }
-  ): void;
-}
+const COSTS_KEY = 'costs';
 
-interface JobStore {
-  jobId: string;
-  costs: CostEntry[];
-  apiCallLogger?: ApiCallLogger;
-}
-
-export const jobContext = new AsyncLocalStorage<JobStore>();
-
-/** Get the current jobId from async context, or undefined if not in a job. */
-export function getJobId(): string | undefined {
-  return jobContext.getStore()?.jobId;
-}
-
-/** Run a function within a job context so all nested calls can access jobId and collect costs. */
-export function runWithJobId<T>(jobId: string, fn: () => T): T {
-  // If already in a context with the same jobId, reuse it (avoids nested stores losing costs)
-  const existing = jobContext.getStore();
-  if (existing && existing.jobId === jobId) return fn();
-  return jobContext.run({ jobId, costs: [] }, fn);
-}
-
-/** Set API call logger for the current job (called by orchestrator after creating PipelineLogger). */
-export function setApiCallLogger(logger: ApiCallLogger): void {
+function getOrCreateCosts(): CostEntry[] | undefined {
   const store = jobContext.getStore();
-  if (store) store.apiCallLogger = logger;
+  if (!store) return undefined;
+  let costs = store.extras[COSTS_KEY] as CostEntry[] | undefined;
+  if (!costs) {
+    costs = [];
+    store.extras[COSTS_KEY] = costs;
+  }
+  return costs;
 }
 
-/** Log an API call to the pipeline logger (if available in job context). */
-export function logApiCall(
-  stepId: string,
-  callId: string,
-  data: {
-    provider: string;
-    model: string;
-    request: { systemPrompt: string; userMessage: string };
-    response: { text: string; usage?: { inputTokens: number; outputTokens: number } };
-    durationMs: number;
-  }
-): void {
-  jobContext.getStore()?.apiCallLogger?.saveApiCall(stepId, callId, data);
+/** Run a function within a job context so all nested calls can access jobId,
+ * collect costs, and emit API-call audit entries. */
+export function runWithJobId<T>(jobId: string, fn: () => T): T {
+  return runWithJobContext(jobId, fn);
 }
 
 /** Add a cost entry to the current job context. Safe to call outside a job (no-op). */
 export function addCost(entry: CostEntry): void {
-  const store = jobContext.getStore();
-  if (store) store.costs.push(entry);
+  getOrCreateCosts()?.push(entry);
 }
 
 /** Get all cost entries collected in the current job context. */
 export function getCosts(): readonly CostEntry[] {
-  return jobContext.getStore()?.costs ?? [];
+  const store = jobContext.getStore();
+  return (store?.extras[COSTS_KEY] as CostEntry[] | undefined) ?? [];
 }
 
 /** Get aggregated cost summary for the current job. */
@@ -90,3 +63,6 @@ export function getCostSummary(): CostSummary {
 
   return { totalUSD, byType, byProvider, entries };
 }
+
+// Re-export shared job-context helpers so existing agent imports keep working.
+export { jobContext, getJobId, setApiCallLogger, logApiCall };

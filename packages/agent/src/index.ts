@@ -52,6 +52,14 @@ export { reviewScript, isScriptReviewEnabled } from './planner/script-reviewer';
 export { rewriteScript, isScriptWriterEnabled } from './planner/script-writer';
 export type { ScriptRewriteResult, ScriptRewriteAssessment } from './planner/script-writer';
 export { writePrompt, isPromptWriterEnabled } from './planner/prompt-writer';
+export {
+  renderPrompt,
+  renderTemplate,
+  loadTemplate,
+  loadPartial,
+  loadGuideline,
+  loadAllPartials,
+} from './prompts';
 export { persistAssetsToStorage } from './orchestrator/asset-persistence';
 export { pollUntilDone } from './polling';
 export { AgentError, PlanningError, GenerationError } from './errors';

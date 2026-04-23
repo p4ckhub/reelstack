@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import type { ProductionPlan, GeneratedAsset, ToolManifest } from '../../types';
 
+// MinIO storage adapter throws at construction if env vars are missing —
+// stub it out before anything indirectly touches it through the pipeline.
+vi.mock('@reelstack/storage', async () =>
+  (await import('../../__test-utils__/storage-mock')).storageMockFactory()
+);
+
 // ── Shared fixtures ─────────────────────────────────────────────
 
 const MOCK_PLAN: ProductionPlan = {

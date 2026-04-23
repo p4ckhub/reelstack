@@ -41,6 +41,11 @@ export const mockUserModuleAccessFindUnique = vi.fn();
 export const mockUserModuleAccessFindMany = vi.fn();
 export const mockUserModuleAccessUpsert = vi.fn();
 
+// ApiCallLog model
+export const mockApiCallLogCreate = vi.fn();
+export const mockApiCallLogFindMany = vi.fn();
+export const mockApiCallLogFindFirst = vi.fn();
+
 // Raw queries
 export const mockExecuteRaw = vi.fn();
 export const mockQueryRaw = vi.fn();
@@ -82,6 +87,11 @@ export const mockPrismaInstance = {
     findUnique: (...args: unknown[]) => mockUserModuleAccessFindUnique(...args),
     findMany: (...args: unknown[]) => mockUserModuleAccessFindMany(...args),
     upsert: (...args: unknown[]) => mockUserModuleAccessUpsert(...args),
+  },
+  apiCallLog: {
+    create: (...args: unknown[]) => mockApiCallLogCreate(...args),
+    findMany: (...args: unknown[]) => mockApiCallLogFindMany(...args),
+    findFirst: (...args: unknown[]) => mockApiCallLogFindFirst(...args),
   },
   $transaction: (...args: unknown[]) => mockTransaction(...args),
   $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),

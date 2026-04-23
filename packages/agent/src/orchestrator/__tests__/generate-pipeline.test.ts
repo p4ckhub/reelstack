@@ -3,8 +3,9 @@ import type { PipelineContext, PipelineDefinition } from '../pipeline-engine';
 
 // ── Mocks ────────────────────────────────────────────────────
 
-import { storageMockFactory } from '../../__test-utils__/storage-mock';
-vi.mock('@reelstack/storage', storageMockFactory);
+vi.mock('@reelstack/storage', async () =>
+  (await import('../../__test-utils__/storage-mock')).storageMockFactory()
+);
 
 // ── Import under test ────────────────────────────────────────
 

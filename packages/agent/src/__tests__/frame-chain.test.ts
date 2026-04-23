@@ -19,12 +19,15 @@ vi.mock('@reelstack/ffmpeg', () => ({
     return framePath;
   }),
 }));
-import { storageMockFactory, mockUpload, mockGetSignedUrl } from '../__test-utils__/storage-mock';
-vi.mock('@reelstack/storage', storageMockFactory);
+import { mockUpload, mockGetSignedUrl } from '../__test-utils__/storage-mock';
+vi.mock('@reelstack/storage', async () =>
+  (await import('../__test-utils__/storage-mock')).storageMockFactory()
+);
 mockUpload.mockResolvedValue('ok');
 mockGetSignedUrl.mockResolvedValue('https://storage/frame.jpg');
-import { loggerMockFactory } from '../__test-utils__/logger-mock';
-vi.mock('@reelstack/logger', loggerMockFactory);
+vi.mock('@reelstack/logger', async () =>
+  (await import('../__test-utils__/logger-mock')).loggerMockFactory()
+);
 
 // Mock fetch for video download in extractAndUploadLastFrame
 import { beforeEach, afterAll } from 'vitest';

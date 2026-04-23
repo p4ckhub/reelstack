@@ -26,3 +26,26 @@ export function createRequestLogger(component: string, requestId: string) {
 
 export { baseLogger as logger };
 export type { Logger } from 'pino';
+
+// ── Job-scoped async context + API call audit ────────────────
+export {
+  jobContext,
+  runWithJobContext,
+  getJobId,
+  setApiCallLogger,
+  addGlobalApiCallSink,
+  removeGlobalApiCallSink,
+  logApiCall,
+} from './job-context';
+export type { JobStore } from './job-context';
+
+export {
+  installFetchHook,
+  runInsideSink,
+  originalFetch,
+  redactHeaders,
+  scrubPayload,
+  inferCallMeta,
+  performLoggedFetch,
+} from './api-log';
+export type { ApiCallKind, ApiCallLogEntry, ApiCallLogger } from './api-log';

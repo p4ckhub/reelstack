@@ -27,9 +27,16 @@ Sentry.init({
 });
 
 import { Worker } from 'bullmq';
-import { createLogger } from '@reelstack/logger';
+import { createLogger, installFetchHook, addGlobalApiCallSink } from '@reelstack/logger';
+import { dbApiCallSink } from '@reelstack/database';
 import { processReelPipelineJob } from '../src/lib/worker/reel-pipeline-worker';
 import { processReelPublishJob } from '../src/lib/worker/reel-publish-worker';
+
+// Install before anything kicks off a fetch. The hook writes to two sinks:
+// (1) the per-job PipelineLogger attached by the orchestrator (R2 artifacts),
+// (2) the DB sink registered below (audit trail in ApiCallLog).
+installFetchHook();
+addGlobalApiCallSink(dbApiCallSink);
 
 const log = createLogger('reel-worker');
 

@@ -228,6 +228,39 @@ model UserModuleAccess {
   @@index([userId])
 }
 
+/// Audit log of every outbound HTTP request made during a reel generation
+/// job. Populated by the global fetch hook in @reelstack/logger — every
+/// fetch() call inside a job context writes one row.
+///
+/// Keeps the full (scrubbed) request and response body so we can
+/// reconstruct or replay the call later. Binary blobs and base64 payloads
+/// are stripped before write.
+model ApiCallLog {
+  id              String   @id @default(cuid())
+  jobId           String
+  stepId          String
+  callId          String
+  kind            String // 'llm' | 'asset-gen' | 'asset-poll' | 'tts' | 'transcription' | 'storage' | 'other'
+  provider        String // inferred from host, e.g. 'anthropic', 'heygen', 'kie'
+  model           String?
+  method          String
+  url             String
+  requestHeaders  Json?
+  requestBody     Json?
+  responseStatus  Int?
+  responseHeaders Json?
+  responseBody    Json?
+  durationMs      Int
+  error           String?
+  costUSD         Float?
+  startedAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([jobId, createdAt])
+  @@index([provider, createdAt])
+  @@index([kind, createdAt])
+}
+
 model ReelJob {
   id            String    @id @default(uuid())
   userId        String

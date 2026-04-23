@@ -16,7 +16,12 @@
  */
 import { createStorage } from '@reelstack/storage';
 import type { StorageAdapter } from '@reelstack/types';
-import { createLogger } from '@reelstack/logger';
+import {
+  createLogger,
+  runInsideSink,
+  type ApiCallLogEntry,
+  type ApiCallLogger,
+} from '@reelstack/logger';
 import { getCostSummary } from '../context';
 
 const log = createLogger('pipeline-logger');
@@ -39,7 +44,7 @@ export interface PipelineStep {
   error?: string;
 }
 
-export class PipelineLogger {
+export class PipelineLogger implements ApiCallLogger {
   private steps: PipelineStep[] = [];
   private startedAt: number;
   private storage: StorageAdapter | null = null;
@@ -88,35 +93,33 @@ export class PipelineLogger {
     const buffer = typeof data === 'string' ? Buffer.from(data, 'utf-8') : data;
     const fullKey = `jobs/${this.jobId}/${key}`;
 
-    const promise = this.storageReady
-      .then((storage) => storage.upload(buffer, fullKey))
-      .then(() => {
-        log.debug({ key: fullKey }, 'Artifact saved');
-      })
-      .catch((err) => {
-        log.warn({ err, key: fullKey }, 'Failed to save artifact');
-      });
+    // runInsideSink: the artifact upload may itself issue fetch()
+    // calls (R2/S3 SDK) which would otherwise recurse back into the
+    // audit sink. Flag scopes to this promise chain only.
+    const promise = runInsideSink(() =>
+      this.storageReady
+        .then((storage) => storage.upload(buffer, fullKey))
+        .then(() => {
+          log.debug({ key: fullKey }, 'Artifact saved');
+        })
+        .catch((err) => {
+          log.warn({ err, key: fullKey }, 'Failed to save artifact');
+        })
+    );
 
     this.pendingUploads.push(promise);
   }
 
   /**
-   * Save a raw API call for audit purposes (fire-and-forget).
+   * Persist a full API call (every outbound HTTP request) for audit + replay.
    * Stored at: jobs/{jobId}/api-calls/{stepId}/{callId}.json
+   *
+   * Fire-and-forget. Called by the global fetch hook via the shared job
+   * context — do not call directly from pipeline code.
    */
-  saveApiCall(
-    stepId: string,
-    callId: string,
-    data: {
-      provider: string;
-      model: string;
-      request: { systemPrompt: string; userMessage: string };
-      response: { text: string; usage?: { inputTokens: number; outputTokens: number } };
-      durationMs: number;
-    }
-  ): void {
-    const key = `api-calls/${stepId}/${callId}.json`;
-    this.saveArtifact(key, JSON.stringify(data, null, 2));
+  saveApiCall(entry: ApiCallLogEntry): void {
+    const key = `api-calls/${entry.stepId}/${entry.callId}.json`;
+    this.saveArtifact(key, JSON.stringify(entry, null, 2));
   }
 
   /**
@@ -137,7 +140,9 @@ export class PipelineLogger {
     try {
       const storage = await this.storageReady;
       const key = `jobs/${this.jobId}/pipeline.json`;
-      await storage.upload(Buffer.from(JSON.stringify(pipelineLog, null, 2), 'utf-8'), key);
+      await runInsideSink(() =>
+        storage.upload(Buffer.from(JSON.stringify(pipelineLog, null, 2), 'utf-8'), key)
+      );
       log.info({ jobId: this.jobId, stepCount: this.steps.length }, 'Pipeline log persisted');
     } catch (err) {
       log.warn({ err, jobId: this.jobId }, 'Failed to persist pipeline log');

@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { storageMockFactory, mockUpload } from '../../__test-utils__/storage-mock';
-vi.mock('@reelstack/storage', storageMockFactory);
+import { mockUpload } from '../../__test-utils__/storage-mock';
+vi.mock('@reelstack/storage', async () =>
+  (await import('../../__test-utils__/storage-mock')).storageMockFactory()
+);
 mockUpload.mockResolvedValue('uploaded-key');
 
 import { PipelineLogger } from '../pipeline-logger';
