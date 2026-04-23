@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  prismaMockFactory,
   mockModuleFindUnique,
   mockModuleFindMany,
   mockUserModuleAccessFindUnique,
@@ -8,7 +7,10 @@ import {
   mockUserModuleAccessUpsert,
 } from './prisma-mock';
 
-vi.mock('@prisma/client', prismaMockFactory);
+vi.mock('@prisma/client', async () => {
+  const { prismaMockFactory } = await import('./prisma-mock');
+  return prismaMockFactory();
+});
 
 const {
   isUnlimited,

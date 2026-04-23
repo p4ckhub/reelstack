@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  prismaMockFactory,
   mockReelJobAggregate,
   mockReelJobCreate,
   mockReelJobFindFirst,
@@ -16,7 +15,13 @@ import {
   mockTransaction,
 } from './prisma-mock';
 
-vi.mock('@prisma/client', prismaMockFactory);
+// Dynamic import inside the factory — vitest hoists `vi.mock` above static
+// imports, so referencing `prismaMockFactory` from the static import list
+// would throw "Cannot access '__vi_import_0__' before initialization".
+vi.mock('@prisma/client', async () => {
+  const { prismaMockFactory } = await import('./prisma-mock');
+  return prismaMockFactory();
+});
 
 // Configure $transaction to pass-through to the callback with mock tx
 mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {

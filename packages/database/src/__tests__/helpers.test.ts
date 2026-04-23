@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  prismaMockFactory,
-  mockUserFindUnique,
-  mockUserUpsert,
-  mockReelJobAggregate,
-} from './prisma-mock';
+import { mockUserFindUnique, mockUserUpsert, mockReelJobAggregate } from './prisma-mock';
 
-vi.mock('@prisma/client', prismaMockFactory);
+vi.mock('@prisma/client', async () => {
+  const { prismaMockFactory } = await import('./prisma-mock');
+  return prismaMockFactory();
+});
 
 const { getUserByEmail, getUserById, upsertUser, getMonthlyCreditsUsed } = await import('../index');
 

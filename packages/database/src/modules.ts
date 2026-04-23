@@ -226,6 +226,17 @@ export const MODULE_DEFAULTS: ReadonlyArray<{
     // Owner-only while we validate the HF runtime path in prod.
     requiredTier: 'OWNER',
   },
+  {
+    slug: 'ai-short-film',
+    name: 'AI Short Film',
+    description:
+      'Narrative short film from a single topic — chained i2v scenes with character continuity.',
+    category: 'premium',
+    // Pricing scales per scene at charge time; 50 is the typical 5-scene ceiling.
+    creditCost: 50,
+    // Owner-only during MVP validation; open up once quality / cost are dialed.
+    requiredTier: 'OWNER',
+  },
 ];
 
 /**
