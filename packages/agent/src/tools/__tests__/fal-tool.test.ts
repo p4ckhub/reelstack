@@ -520,17 +520,14 @@ describe('FalTool', () => {
       // Verify two fetch calls were made
       expect(mockFetch).toHaveBeenCalledTimes(2);
 
-      // First call: status endpoint
+      // First call: status endpoint — uses app-level path (<vendor>/<app>),
+      // not the full submodel path. fal's queue API returns 405 otherwise.
       const [statusUrl] = mockFetch.mock.calls[0]!;
-      expect(statusUrl).toBe(
-        `https://queue.fal.run/fal-ai/kling-video/v3/pro/text-to-video/requests/${JOB_ID}/status`
-      );
+      expect(statusUrl).toBe(`https://queue.fal.run/fal-ai/kling-video/requests/${JOB_ID}/status`);
 
-      // Second call: result endpoint
+      // Second call: result endpoint — same app-level path.
       const [resultUrl] = mockFetch.mock.calls[1]!;
-      expect(resultUrl).toBe(
-        `https://queue.fal.run/fal-ai/kling-video/v3/pro/text-to-video/requests/${JOB_ID}`
-      );
+      expect(resultUrl).toBe(`https://queue.fal.run/fal-ai/kling-video/requests/${JOB_ID}`);
     });
 
     it('calls addCost with correct parameters on completed', async () => {

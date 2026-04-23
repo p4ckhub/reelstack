@@ -137,9 +137,15 @@ class FalTool implements ProductionTool {
       return { jobId, toolId: this.id, status: 'failed', error: 'Invalid jobId format' };
     }
 
+    // fal's queue API tracks requests at the app level (two path segments:
+    // `<vendor>/<app>`). Submodels like `fal-ai/kling-video/o3/standard/image-to-video`
+    // use the full path to submit, but the status/result endpoints only
+    // accept the app path — otherwise fal returns 405 Method Not Allowed.
+    const appPath = this.modelId.split('/').slice(0, 2).join('/');
+
     try {
       const statusRes = await fetch(
-        `${FAL_QUEUE_BASE}/${this.modelId}/requests/${encodeURIComponent(jobId)}/status`,
+        `${FAL_QUEUE_BASE}/${appPath}/requests/${encodeURIComponent(jobId)}/status`,
         {
           headers: { Authorization: `Key ${this.apiKey}` },
           signal: AbortSignal.timeout(10_000),
@@ -167,9 +173,9 @@ class FalTool implements ProductionTool {
         return { jobId, toolId: this.id, status: 'processing' };
       }
 
-      // Fetch result
+      // Fetch result — same app-level path as /status (see note above).
       const resultRes = await fetch(
-        `${FAL_QUEUE_BASE}/${this.modelId}/requests/${encodeURIComponent(jobId)}`,
+        `${FAL_QUEUE_BASE}/${appPath}/requests/${encodeURIComponent(jobId)}`,
         {
           headers: { Authorization: `Key ${this.apiKey}` },
           signal: AbortSignal.timeout(10_000),

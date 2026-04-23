@@ -4,11 +4,10 @@ import type { AssetGenerationRequest } from '../../types';
 import fs from 'fs';
 
 // child_process needs vi.mock (tool destructures execSync at import time)
-import {
-  childProcessMockFactory,
-  mockExecSync as sharedMockExecSync,
-} from '../../__test-utils__/child-process-mock';
-vi.mock('child_process', childProcessMockFactory);
+import { mockExecSync as sharedMockExecSync } from '../../__test-utils__/child-process-mock';
+vi.mock('child_process', async () =>
+  (await import('../../__test-utils__/child-process-mock')).childProcessMockFactory()
+);
 
 // fs uses spyOn — no vi.mock, no leaking to other test files
 import { Veo31GeminiTool } from '../veo31-gemini-tool';

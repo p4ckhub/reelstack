@@ -2,20 +2,22 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { groupWordsIntoCues } from '../word-grouper';
 import type { TranscriptionWord } from '../types';
 
-// Mock crypto.randomUUID for deterministic tests
+// Mock crypto.randomUUID for deterministic tests. Node 22+ makes
+// globalThis.crypto a getter — assigning directly throws; stub via
+// vi.stubGlobal instead.
 let uuidCounter = 0;
 const originalCrypto = globalThis.crypto;
-globalThis.crypto = {
+vi.stubGlobal('crypto', {
   ...originalCrypto,
   randomUUID: () => `test-uuid-${++uuidCounter}`,
-} as Crypto;
+});
 
 beforeEach(() => {
   uuidCounter = 0;
 });
 
 afterAll(() => {
-  globalThis.crypto = originalCrypto;
+  vi.unstubAllGlobals();
 });
 
 const makeWords = (texts: string[], startOffset = 0, wordDuration = 0.5): TranscriptionWord[] =>

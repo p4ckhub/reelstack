@@ -3,7 +3,6 @@
  * Uses Web Audio API (no FFmpeg.wasm needed).
  * Inspired by OpenReel's transcription-service.ts:105-156.
  */
-
 const TARGET_SAMPLE_RATE = 16000; // Whisper expects 16kHz
 
 /**
