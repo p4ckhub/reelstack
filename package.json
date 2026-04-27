@@ -11,7 +11,7 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "test": "bun test packages/core && bun test packages/tts && bun test packages/transcription && bun test packages/ffmpeg && bun test packages/storage && bun test packages/queue && bun test packages/database && bun test packages/image-gen && bun test packages/remotion && bun test packages/modules && bun test packages/agent && bun test apps/web/src",
+    "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "api:seed": "bun scripts/dev-seed.ts",

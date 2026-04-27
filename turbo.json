@@ -13,7 +13,16 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "package.json",
+        "tsconfig.json",
+        "vitest.config.ts",
+        "../../vitest.shared.ts"
+      ],
+      "outputs": []
     },
     "typecheck": {
       "dependsOn": ["^build"]
