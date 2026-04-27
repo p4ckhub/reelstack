@@ -185,6 +185,8 @@
       },
       "devDependencies": {
         "pino-pretty": "^13.0.0",
+        "typescript": "^5.9.3",
+        "vitest": "^3.2.4",
       },
     },
     "packages/modules": {
@@ -288,11 +290,9 @@
         "vitest": "^3.2.4",
       },
       "peerDependencies": {
-        "@reelstack/hyperframes": "workspace:*",
         "@reelstack/remotion": "workspace:*",
       },
       "optionalPeers": [
-        "@reelstack/hyperframes",
         "@reelstack/remotion",
       ],
     },

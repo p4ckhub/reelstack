@@ -370,7 +370,8 @@ export default function ReelWizardPage() {
       <div className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-bold">Create Reel</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Start with the content. You'll pick captions, voice, and model settings in the next steps.
+          Start with the content. You&apos;ll pick captions, voice, and model settings in the next
+          steps.
         </p>
 
         <Card className="mt-6">

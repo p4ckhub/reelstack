@@ -3,21 +3,22 @@ import { groupWordsIntoCues } from '../word-grouper';
 import type { TranscriptionWord } from '../types';
 
 // Mock crypto.randomUUID for deterministic tests. Node 22+ makes
-// globalThis.crypto a getter — assigning directly throws; stub via
-// vi.stubGlobal instead.
+// globalThis.crypto a getter — assigning to globalThis.crypto throws,
+// and `vi.stubGlobal` is vitest-only (not in bun:test's vi shim, so
+// the same file runs under either runner).
 let uuidCounter = 0;
-const originalCrypto = globalThis.crypto;
-vi.stubGlobal('crypto', {
-  ...originalCrypto,
-  randomUUID: () => `test-uuid-${++uuidCounter}`,
-});
+const cryptoSpy = vi
+  .spyOn(globalThis.crypto, 'randomUUID')
+  .mockImplementation(
+    () => `test-uuid-${++uuidCounter}` as `${string}-${string}-${string}-${string}-${string}`
+  );
 
 beforeEach(() => {
   uuidCounter = 0;
 });
 
 afterAll(() => {
-  vi.unstubAllGlobals();
+  cryptoSpy.mockRestore();
 });
 
 const makeWords = (texts: string[], startOffset = 0, wordDuration = 0.5): TranscriptionWord[] =>
