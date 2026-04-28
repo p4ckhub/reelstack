@@ -25,9 +25,9 @@ vi.mock('@reelstack/agent', () => ({
   listModules: () => [],
   registerModule: vi.fn(),
   callLLM: vi.fn(),
-  PipelineEngine: vi.fn().mockImplementation(() => ({
-    runAll: mockPipelineEngineRunAll,
-  })),
+  PipelineEngine: vi.fn(function (this: { runAll: typeof mockPipelineEngineRunAll }) {
+    this.runAll = mockPipelineEngineRunAll;
+  }),
   createGeneratePipeline: vi.fn().mockReturnValue({
     id: 'generate',
     name: 'Full Auto Generate',
@@ -52,11 +52,15 @@ vi.mock('@reelstack/agent', () => ({
   uploadVoiceover: vi.fn(),
   renderVideo: (...args: unknown[]) => mockRenderVideo(...args),
   discoverTools: vi.fn().mockReturnValue([]),
-  ToolRegistry: vi.fn().mockImplementation(() => ({
-    register: vi.fn(),
-    discover: vi.fn().mockResolvedValue(undefined),
-    getToolManifest: vi.fn().mockReturnValue({ tools: [], summary: '' }),
-  })),
+  ToolRegistry: vi.fn(function (this: {
+    register: ReturnType<typeof vi.fn>;
+    discover: ReturnType<typeof vi.fn>;
+    getToolManifest: ReturnType<typeof vi.fn>;
+  }) {
+    this.register = vi.fn();
+    this.discover = vi.fn().mockResolvedValue(undefined);
+    this.getToolManifest = vi.fn().mockReturnValue({ tools: [], summary: '' });
+  }),
   getCostSummary: vi.fn().mockReturnValue({ totalUSD: 0, byType: {}, byProvider: {}, entries: [] }),
   runPostRenderGates: vi.fn().mockResolvedValue({ passed: true, failures: [], details: [] }),
   resolvePresetConfig: vi.fn().mockReturnValue({

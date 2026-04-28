@@ -31,15 +31,22 @@ const mockPipelineEngineRetryStep = vi.fn();
 const mockPipelineEngineResumeFrom = vi.fn();
 const mockPipelineEngineLoadContext = vi.fn();
 
-const mockPipelineEngineFactory = () => ({
-  getStatus: mockPipelineEngineGetStatus,
-  retryStep: mockPipelineEngineRetryStep,
-  resumeFrom: mockPipelineEngineResumeFrom,
-  loadContext: mockPipelineEngineLoadContext,
-});
+type PipelineEngineMockShape = {
+  getStatus: typeof mockPipelineEngineGetStatus;
+  retryStep: typeof mockPipelineEngineRetryStep;
+  resumeFrom: typeof mockPipelineEngineResumeFrom;
+  loadContext: typeof mockPipelineEngineLoadContext;
+};
+
+function mockPipelineEngineCtor(this: PipelineEngineMockShape) {
+  this.getStatus = mockPipelineEngineGetStatus;
+  this.retryStep = mockPipelineEngineRetryStep;
+  this.resumeFrom = mockPipelineEngineResumeFrom;
+  this.loadContext = mockPipelineEngineLoadContext;
+}
 
 vi.mock('@reelstack/agent', () => ({
-  PipelineEngine: vi.fn().mockImplementation(mockPipelineEngineFactory),
+  PipelineEngine: vi.fn(mockPipelineEngineCtor),
   createGeneratePipeline: vi.fn().mockReturnValue({
     id: 'generate',
     name: 'Full Auto Generate',
@@ -51,7 +58,7 @@ vi.mock('@reelstack/agent', () => ({
 }));
 
 vi.mock('@reelstack/agent/pipeline', () => ({
-  PipelineEngine: vi.fn().mockImplementation(mockPipelineEngineFactory),
+  PipelineEngine: vi.fn(mockPipelineEngineCtor),
 }));
 
 import { queueMockFactory, mockEnqueue } from '@/__test-utils__/queue-mock';
