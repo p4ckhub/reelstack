@@ -83,6 +83,7 @@ export const EFFECT_CATALOG: readonly EffectCatalogEntry[] = [
     description: 'Animated circular progress counter',
     config:
       'segments ([{value, holdFrames?}]), size (50-500), fillColor, trackColor, textColor, fontSize, strokeWidth, position ("center"|"top-right"|"top-left"|"bottom-right"|"bottom-left"), entrance, exit',
+    defaultSfx: 'rise',
     recommendedStyles: ['dynamic', 'educational'],
     styleHint: 'stats, percentages, progress indicators',
   },
@@ -165,6 +166,7 @@ export const EFFECT_CATALOG: readonly EffectCatalogEntry[] = [
     description: 'Animated SVG progress ring filling from 0% to target',
     config:
       'targetPercent (0-100, REQUIRED), size (50-500, default 200), strokeWidth (4-40, default 12), fillColor (hex), trackColor (hex), label (string, optional — auto-shows percentage if omitted), labelFontSize, labelColor, position ("center"|"top-right"|"top-left"|"bottom-right"|"bottom-left"), entrance, exit',
+    defaultSfx: 'rise',
     recommendedStyles: ['dynamic', 'educational', 'cyber-retro'],
     styleHint: 'stats, progress indicators, completion rates, scores',
   },
@@ -684,6 +686,12 @@ export interface MontageProfileEntry {
   readonly effectsPerThirtySec: number;
   readonly allowedTransitions: readonly string[];
   readonly sfxMapping: Record<string, string>;
+  /**
+   * Per-effect SFX overrides keyed by EFFECT_CATALOG.type.
+   * Resolution order in assembler: LLM config > profile override > catalog defaultSfx.
+   * `null` mutes the effect; omitted = fall through to catalog default.
+   */
+  readonly effectSfxOverrides?: Record<string, string | null>;
   readonly directorRules: readonly string[];
   readonly topicKeywords: readonly string[];
   readonly toolPreference: readonly string[];

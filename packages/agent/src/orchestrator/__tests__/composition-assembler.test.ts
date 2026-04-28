@@ -6,6 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { assembleComposition } from '../composition-assembler';
 import type { AssemblyInput, AssembledProps } from '../composition-assembler';
 import type { ProductionPlan, GeneratedAsset, BrandPreset, ShotPlan } from '../../types';
+import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -519,6 +520,31 @@ describe('effects assembly', () => {
     expect(result.effects[0].sfx).toEqual({ url: 'sfx/pop.mp3', volume: 0.7 });
   });
 
+  it('counter and progress-ring auto-wire to "rise" SFX (Task 3.3)', () => {
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'circular-counter',
+          startTime: 1,
+          endTime: 3,
+          config: { segments: [{ value: 100 }] },
+          reason: 'stat',
+        },
+        {
+          type: 'progress-ring',
+          startTime: 4,
+          endTime: 6,
+          config: { targetPercent: 80 },
+          reason: 'completion',
+        },
+      ],
+    });
+    const result = assembleComposition(makeInput({ plan }));
+
+    expect(result.effects[0].sfx).toEqual({ url: 'sfx/rise.mp3', volume: 0.7 });
+    expect(result.effects[1].sfx).toEqual({ url: 'sfx/rise.mp3', volume: 0.7 });
+  });
+
   it('uses LLM-specified custom SFX over catalog default', () => {
     const plan = makeMinimalPlan({
       effects: [
@@ -568,6 +594,140 @@ describe('effects assembly', () => {
     const result = assembleComposition(makeInput({ plan }));
 
     expect(result.effects[0].sfx).toBeUndefined();
+  });
+
+  // ── Per-profile SFX overrides (Task 3.3) ────────────────────
+
+  function makeProfile(
+    overrides: Partial<MontageProfileEntry> & Pick<MontageProfileEntry, 'effectSfxOverrides'>
+  ): MontageProfileEntry {
+    return {
+      id: 'test-profile',
+      name: 'Test',
+      description: 'test',
+      pacing: 'fast',
+      maxShotDurationSec: 4,
+      effectsPerThirtySec: 10,
+      allowedTransitions: ['crossfade'],
+      sfxMapping: {},
+      directorRules: ['x'],
+      topicKeywords: ['x'],
+      toolPreference: ['pexels'],
+      colorPalette: { accent: '#000' },
+      ...overrides,
+    };
+  }
+
+  it('profile override replaces catalog default SFX', () => {
+    // emoji-popup catalog default = 'pop'; profile overrides to 'glitch'
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'emoji-popup',
+          startTime: 1,
+          endTime: 2,
+          config: { emoji: 'fire' },
+          reason: 'reaction',
+        },
+      ],
+    });
+    const profile = makeProfile({ effectSfxOverrides: { 'emoji-popup': 'glitch' } });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toEqual({ url: 'sfx/glitch.mp3', volume: 0.7 });
+  });
+
+  it('profile override null mutes catalog default SFX', () => {
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'emoji-popup',
+          startTime: 1,
+          endTime: 2,
+          config: { emoji: 'fire' },
+          reason: 'reaction',
+        },
+      ],
+    });
+    const profile = makeProfile({ effectSfxOverrides: { 'emoji-popup': null } });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toBeUndefined();
+  });
+
+  it('profile override adds SFX for effect with no catalog default', () => {
+    // screen-shake has no catalog defaultSfx — profile supplies one
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'screen-shake',
+          startTime: 1,
+          endTime: 1.5,
+          config: { intensity: 10 },
+          reason: 'impact',
+        },
+      ],
+    });
+    const profile = makeProfile({ effectSfxOverrides: { 'screen-shake': 'thud' } });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toEqual({ url: 'sfx/thud.mp3', volume: 0.7 });
+  });
+
+  it('LLM sfx config overrides profile override', () => {
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'emoji-popup',
+          startTime: 1,
+          endTime: 2,
+          config: { emoji: 'fire', sfx: { id: 'ding' } },
+          reason: 'reaction',
+        },
+      ],
+    });
+    const profile = makeProfile({ effectSfxOverrides: { 'emoji-popup': 'glitch' } });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toEqual({ url: 'sfx/ding.mp3', volume: 0.7 });
+  });
+
+  it('LLM sfx=null overrides profile override (mutes)', () => {
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'emoji-popup',
+          startTime: 1,
+          endTime: 2,
+          config: { emoji: 'fire', sfx: null },
+          reason: 'silent',
+        },
+      ],
+    });
+    const profile = makeProfile({ effectSfxOverrides: { 'emoji-popup': 'glitch' } });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toBeUndefined();
+  });
+
+  it('falls back to catalog default when profile has no override for the effect', () => {
+    const plan = makeMinimalPlan({
+      effects: [
+        {
+          type: 'emoji-popup',
+          startTime: 1,
+          endTime: 2,
+          config: { emoji: 'fire' },
+          reason: 'reaction',
+        },
+      ],
+    });
+    const profile = makeProfile({
+      effectSfxOverrides: { 'glitch-transition': 'whoosh' }, // unrelated entry
+    });
+    const result = assembleComposition(makeInput({ plan, montageProfile: profile }));
+
+    expect(result.effects[0].sfx).toEqual({ url: 'sfx/pop.mp3', volume: 0.7 });
   });
 
   it('uses default volume 0.7 when LLM sfx has no volume', () => {

@@ -1,7 +1,7 @@
 import type { ProductionPlan, GeneratedAsset, BrandPreset } from '../types';
 import { BUILT_IN_CAPTION_PRESETS, DEFAULT_CAPTION_PRESET } from '@reelstack/types';
 import type { CaptionPreset } from '@reelstack/types';
-import { EFFECT_CATALOG, sfxIdToUrl } from '@reelstack/remotion/catalog';
+import { EFFECT_CATALOG, sfxIdToUrl, type MontageProfileEntry } from '@reelstack/remotion/catalog';
 import { createLogger } from '@reelstack/logger';
 
 const log = createLogger('composition-assembler');
@@ -86,6 +86,8 @@ export interface AssemblyInput {
   primaryVideoTransparent?: boolean;
   /** FREE-tier watermark config. Server-authoritative, never client-set. */
   watermark?: { enabled: boolean; seed?: string };
+  /** Active montage profile — supplies per-effect SFX overrides (Task 3.3). */
+  montageProfile?: MontageProfileEntry;
 }
 
 /** Extract string from unknown, return undefined if not string */
@@ -101,7 +103,7 @@ function num(v: unknown): number | undefined {
  * Assembles a ProductionPlan + generated assets + cues into ReelProps.
  */
 export function assembleComposition(input: AssemblyInput): AssembledProps {
-  const { plan, assets, cues, voiceoverFilename, brandPreset, watermark } = input;
+  const { plan, assets, cues, voiceoverFilename, brandPreset, watermark, montageProfile } = input;
 
   // Build asset lookup: shotId -> asset (also index by searchQuery for compose mode)
   const assetMap = new Map<string, GeneratedAsset>();
@@ -276,6 +278,37 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
     'B-roll segments assembled'
   );
 
+  // Tier 0 sanity: surface obvious composition problems while we have all
+  // the context (plan, assets, cues). Logged as warnings — the orchestrator
+  // runs proper quality gates after assembly. Cheap and non-blocking.
+  const planEnd = plan.shots.reduce((max, s) => Math.max(max, s.endTime), 0);
+  const cueEnd = cues.reduce((max, c) => Math.max(max, c.endTime), 0);
+  const COMPOSITION_DRIFT_TOLERANCE = 0.1;
+  if (planEnd > 0 && cueEnd > 0 && Math.abs(planEnd - cueEnd) > COMPOSITION_DRIFT_TOLERANCE) {
+    log.warn(
+      { planEnd, cueEnd, drift: +(planEnd - cueEnd).toFixed(3) },
+      'Composition sanity: plan duration drifts from cue duration > 0.1s'
+    );
+  }
+  if (plan.primarySource.type !== 'none' && plan.shots.length > 0 && cues.length === 0) {
+    log.warn(
+      { primarySource: plan.primarySource.type, shotCount: plan.shots.length },
+      'Composition sanity: plan has voiceover/shots but no caption cues attached'
+    );
+  }
+  const unresolvedShots = plan.shots.filter((shot) => {
+    if (shot.shotLayout === 'montage' && shot.montagePanelIds?.length) return false;
+    if (shot.visual.type === 'primary' || shot.visual.type === 'text-card') return false;
+    const sq = (shot.visual as Record<string, unknown>).searchQuery as string | undefined;
+    return !assetMap.has(shot.id) && !(sq && assetMap.has(sq));
+  });
+  if (unresolvedShots.length > 0) {
+    log.warn(
+      { unresolvedShotIds: unresolvedShots.map((s) => s.id) },
+      'Composition sanity: shots without resolved assets (placeholder will render)'
+    );
+  }
+
   // Convert effects - flatten config into top-level props (spread config first so sanitized fields can't be overridden)
   // Build default SFX lookup from catalog
   const defaultSfxMap = new Map<string, string>();
@@ -284,6 +317,7 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
       defaultSfxMap.set(entry.type, entry.defaultSfx);
     }
   }
+  const profileSfxOverrides = montageProfile?.effectSfxOverrides;
 
   const effects: EffectEntry[] = plan.effects.map((e) => {
     const base: EffectEntry = {
@@ -293,7 +327,7 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
       endTime: e.endTime,
     };
 
-    // Resolve SFX: LLM config > default from catalog
+    // Resolve SFX: LLM config > profile override > catalog default
     const configSfx = e.config.sfx as { id?: string; volume?: number } | null | undefined;
 
     if (configSfx === null) {
@@ -303,10 +337,11 @@ export function assembleComposition(input: AssemblyInput): AssembledProps {
       // LLM specified a custom SFX
       base.sfx = { url: sfxIdToUrl(configSfx.id), volume: configSfx.volume ?? 0.7 };
     } else {
-      // Apply default SFX from catalog if available
-      const defaultSfxId = defaultSfxMap.get(e.type);
-      if (defaultSfxId) {
-        base.sfx = { url: sfxIdToUrl(defaultSfxId), volume: 0.7 };
+      // Profile override (null = mute, string = use that id, undefined = fall through to catalog)
+      const override = profileSfxOverrides?.[e.type];
+      const resolved = override === undefined ? defaultSfxMap.get(e.type) : override;
+      if (resolved) {
+        base.sfx = { url: sfxIdToUrl(resolved), volume: 0.7 };
       }
     }
 

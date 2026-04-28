@@ -410,6 +410,7 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     voiceoverFilename: voiceoverUrl,
     brandPreset: request.brandPreset,
     watermark: request.watermark,
+    montageProfile,
   });
 
   // Pipeline logging: composition assembly
@@ -747,6 +748,7 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
   onProgress?.('Assembling composition...');
 
   const voiceoverUrl = await uploadVoiceover(voiceoverPath);
+  const montageProfile = selectMontageProfile(request.script);
 
   const primaryAsset = request.assets.find((a) => a.isPrimary);
   const framingMap: Record<string, string> = {
@@ -764,6 +766,7 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
     brandPreset: request.brandPreset,
     primaryVideoDurationSeconds: primaryAsset?.durationSeconds,
     primaryVideoObjectPosition: framingMap[avatarFraming] ?? 'center',
+    montageProfile,
   });
 
   // Pipeline logging: composition assembly
