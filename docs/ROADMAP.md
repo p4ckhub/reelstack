@@ -617,7 +617,7 @@ Public GitHub release turns ReelStack into organic distribution.
 | Tests (total)         | ~1930 (1666 bun-test + 266 vitest)                                                                                             |
 | Packages              | 14 (agent, core, database, ffmpeg, image-gen, logger, modules, publisher, queue, remotion, storage, transcription, tts, types) |
 | Reel layouts          | 5 (fullscreen, split-screen, anchor-bottom, hybrid-anchor, comparison-split)                                                   |
-| Montage profiles      | 3 (cyber-retro, clean-corporate, ai-tool-showcase)                                                                               |
+| Montage profiles      | 3 (cyber-retro, clean-corporate, ai-tool-showcase)                                                                             |
 | Modules               | 7+ (public: slideshow, captions · private: n8n-explainer, talking-object, presenter-explainer, ai-tips, zoom-reframe)          |
 | AI tools discoverable | 24 (with all provider keys set)                                                                                                |
 | Docker images         | 3 (web, worker, reel-worker)                                                                                                   |
