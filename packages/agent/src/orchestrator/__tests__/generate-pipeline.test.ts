@@ -179,8 +179,8 @@ describe('generatePipeline', () => {
       expect(pipeline.name).toBe('Full Auto Generate');
     });
 
-    it('defines 11 steps in correct order', () => {
-      expect(pipeline.steps).toHaveLength(11);
+    it('defines 12 steps in correct order', () => {
+      expect(pipeline.steps).toHaveLength(12);
       const ids = pipeline.steps.map((s) => s.id);
       expect(ids).toEqual([
         'script-review',
@@ -194,6 +194,7 @@ describe('generatePipeline', () => {
         'asset-gen',
         'asset-persist',
         'composition',
+        'pre-render-gates',
       ]);
     });
 
@@ -215,14 +216,15 @@ describe('generatePipeline', () => {
       expect(pipeline.steps[0].dependsOn).toEqual([]);
     });
 
-    it('last step depends on asset-persist', () => {
+    it('last step (pre-render-gates) depends on composition', () => {
       const last = pipeline.steps[pipeline.steps.length - 1];
-      expect(last.dependsOn).toContain('asset-persist');
+      expect(last.id).toBe('pre-render-gates');
+      expect(last.dependsOn).toContain('composition');
     });
 
     it('exports GENERATE_STEP_IDS constant for reference', () => {
       expect(GENERATE_STEP_IDS).toBeDefined();
-      expect(GENERATE_STEP_IDS).toHaveLength(11);
+      expect(GENERATE_STEP_IDS).toHaveLength(12);
     });
   });
 

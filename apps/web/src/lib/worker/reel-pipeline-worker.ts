@@ -19,7 +19,9 @@ import {
   createGeneratePipeline,
   getCostSummary,
   isPublicUrl,
+  runPostRenderGates,
 } from '@reelstack/agent';
+import type { QualityCheckResult } from '@reelstack/agent';
 import type {
   UserAsset,
   ComposeRequest,
@@ -171,9 +173,13 @@ export async function processReelPipelineJob(jobId: string, fromStepId?: string)
       // Post-process: some pipelines need extra steps (e.g. generate needs render)
       outputPath = await postProcess(pipelineResult);
 
+      // Tier 0 post-render gates (codec/container/duration/captions on the
+      // rendered MP4). Pre-render gates already ran inside the pipeline.
+      const postGates = await runPostRenderGatesForPipeline(pipelineResult, outputPath);
+
       // Save production metadata from pipeline steps
       await updateReelJobStatus(jobId, {
-        productionMeta: buildPipelineProductionMeta(pipelineResult),
+        productionMeta: buildPipelineProductionMeta(pipelineResult, postGates),
       }).catch((err) => log.warn({ jobId, err }, 'Failed to save production meta'));
 
       log.info(
@@ -619,9 +625,36 @@ async function createGenerateDeps(): Promise<GeneratePipelineDeps> {
 }
 
 /**
+ * Run Tier 0 post-render gates for a finished pipeline result. Pre-render
+ * gates already ran as the last pipeline step (`pre-render-gates`) — this
+ * complements them by probing the rendered MP4.
+ *
+ * Failures are logged but never throw; downstream `mergeQualityChecksMeta`
+ * surfaces them in productionMeta so the customer sees a warning instead of
+ * a silent ship.
+ */
+async function runPostRenderGatesForPipeline(
+  result: PipelineResult,
+  outputPath: string
+): Promise<QualityCheckResult> {
+  const ttsResult = result.context.results.tts as
+    | { audioDuration?: number; cues?: ReadonlyArray<unknown> }
+    | undefined;
+  return runPostRenderGates({
+    outputPath,
+    expectedDuration: ttsResult?.audioDuration ?? 0,
+    expectsCaptions: (ttsResult?.cues?.length ?? 0) > 0,
+    assumeBurnedInCaptions: true,
+  });
+}
+
+/**
  * Build production metadata from PipelineEngine result for DB persistence.
  */
-function buildPipelineProductionMeta(result: PipelineResult): Record<string, unknown> {
+function buildPipelineProductionMeta(
+  result: PipelineResult,
+  postGates?: QualityCheckResult
+): Record<string, unknown> {
   const ctx = result.context;
   const compositionResult = ctx.results.composition as
     | { plan: import('@reelstack/agent').ProductionPlan }
@@ -630,6 +663,7 @@ function buildPipelineProductionMeta(result: PipelineResult): Record<string, unk
     | { assets: import('@reelstack/agent').GeneratedAsset[] }
     | undefined;
   const ttsResult = ctx.results.tts as { audioDuration?: number } | undefined;
+  const preGates = ctx.results['pre-render-gates'] as QualityCheckResult | undefined;
 
   const plan = compositionResult?.plan;
   const assets = assetPersistResult?.assets ?? [];
@@ -669,6 +703,25 @@ function buildPipelineProductionMeta(result: PipelineResult): Record<string, unk
     })),
     durationSeconds: ttsResult?.audioDuration,
     costs: getCostSummary(),
+    qualityChecks: mergeQualityChecksMeta(preGates, postGates),
+  };
+}
+
+/**
+ * Merge pre + post quality check results into the shape stored in
+ * productionMeta and surfaced via the API.
+ */
+function mergeQualityChecksMeta(
+  pre?: QualityCheckResult,
+  post?: QualityCheckResult
+): { passed: boolean; failures: string[]; details: QualityCheckResult['details'] } | null {
+  if (!pre && !post) return null;
+  const prePassed = pre?.passed ?? true;
+  const postPassed = post?.passed ?? true;
+  return {
+    passed: prePassed && postPassed,
+    failures: [...(pre?.failures ?? []), ...(post?.failures ?? [])],
+    details: [...(pre?.details ?? []), ...(post?.details ?? [])],
   };
 }
 
@@ -714,5 +767,6 @@ function buildProductionMeta(
       detail: s.detail,
     })),
     durationSeconds: result.durationSeconds,
+    qualityChecks: result.qualityChecks ?? null,
   };
 }

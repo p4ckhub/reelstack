@@ -4,3 +4,5 @@ export { formatTime, parseTime, formatDisplay } from './time-utils';
 export { extractLastFrame, extractFrameAt } from './video-frames';
 export { splitAudioByTimings } from './audio-split';
 export type { AudioSegment, SplitResult } from './audio-split';
+export { probeMedia, measureLufs } from './probe';
+export type { ProbeResult, ProbeStream } from './probe';

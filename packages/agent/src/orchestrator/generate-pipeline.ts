@@ -23,6 +23,7 @@ import type { SupervisorResult } from '../planner/plan-supervisor';
 import type { ToolRegistry } from '../registry/tool-registry';
 import type { AssemblyInput, AssembledProps } from './composition-assembler';
 import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
+import { runPreRenderGates } from '../quality/tier0-gates';
 
 // ── Step IDs ──────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export const GENERATE_STEP_IDS = [
   'asset-gen',
   'asset-persist',
   'composition',
+  'pre-render-gates',
 ] as const;
 
 export type GenerateStepId = (typeof GENERATE_STEP_IDS)[number];
@@ -143,6 +145,7 @@ export function createGeneratePipeline(deps: GeneratePipelineDeps): PipelineDefi
       createAssetGenStep(deps),
       createAssetPersistStep(deps),
       createCompositionStep(deps),
+      createPreRenderGatesStep(),
     ],
   };
 }
@@ -440,6 +443,32 @@ function createAssetPersistStep(deps: GeneratePipelineDeps): StepDefinition {
       const assets = await deps.persistAssets(assetGenResult.assets, ctx.jobId);
 
       return { assets };
+    },
+  };
+}
+
+/**
+ * Tier 0 pre-render quality gates. Runs after composition, before the worker
+ * pays for a Lambda render. Doesn't fail the pipeline — failures are recorded
+ * in the step output so the caller marks the job completed_with_warnings.
+ *
+ * Post-render gates run in the worker because the pipeline output (reelProps)
+ * is consumed by the renderer outside the pipeline.
+ */
+function createPreRenderGatesStep(): StepDefinition {
+  return {
+    id: 'pre-render-gates',
+    name: 'Tier 0 quality gates (pre-render)',
+    dependsOn: ['composition', 'tts'],
+    async execute(ctx: PipelineContext) {
+      const compositionResult = ctx.results.composition as { plan: ProductionPlan };
+      const ttsResult = ctx.results.tts as TTSPipelineResult;
+      return runPreRenderGates({
+        voiceoverPath: ttsResult.voiceoverPath,
+        audioDuration: ttsResult.audioDuration,
+        plan: compositionResult.plan,
+        cues: ttsResult.cues,
+      });
     },
   };
 }

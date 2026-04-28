@@ -63,6 +63,23 @@ export {
 export { persistAssetsToStorage } from './orchestrator/asset-persistence';
 export { pollUntilDone } from './polling';
 export { AgentError, PlanningError, GenerationError } from './errors';
+export {
+  runPreRenderGates,
+  runPostRenderGates,
+  runTier0Gates,
+  LUFS_MIN,
+  LUFS_MAX,
+  ALLOWED_VIDEO_CODECS,
+  ALLOWED_AUDIO_CODECS,
+  ALLOWED_CONTAINERS,
+  DURATION_TOLERANCE_SECONDS,
+} from './quality/tier0-gates';
+export type {
+  QualityCheckResult,
+  GateDetail,
+  PreRenderInput,
+  PostRenderInput,
+} from './quality/tier0-gates';
 export { PipelineLogger } from './orchestrator/pipeline-logger';
 export type { PipelineLog, PipelineLogSummary } from './orchestrator/pipeline-logger';
 export { PipelineEngine } from './orchestrator/pipeline-engine';

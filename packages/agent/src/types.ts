@@ -479,6 +479,20 @@ export interface ProductionResult {
       readonly hasError: boolean;
     }>;
   };
+  /**
+   * Tier 0 quality gate results (LUFS / duration / codec / captions).
+   * `passed: false` means the orchestrator should mark the job
+   * `completed_with_warnings`, not silent ship. See `quality/tier0-gates.ts`.
+   */
+  readonly qualityChecks?: {
+    readonly passed: boolean;
+    readonly failures: readonly string[];
+    readonly details: ReadonlyArray<{
+      readonly id: string;
+      readonly status: 'passed' | 'failed' | 'skipped';
+      readonly message: string;
+    }>;
+  };
 }
 
 export interface ProductionStep {

@@ -58,6 +58,7 @@ vi.mock('@reelstack/agent', () => ({
     getToolManifest: vi.fn().mockReturnValue({ tools: [], summary: '' }),
   })),
   getCostSummary: vi.fn().mockReturnValue({ totalUSD: 0, byType: {}, byProvider: {}, entries: [] }),
+  runPostRenderGates: vi.fn().mockResolvedValue({ passed: true, failures: [], details: [] }),
   resolvePresetConfig: vi.fn().mockReturnValue({
     maxWordsPerCue: 5,
     maxDurationPerCue: 3,

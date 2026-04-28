@@ -27,8 +27,6 @@ import type {
   ProductionResult,
   ProductionStep,
   ComposeRequest,
-  BrandPreset,
-  ProductionPlan,
   GeneratedAsset,
 } from '../types';
 import { selectMontageProfile } from '../planner/montage-profile';
@@ -39,6 +37,8 @@ import { createLogger } from '@reelstack/logger';
 import { PipelineLogger } from './pipeline-logger';
 import { persistAssetsToStorage } from './asset-persistence';
 import { runWithJobId, setApiCallLogger } from '../context';
+import { runPreRenderGates, runPostRenderGates } from '../quality/tier0-gates';
+import type { QualityCheckResult } from '../quality/tier0-gates';
 
 const baseLog = createLogger('production-orchestrator');
 
@@ -416,6 +416,28 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
   pipelineLogger?.logStep('composition-assembly', 0, { planLayout: plan.layout }, props);
   pipelineLogger?.saveArtifact('06-composition.json', JSON.stringify(props, null, 2));
 
+  // ── 5b. PRE-RENDER QUALITY GATES ───────────────────────────
+  // Cheap checks (LUFS on voiceover, plan/audio duration, captions present)
+  // before paying for a Lambda render. Failures don't block — we log them
+  // and surface in qualityChecks so the job is marked completed_with_warnings.
+  onProgress?.('Running pre-render quality gates...');
+  const preGateStart = performance.now();
+  const preGates = await runPreRenderGates({
+    voiceoverPath: ttsResult.voiceoverPath,
+    audioDuration: ttsResult.audioDuration,
+    plan,
+    cues: ttsResult.cues,
+  });
+  steps.push({
+    name: 'Pre-render quality gates',
+    durationMs: performance.now() - preGateStart,
+    detail: preGates.passed ? 'All gates passed' : `${preGates.failures.length} failure(s)`,
+  });
+  pipelineLogger?.logStep('pre-render-gates', performance.now() - preGateStart, {}, preGates);
+  if (!preGates.passed) {
+    log.warn({ failures: preGates.failures }, 'Pre-render quality gates failed');
+  }
+
   // ── 6. RENDER ──────────────────────────────────────────────
   const { outputPath, step: renderStep } = await renderVideo(
     props as unknown as Record<string, unknown>,
@@ -431,6 +453,28 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     { layout: props.layout, outputPath },
     { sizeBytes: renderStep.detail, durationMs: renderStep.durationMs }
   );
+
+  // ── 6b. POST-RENDER QUALITY GATES ──────────────────────────
+  // Verify the rendered file before we ship it (codec, container, duration,
+  // captions). Remotion always burns captions in, so we pass assumeBurnedIn.
+  const postGateStart = performance.now();
+  const postGates = await runPostRenderGates({
+    outputPath,
+    expectedDuration: ttsResult.audioDuration,
+    expectsCaptions: ttsResult.cues.length > 0,
+    assumeBurnedInCaptions: true,
+  });
+  steps.push({
+    name: 'Post-render quality gates',
+    durationMs: performance.now() - postGateStart,
+    detail: postGates.passed ? 'All gates passed' : `${postGates.failures.length} failure(s)`,
+  });
+  pipelineLogger?.logStep('post-render-gates', performance.now() - postGateStart, {}, postGates);
+  if (!postGates.passed) {
+    log.warn({ failures: postGates.failures }, 'Post-render quality gates failed');
+  }
+
+  const qualityChecks = mergeQualityChecks(preGates, postGates);
 
   // Persist full pipeline log (awaited — this is the final step)
   if (pipelineLogger) {
@@ -454,6 +498,7 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     steps,
     generatedAssets: assets,
     pipelineLogSummary: pipelineLogger?.getSummary(),
+    qualityChecks,
   };
 }
 
@@ -725,6 +770,25 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
   pipelineLogger?.logStep('composition-assembly', 0, { planLayout: plan.layout }, props);
   pipelineLogger?.saveArtifact('06-composition.json', JSON.stringify(props, null, 2));
 
+  // ── 5b. PRE-RENDER QUALITY GATES ───────────────────────────
+  onProgress?.('Running pre-render quality gates...');
+  const preGateStart = performance.now();
+  const preGates = await runPreRenderGates({
+    voiceoverPath,
+    audioDuration,
+    plan,
+    cues,
+  });
+  steps.push({
+    name: 'Pre-render quality gates',
+    durationMs: performance.now() - preGateStart,
+    detail: preGates.passed ? 'All gates passed' : `${preGates.failures.length} failure(s)`,
+  });
+  pipelineLogger?.logStep('pre-render-gates', performance.now() - preGateStart, {}, preGates);
+  if (!preGates.passed) {
+    log.warn({ failures: preGates.failures }, 'Pre-render quality gates failed');
+  }
+
   // ── 6. RENDER ───────────────────────────────────────────────
   const { outputPath, step: renderStep } = await renderVideo(
     props as unknown as Record<string, unknown>,
@@ -740,6 +804,26 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
     { layout: props.layout, outputPath },
     { sizeBytes: renderStep.detail, durationMs: renderStep.durationMs }
   );
+
+  // ── 6b. POST-RENDER QUALITY GATES ──────────────────────────
+  const postGateStart = performance.now();
+  const postGates = await runPostRenderGates({
+    outputPath,
+    expectedDuration: audioDuration,
+    expectsCaptions: cues.length > 0,
+    assumeBurnedInCaptions: true,
+  });
+  steps.push({
+    name: 'Post-render quality gates',
+    durationMs: performance.now() - postGateStart,
+    detail: postGates.passed ? 'All gates passed' : `${postGates.failures.length} failure(s)`,
+  });
+  pipelineLogger?.logStep('post-render-gates', performance.now() - postGateStart, {}, postGates);
+  if (!postGates.passed) {
+    log.warn({ failures: postGates.failures }, 'Post-render quality gates failed');
+  }
+
+  const qualityChecks = mergeQualityChecks(preGates, postGates);
 
   // Persist full pipeline log (awaited — this is the final step)
   if (pipelineLogger) {
@@ -763,6 +847,22 @@ async function produceCompositionInner(request: ComposeRequest): Promise<Product
     steps,
     generatedAssets: persistedAssets,
     pipelineLogSummary: pipelineLogger?.getSummary(),
+    qualityChecks,
+  };
+}
+
+/**
+ * Merge pre-render and post-render gate results into a single ProductionResult
+ * payload. Both runs always execute so the audit log captures both stages.
+ */
+function mergeQualityChecks(
+  pre: QualityCheckResult,
+  post: QualityCheckResult
+): NonNullable<ProductionResult['qualityChecks']> {
+  return {
+    passed: pre.passed && post.passed,
+    failures: [...pre.failures, ...post.failures],
+    details: [...pre.details, ...post.details],
   };
 }
 
