@@ -24,6 +24,36 @@ import { buildProfileGuidelines } from './montage-profile';
 import { renderTemplate } from '../prompts/renderer';
 import { loadTemplate, loadAllPartials } from '../prompts/loader';
 
+/**
+ * Extract a one-line summary from a multi-line markdown guideline.
+ * Skips blank lines and markdown headings, returns the first content line
+ * truncated to ~120 chars. Used to keep the planner prompt compact when
+ * full guidelines are not needed (prompt-writer handles per-shot guidance).
+ */
+function summarizeGuidelines(guidelines: string): string {
+  const lines = guidelines.split('\n');
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('#')) continue;
+    if (line.startsWith('---')) continue;
+    return line.length > 120 ? `${line.slice(0, 117)}...` : line;
+  }
+  return '';
+}
+
+/**
+ * Whether to inject full per-tool prompt-writing guidelines into the
+ * planner system prompt. Off by default — the planner only needs to
+ * SELECT a tool, not write tool-specific prompts. Per-shot prompt
+ * generation runs in `prompt-writer.ts` with the full guideline for
+ * the chosen tool. Setting `LEGACY_FULL_GUIDELINES_IN_PLANNER=true`
+ * restores pre-Tier-1.1 behaviour for rollback.
+ */
+function useFullGuidelinesInPlanner(): boolean {
+  return process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER === 'true';
+}
+
 /** Shared catalog sections used by planner, revision, and composer prompts. */
 function buildCatalogSections(manifest: ToolManifest) {
   const availableTools = manifest.tools.filter((t) => t.available);
@@ -40,10 +70,17 @@ function buildCatalogSections(manifest: ToolManifest) {
     })
     .join('\n\n');
 
+  const fullGuidelines = useFullGuidelinesInPlanner();
   const guidelinesSection = availableTools
     .filter((t) => t.promptGuidelines)
-    .map((t) => `### ${t.name} (id: "${t.id}")\n${t.promptGuidelines}`)
-    .join('\n\n');
+    .map((t) => {
+      if (fullGuidelines) {
+        return `### ${t.name} (id: "${t.id}")\n${t.promptGuidelines}`;
+      }
+      const summary = summarizeGuidelines(t.promptGuidelines!);
+      return `- "${t.id}": ${summary}`;
+    })
+    .join(fullGuidelines ? '\n\n' : '\n');
 
   const effectSection = EFFECT_CATALOG.map((e) => {
     const sfxNote = e.defaultSfx ? ` [default SFX: "${e.defaultSfx}"]` : '';

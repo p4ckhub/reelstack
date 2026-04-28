@@ -153,10 +153,42 @@ describe('buildPlannerPrompt', () => {
     expect(result).not.toContain('Disabled Tool (id: "disabled-tool")');
   });
 
-  it('includes prompt guidelines for tools that have them', () => {
+  it('includes one-line guideline summary per tool (lazy mode, default)', () => {
     const result = buildPlannerPrompt(mockManifest);
 
-    expect(result).toContain('Describe motion explicitly. Avoid text overlays.');
+    // Default mode summarises full guidelines down to a single line per tool —
+    // the planner only needs to SELECT a tool, not write tool-specific prompts.
+    // Per-shot prompt-writing happens in `prompt-writer.ts` with the full guideline.
+    expect(result).toContain(
+      '- "seedance2-piapi": Describe motion explicitly. Avoid text overlays.'
+    );
+  });
+
+  it('includes full guidelines when LEGACY_FULL_GUIDELINES_IN_PLANNER=true', () => {
+    const prev = process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER;
+    process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER = 'true';
+    try {
+      const result = buildPlannerPrompt(mockManifest);
+      expect(result).toContain('### Seedance 2.0 (id: "seedance2-piapi")');
+      expect(result).toContain('Describe motion explicitly. Avoid text overlays.');
+    } finally {
+      if (prev === undefined) delete process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER;
+      else process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER = prev;
+    }
+  });
+
+  it('lazy guidelines mode shrinks prompt vs legacy full mode', () => {
+    const lazy = buildPlannerPrompt(mockManifest);
+
+    const prev = process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER;
+    process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER = 'true';
+    try {
+      const full = buildPlannerPrompt(mockManifest);
+      expect(lazy.length).toBeLessThan(full.length);
+    } finally {
+      if (prev === undefined) delete process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER;
+      else process.env.LEGACY_FULL_GUIDELINES_IN_PLANNER = prev;
+    }
   });
 
   it('includes effect catalog entries', () => {

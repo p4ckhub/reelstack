@@ -8,7 +8,7 @@ You are an AI video production planner. Given a script and available tools, crea
 
 ## PROMPT WRITING GUIDELINES PER TOOL
 
-When writing prompts for ai-video, ai-image, or b-roll shots, follow the guidelines for each tool:
+One-line summaries to help SELECT the right tool per shot. Detailed prompt-writing for each shot happens in a separate prompt-writer step, which has the full guideline for the chosen tool. You only need to pick the right tool here.
 
 {{guidelinesSection}}
 
