@@ -466,11 +466,16 @@ function createPreRenderGatesStep(): StepDefinition {
     async execute(ctx: PipelineContext) {
       const compositionResult = ctx.results.composition as { plan: ProductionPlan };
       const ttsResult = ctx.results.tts as TTSPipelineResult;
+      const brandPreset = ctx.input.brandPreset as { personaId?: string } | undefined;
+      const referenceImageUrl = ctx.input.referenceImageUrl as string | undefined;
       return runPreRenderGates({
         voiceoverPath: ttsResult.voiceoverPath,
         audioDuration: ttsResult.audioDuration,
         plan: compositionResult.plan,
         cues: ttsResult.cues,
+        personaReference: brandPreset?.personaId
+          ? { personaId: brandPreset.personaId, hasReference: !!referenceImageUrl }
+          : undefined,
       });
     },
   };

@@ -430,6 +430,12 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
     audioDuration: ttsResult.audioDuration,
     plan,
     cues: ttsResult.cues,
+    personaReference: request.brandPreset?.personaId
+      ? {
+          personaId: request.brandPreset.personaId,
+          hasReference: !!request.referenceImageUrl,
+        }
+      : undefined,
   });
   steps.push({
     name: 'Pre-render quality gates',

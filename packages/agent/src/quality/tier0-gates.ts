@@ -59,6 +59,15 @@ export interface PreRenderInput {
   plan: ProductionPlan;
   /** Caption cues that the assembler attached to the composition. */
   cues?: ReadonlyArray<{ startTime: number; endTime: number; text: string }>;
+  /**
+   * Persona reference state. Set by the orchestrator from the request:
+   * `{ personaId, hasReference }`. When `personaId` is set but
+   * `hasReference` is false, the gate emits a failure so the user sees
+   * "your persona has no reference image" in the API quality checks.
+   * Tier 2.3 reference bank — surfaces the otherwise-silent fail-soft
+   * path so the feature isn't forgotten.
+   */
+  personaReference?: { personaId: string; hasReference: boolean };
 }
 
 export interface PostRenderInput {
@@ -90,6 +99,7 @@ export async function runPreRenderGates(input: PreRenderInput): Promise<QualityC
   details.push(checkLufs(input.voiceoverPath));
   details.push(checkPlannedDuration(input.plan, input.audioDuration));
   details.push(checkCaptionsPresent(input.plan, input.cues));
+  details.push(checkPersonaReference(input.personaReference));
 
   return summarize(details);
 }
@@ -216,6 +226,28 @@ function checkCaptionsPresent(
     id: 'captions',
     status: 'passed',
     message: `${cues.length} caption cue(s) present`,
+  };
+}
+
+function checkPersonaReference(input: PreRenderInput['personaReference']): GateDetail {
+  if (!input || !input.personaId) {
+    return {
+      id: 'persona-reference',
+      status: 'skipped',
+      message: 'No persona configured — reference check n/a',
+    };
+  }
+  if (!input.hasReference) {
+    return {
+      id: 'persona-reference',
+      status: 'failed',
+      message: `Persona "${input.personaId}" has no reference image — faces may vary across shots. Upload one via addReferenceImage() (Tier 2.3 reference bank).`,
+    };
+  }
+  return {
+    id: 'persona-reference',
+    status: 'passed',
+    message: `Persona "${input.personaId}" reference image configured`,
   };
 }
 

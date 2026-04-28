@@ -152,6 +152,49 @@ describe('runPreRenderGates', () => {
     const captions = result.details.find((d) => d.id === 'captions');
     expect(captions?.status).toBe('skipped');
   });
+
+  test('SKIPS persona-reference gate when no persona configured', async () => {
+    measureLufsMock.mockReturnValue(-16);
+    const result = await runPreRenderGates({
+      voiceoverPath: '/tmp/vo.mp3',
+      audioDuration: 3,
+      plan: makePlan({ primarySource: { type: 'avatar', toolId: 'heygen', script: 'x' } }),
+      cues,
+    });
+    const persona = result.details.find((d) => d.id === 'persona-reference');
+    expect(persona?.status).toBe('skipped');
+    expect(result.passed).toBe(true);
+  });
+
+  test('FAILS persona-reference when persona set but reference missing', async () => {
+    measureLufsMock.mockReturnValue(-16);
+    const result = await runPreRenderGates({
+      voiceoverPath: '/tmp/vo.mp3',
+      audioDuration: 3,
+      plan: makePlan({ primarySource: { type: 'avatar', toolId: 'heygen', script: 'x' } }),
+      cues,
+      personaReference: { personaId: 'cyber-retro', hasReference: false },
+    });
+    const persona = result.details.find((d) => d.id === 'persona-reference');
+    expect(persona?.status).toBe('failed');
+    expect(persona?.message).toContain('cyber-retro');
+    expect(result.passed).toBe(false);
+    expect(result.failures.some((f) => f.startsWith('persona-reference:'))).toBe(true);
+  });
+
+  test('PASSES persona-reference when persona set and reference present', async () => {
+    measureLufsMock.mockReturnValue(-16);
+    const result = await runPreRenderGates({
+      voiceoverPath: '/tmp/vo.mp3',
+      audioDuration: 3,
+      plan: makePlan({ primarySource: { type: 'avatar', toolId: 'heygen', script: 'x' } }),
+      cues,
+      personaReference: { personaId: 'cyber-retro', hasReference: true },
+    });
+    const persona = result.details.find((d) => d.id === 'persona-reference');
+    expect(persona?.status).toBe('passed');
+    expect(result.passed).toBe(true);
+  });
 });
 
 describe('runPostRenderGates', () => {
