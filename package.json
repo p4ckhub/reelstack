@@ -37,7 +37,7 @@
     "prettier": "^3.8.3",
     "prisma": "~6.19.3",
     "turbo": "^2.9.6",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "web": "workspace:*"
   },
   "dependencies": {
