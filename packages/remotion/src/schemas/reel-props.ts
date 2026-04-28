@@ -288,7 +288,7 @@ export const reelPropsSchema = z.object({
     .object({
       cardSlug: z.string(),
       paletteSlug: z.string(),
-      data: z.record(z.string().optional()),
+      data: z.record(z.string(), z.string().optional()),
       durationSeconds: z.number().min(0.5).max(8).default(3),
     })
     .optional(),
