@@ -14,10 +14,10 @@
   "dependencies": {
     "@reelstack/logger": "workspace:*",
     "@reelstack/types": "workspace:*",
-    "msedge-tts": "^2.0.4"
+    "msedge-tts": "^2.0.5"
   },
   "devDependencies": {
-    "tsx": "^4.19.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

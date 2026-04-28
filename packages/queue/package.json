@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@reelstack/types": "workspace:*",
-    "bullmq": "^5.34.8",
-    "inngest": "^3.29.1"
+    "bullmq": "^5.76.2",
+    "inngest": "^3.54.1"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

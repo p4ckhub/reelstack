@@ -16,7 +16,7 @@
   "dependencies": {
     "@reelstack/logger": "workspace:*",
     "@reelstack/renderer": "workspace:*",
-    "hyperframes": "^0.4.12"
+    "hyperframes": "^0.4.32"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
