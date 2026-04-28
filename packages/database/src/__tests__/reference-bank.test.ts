@@ -26,13 +26,13 @@ describe('reference-bank', () => {
 
   describe('getCharacterBySlug', () => {
     it('returns the character when slug exists', async () => {
-      const row = { id: 'c1', slug: 'cyber-retro', name: 'Cyber Retro' };
+      const row = { id: 'c1', slug: 'animated-dev', name: 'Animated Dev' };
       mockCharacterFindUnique.mockResolvedValueOnce(row);
 
-      const result = await getCharacterBySlug('cyber-retro');
+      const result = await getCharacterBySlug('animated-dev');
 
       expect(result).toEqual(row);
-      expect(mockCharacterFindUnique).toHaveBeenCalledWith({ where: { slug: 'cyber-retro' } });
+      expect(mockCharacterFindUnique).toHaveBeenCalledWith({ where: { slug: 'animated-dev' } });
     });
 
     it('returns null when slug does not exist', async () => {
@@ -47,11 +47,11 @@ describe('reference-bank', () => {
   describe('getPrimaryReferenceUrl', () => {
     it('returns the primary portrait URL by default', async () => {
       mockCharacterFindUnique.mockResolvedValueOnce({ id: 'c1' });
-      mockReferenceImageFindFirst.mockResolvedValueOnce({ url: 'https://cdn/cyber-retro.jpg' });
+      mockReferenceImageFindFirst.mockResolvedValueOnce({ url: 'https://cdn/animated-dev.jpg' });
 
-      const url = await getPrimaryReferenceUrl('cyber-retro');
+      const url = await getPrimaryReferenceUrl('animated-dev');
 
-      expect(url).toBe('https://cdn/cyber-retro.jpg');
+      expect(url).toBe('https://cdn/animated-dev.jpg');
       expect(mockReferenceImageFindFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { characterId: 'c1', kind: 'portrait', isPrimary: true },
@@ -72,7 +72,7 @@ describe('reference-bank', () => {
       mockCharacterFindUnique.mockResolvedValueOnce({ id: 'c1' });
       mockReferenceImageFindFirst.mockResolvedValueOnce(null);
 
-      const url = await getPrimaryReferenceUrl('cyber-retro', 'fullbody');
+      const url = await getPrimaryReferenceUrl('animated-dev', 'fullbody');
 
       expect(url).toBeNull();
       expect(mockReferenceImageFindFirst).toHaveBeenCalledWith(
@@ -86,7 +86,7 @@ describe('reference-bank', () => {
       mockCharacterFindUnique.mockResolvedValueOnce({ id: 'c1' });
       mockReferenceImageFindFirst.mockResolvedValueOnce({ url: 'https://cdn/env.jpg' });
 
-      const url = await getPrimaryReferenceUrl('cyber-retro', 'environment');
+      const url = await getPrimaryReferenceUrl('animated-dev', 'environment');
 
       expect(url).toBe('https://cdn/env.jpg');
     });
@@ -94,22 +94,22 @@ describe('reference-bank', () => {
 
   describe('upsertCharacter', () => {
     it('creates a global character when ownerUserId is omitted', async () => {
-      const row = { id: 'c1', slug: 'clean-corporate' };
+      const row = { id: 'c1', slug: 'prof-IT' };
       mockCharacterUpsert.mockResolvedValueOnce(row);
 
-      const result = await upsertCharacter({ slug: 'clean-corporate', name: 'Clean Corporate' });
+      const result = await upsertCharacter({ slug: 'prof-IT', name: 'Prof. IT' });
 
       expect(result).toEqual(row);
       expect(mockCharacterUpsert).toHaveBeenCalledWith({
-        where: { slug: 'clean-corporate' },
+        where: { slug: 'prof-IT' },
         create: {
-          slug: 'clean-corporate',
-          name: 'Clean Corporate',
+          slug: 'prof-IT',
+          name: 'Prof. IT',
           description: null,
           ownerUserId: null,
         },
         update: {
-          name: 'Clean Corporate',
+          name: 'Prof. IT',
           description: null,
           ownerUserId: null,
         },

@@ -297,7 +297,8 @@ model ReelJob {
 /// Wan / HeyGen / Runway. Foundation for the Identity gate (master plan
 /// Tier 2.3 + Tier 2.4).
 ///
-/// `slug` is the stable lookup key (e.g. "cyber-retro", "clean-corporate").
+/// `slug` is the stable lookup key matching `PresenterPersona.id`
+/// (e.g. "animated-dev", "prof-IT").
 /// `ownerUserId = null` means a global/system character; non-null means
 /// a per-user character (future, when users define their own personas).
 model Character {

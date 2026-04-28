@@ -3,7 +3,7 @@
  * tables that back the `referenceImageUrl` injection in asset generation.
  *
  * Lookup flow used by the agent's asset-generator: given a persona slug
- * (e.g. "cyber-retro"), fetch the matching `Character` and its primary
+ * (e.g. "animated-dev"), fetch the matching `Character` and its primary
  * portrait `ReferenceImage`. The asset-generator wires the URL into
  * `AssetGenerationRequest.referenceImageUrl` so every shot of that
  * persona pulls from the same canonical reference. This is the 2026
@@ -26,7 +26,7 @@ export interface CharacterWithPrimaryReference {
 
 /**
  * Look up a character by stable slug. Slugs are case-sensitive and
- * match the persona id (e.g. "cyber-retro"). Returns `null` if no
+ * match the persona id (e.g. "animated-dev"). Returns `null` if no
  * row exists yet — callers must treat this as "no reference available"
  * and skip injection rather than failing.
  */
