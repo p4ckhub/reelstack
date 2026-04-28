@@ -644,7 +644,7 @@ describe('generatePipeline', () => {
 
       const result = (await step.execute(ctx)) as { assets: unknown[] };
 
-      expect(deps.generateAssets).toHaveBeenCalledWith(plan, registry, undefined);
+      expect(deps.generateAssets).toHaveBeenCalledWith(plan, registry, undefined, undefined);
       expect(result.assets).toHaveLength(1);
     });
   });

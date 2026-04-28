@@ -687,3 +687,151 @@ describe('splitChainedTasks (via generateAssets)', () => {
     expect(result[0].shotId).toBe('shot-1');
   });
 });
+
+// ── Persona reference image injection (Tier 2.3) ─────────────
+
+describe('reference image injection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function imageTool() {
+    return makeTool({
+      id: 'flux',
+      capabilities: [
+        {
+          assetType: 'ai-image',
+          supportsPrompt: true,
+          supportsScript: false,
+          estimatedLatencyMs: 5000,
+          isAsync: false,
+          costTier: 'cheap',
+        },
+      ],
+    });
+  }
+
+  function videoTool() {
+    return makeTool({ id: 'veo31' });
+  }
+
+  it('injects referenceImageUrl on ai-video shots when option is provided', async () => {
+    const tool = videoTool();
+    const plan = makeMinimalPlan({
+      shots: [
+        {
+          id: 'shot-1',
+          startTime: 0,
+          endTime: 3,
+          scriptSegment: 'test',
+          visual: { type: 'ai-video', prompt: 'cinematic', toolId: 'veo31' },
+          transition: { type: 'crossfade', durationMs: 300 },
+          reason: 'establishing',
+        },
+      ],
+    });
+
+    await generateAssets(plan, makeRegistry([tool]), undefined, {
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+
+    expect(tool.generate).toHaveBeenCalledTimes(1);
+    expect((tool.generate as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({
+      prompt: 'cinematic',
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+  });
+
+  it('injects referenceImageUrl on ai-image shots when option is provided', async () => {
+    const tool = imageTool();
+    const plan = makeMinimalPlan({
+      shots: [
+        {
+          id: 'shot-1',
+          startTime: 0,
+          endTime: 3,
+          scriptSegment: 'test',
+          visual: { type: 'ai-image', prompt: 'thumbnail', toolId: 'flux' },
+          transition: { type: 'crossfade', durationMs: 300 },
+          reason: 'illustration',
+        },
+      ],
+    });
+
+    await generateAssets(plan, makeRegistry([tool]), undefined, {
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+
+    expect((tool.generate as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+  });
+
+  it('injects referenceImageUrl on primary avatar tasks', async () => {
+    const tool = makeTool({ id: 'heygen' });
+    const plan = makeMinimalPlan({
+      primarySource: {
+        type: 'avatar',
+        toolId: 'heygen',
+        script: 'Hello',
+      },
+    });
+
+    await generateAssets(plan, makeRegistry([tool]), undefined, {
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+
+    expect((tool.generate as ReturnType<typeof vi.fn>).mock.calls[0][0]).toMatchObject({
+      script: 'Hello',
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+  });
+
+  it('does not inject referenceImageUrl on b-roll tasks (stock footage)', async () => {
+    const tool = makeTool({ id: 'pexels' });
+    const plan = makeMinimalPlan({
+      shots: [
+        {
+          id: 'shot-1',
+          startTime: 0,
+          endTime: 3,
+          scriptSegment: 'test',
+          visual: { type: 'b-roll', searchQuery: 'city', toolId: 'pexels' },
+          transition: { type: 'crossfade', durationMs: 300 },
+          reason: 'establishing',
+        },
+      ],
+    });
+
+    await generateAssets(plan, makeRegistry([tool]), undefined, {
+      referenceImageUrl: 'https://cdn/persona.jpg',
+    });
+
+    expect((tool.generate as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toHaveProperty(
+      'referenceImageUrl'
+    );
+  });
+
+  it('omits referenceImageUrl when option is not provided (existing behaviour)', async () => {
+    const tool = videoTool();
+    const plan = makeMinimalPlan({
+      shots: [
+        {
+          id: 'shot-1',
+          startTime: 0,
+          endTime: 3,
+          scriptSegment: 'test',
+          visual: { type: 'ai-video', prompt: 'cinematic', toolId: 'veo31' },
+          transition: { type: 'crossfade', durationMs: 300 },
+          reason: 'establishing',
+        },
+      ],
+    });
+
+    await generateAssets(plan, makeRegistry([tool]));
+
+    expect((tool.generate as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toHaveProperty(
+      'referenceImageUrl'
+    );
+  });
+});

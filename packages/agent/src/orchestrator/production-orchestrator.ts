@@ -350,7 +350,9 @@ async function produceInner(request: ProductionRequest): Promise<ProductionResul
   onProgress?.('Generating visual assets...');
   const genStart = performance.now();
 
-  const rawAssets = await generateAssets(plan, registry, onProgress);
+  const rawAssets = await generateAssets(plan, registry, onProgress, {
+    referenceImageUrl: request.referenceImageUrl,
+  });
 
   steps.push({
     name: 'Asset generation',

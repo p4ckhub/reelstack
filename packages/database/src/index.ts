@@ -16,5 +16,6 @@ export * from './tier-config';
 export * from './audit';
 export * from './modules';
 export * from './api-call-log';
+export * from './reference-bank';
 
 export type * from '@prisma/client';

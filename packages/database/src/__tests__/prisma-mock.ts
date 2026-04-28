@@ -46,6 +46,13 @@ export const mockApiCallLogCreate = vi.fn();
 export const mockApiCallLogFindMany = vi.fn();
 export const mockApiCallLogFindFirst = vi.fn();
 
+// Character / ReferenceImage models (reference-bank, Tier 2.3)
+export const mockCharacterFindUnique = vi.fn();
+export const mockCharacterUpsert = vi.fn();
+export const mockReferenceImageFindFirst = vi.fn();
+export const mockReferenceImageCreate = vi.fn();
+export const mockReferenceImageUpdateMany = vi.fn();
+
 // Raw queries
 export const mockExecuteRaw = vi.fn();
 export const mockQueryRaw = vi.fn();
@@ -92,6 +99,15 @@ export const mockPrismaInstance = {
     create: (...args: unknown[]) => mockApiCallLogCreate(...args),
     findMany: (...args: unknown[]) => mockApiCallLogFindMany(...args),
     findFirst: (...args: unknown[]) => mockApiCallLogFindFirst(...args),
+  },
+  character: {
+    findUnique: (...args: unknown[]) => mockCharacterFindUnique(...args),
+    upsert: (...args: unknown[]) => mockCharacterUpsert(...args),
+  },
+  referenceImage: {
+    findFirst: (...args: unknown[]) => mockReferenceImageFindFirst(...args),
+    create: (...args: unknown[]) => mockReferenceImageCreate(...args),
+    updateMany: (...args: unknown[]) => mockReferenceImageUpdateMany(...args),
   },
   $transaction: (...args: unknown[]) => mockTransaction(...args),
   $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args),

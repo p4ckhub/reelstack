@@ -7,6 +7,7 @@ import {
   updateReelJobStatus,
   markCallbackSent,
   resetCallbackSent,
+  getPrimaryReferenceUrl,
 } from '@reelstack/database';
 import { createLogger } from '@reelstack/logger';
 import { reelJobsTotal, reelRenderDuration } from '@/lib/metrics';
@@ -267,6 +268,27 @@ interface PipelineSetup {
 }
 
 /**
+ * Resolve the persona reference image (Tier 2.3 reference bank). Looks
+ * up `Character.slug = brandPreset.personaId` and returns the primary
+ * portrait URL, or `undefined` if no reference is configured. Failing
+ * fail-soft on lookup errors keeps the render path resilient: the
+ * reference is a quality booster, not a hard requirement.
+ */
+async function resolvePersonaReferenceImage(
+  brandPreset: BrandPreset | undefined
+): Promise<string | undefined> {
+  const slug = brandPreset?.personaId;
+  if (!slug) return undefined;
+  try {
+    const url = await getPrimaryReferenceUrl(slug);
+    return url ?? undefined;
+  } catch (err) {
+    log.warn({ slug, err }, 'Failed to resolve persona reference image');
+    return undefined;
+  }
+}
+
+/**
  * Build the correct PipelineDefinition + input for any mode.
  * - generate: full multi-step pipeline
  * - compose: single-step wrapper around produceComposition()
@@ -309,6 +331,9 @@ async function buildGeneratePipelineSetup(
 
   const deps = await createGenerateDeps();
   const pipeline = createGeneratePipeline(deps);
+  const referenceImageUrl = await resolvePersonaReferenceImage(
+    config.brandPreset as BrandPreset | undefined
+  );
 
   return {
     pipeline,
@@ -322,6 +347,7 @@ async function buildGeneratePipelineSetup(
       montageProfile: config.montageProfile,
       preferredToolIds: config.preferredToolIds,
       watermark: config.watermark,
+      referenceImageUrl,
     },
     stepProgressMap: {
       'script-review': 10,
@@ -493,9 +519,14 @@ async function runLegacyGenerate(
 ): Promise<string> {
   log.info({ jobId }, 'Running full auto pipeline (legacy)');
 
+  const referenceImageUrl = await resolvePersonaReferenceImage(
+    config.brandPreset as BrandPreset | undefined
+  );
+
   const agentResult = await agentProduce({
     jobId,
     script: job.script ?? '',
+    referenceImageUrl,
     layout: config.layout as 'fullscreen' | 'split-screen' | 'picture-in-picture' | undefined,
     style: config.style as 'dynamic' | 'calm' | 'cinematic' | 'educational' | undefined,
     tts: config.tts as

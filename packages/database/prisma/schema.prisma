@@ -26,26 +26,26 @@ enum JobStatus {
 }
 
 model User {
-  id               String             @id @default(uuid())
-  email            String             @unique
-  emailVerified    DateTime?
-  name             String?
-  image            String?
-  password         String?
-  tier             Tier               @default(FREE)
-  tokenBalance     Int                @default(0)
-  preferences      Json?
-  sellfCustomerId  String?            @unique
-  accounts         Account[]
-  sessions         Session[]
-  reelJobs         ReelJob[]
-  templates        Template[]
-  apiKeys          ApiKey[]
+  id                String             @id @default(uuid())
+  email             String             @unique
+  emailVerified     DateTime?
+  name              String?
+  image             String?
+  password          String?
+  tier              Tier               @default(FREE)
+  tokenBalance      Int                @default(0)
+  preferences       Json?
+  sellfCustomerId   String?            @unique
+  accounts          Account[]
+  sessions          Session[]
+  reelJobs          ReelJob[]
+  templates         Template[]
+  apiKeys           ApiKey[]
   tokenTransactions TokenTransaction[]
-  auditLogs        AuditLog[]
-  moduleAccesses   UserModuleAccess[]
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  auditLogs         AuditLog[]
+  moduleAccesses    UserModuleAccess[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Account {
@@ -148,9 +148,9 @@ model WebhookEvent {
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String?
-  action    String   // e.g., "tier.upgrade", "apikey.create", "apikey.revoke", "apikey.rotate", "webhook.purchase", "user.login"
-  target    String?  // e.g., the API key ID, tier name, job ID
-  metadata  Json?    // Additional context (old tier, new tier, IP address, etc.)
+  action    String // e.g., "tier.upgrade", "apikey.create", "apikey.revoke", "apikey.rotate", "webhook.purchase", "user.login"
+  target    String? // e.g., the API key ID, tier name, job ID
+  metadata  Json? // Additional context (old tier, new tier, IP address, etc.)
   ip        String?
   createdAt DateTime @default(now())
 
@@ -165,7 +165,7 @@ model TierConfig {
   productSlug     String   @default("reelstack")
   creditsPerMonth Int
   maxFileSizeMb   Int
-  maxDurationSec  Int      // -1 = unlimited
+  maxDurationSec  Int // -1 = unlimited
   active          Boolean  @default(true)
   updatedAt       DateTime @updatedAt
 
@@ -175,7 +175,7 @@ model TierConfig {
 
 model CreditPricing {
   productSlug String
-  action      String   // e.g. "video", "video_multilang", "image"
+  action      String // e.g. "video", "video_multilang", "image"
   creditCost  Int      @default(1)
   active      Boolean  @default(true)
   updatedAt   DateTime @updatedAt
@@ -187,26 +187,26 @@ model CreditPricing {
 /// Phase 1 uses: enabled, creditCost, requiredTier.
 /// Phase 3 (marketplace) will use: bundleUrl, version, thumbnailUrl, previewUrl.
 model Module {
-  id           String   @id @default(uuid())
-  slug         String   @unique // "slideshow", "captions", "n8n-explainer", ...
-  name         String
-  description  String?
-  category     String   @default("premium") // "core" | "premium" | "experimental"
+  id          String  @id @default(uuid())
+  slug        String  @unique // "slideshow", "captions", "n8n-explainer", ...
+  name        String
+  description String?
+  category    String  @default("premium") // "core" | "premium" | "experimental"
 
-  enabled      Boolean  @default(true)
-  creditCost   Int      @default(10)
+  enabled      Boolean @default(true)
+  creditCost   Int     @default(10)
   requiredTier Tier? // null = available to all tiers
 
   // Marketplace metadata (Phase 3)
   thumbnailUrl String?
   previewUrl   String?
   bundleUrl    String? // where to fetch runtime bundle from when Phase 3 lands
-  version      String   @default("1.0.0")
+  version      String  @default("1.0.0")
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  accesses     UserModuleAccess[]
+  accesses UserModuleAccess[]
 
   @@index([enabled, category])
 }
@@ -217,12 +217,12 @@ model Module {
 model UserModuleAccess {
   userId    String
   moduleId  String
-  grantedAt DateTime @default(now())
+  grantedAt DateTime  @default(now())
   expiresAt DateTime?
-  source    String   @default("manual") // "manual" | "purchase" | "subscription" | "gift" | "owner"
+  source    String    @default("manual") // "manual" | "purchase" | "subscription" | "gift" | "owner"
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@id([userId, moduleId])
   @@index([userId])
@@ -262,30 +262,72 @@ model ApiCallLog {
 }
 
 model ReelJob {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Restrict)
-  status        JobStatus @default(QUEUED)
-  progress      Int       @default(0)
-  script        String?
-  reelConfig    Json?
-  outputUrl     String?
-  error         String?
-  apiKeyId      String?
-  publishStatus Json?
-  creditCost    Int       @default(10) // Credits consumed by this job
-  callbackUrl   String?   // Webhook URL - POST result when job completes/fails
-  callbackSent  Boolean   @default(false)
-  parentJobId   String?   // For batch jobs - links back to the original batch request
-  language      String?   // ISO language code (e.g., "en", "pl") - for multi-language reels
-  productionMeta Json?    // AI production metadata: plan, prompts, models, generated assets
-  startedAt     DateTime?
-  completedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status         JobStatus @default(QUEUED)
+  progress       Int       @default(0)
+  script         String?
+  reelConfig     Json?
+  outputUrl      String?
+  error          String?
+  apiKeyId       String?
+  publishStatus  Json?
+  creditCost     Int       @default(10) // Credits consumed by this job
+  callbackUrl    String? // Webhook URL - POST result when job completes/fails
+  callbackSent   Boolean   @default(false)
+  parentJobId    String? // For batch jobs - links back to the original batch request
+  language       String? // ISO language code (e.g., "en", "pl") - for multi-language reels
+  productionMeta Json? // AI production metadata: plan, prompts, models, generated assets
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([userId])
   @@index([status])
   @@index([userId, createdAt])
   @@index([parentJobId])
+}
+
+/// Reference bank — Character + ReferenceImage tables backing the
+/// `referenceImageUrl` injection in asset generation. Lets every reel of
+/// a given persona/character pull from the same canonical visual reference,
+/// which is the 2026 industry standard across Veo / Kling / Sora / LTX-2 /
+/// Wan / HeyGen / Runway. Foundation for the Identity gate (master plan
+/// Tier 2.3 + Tier 2.4).
+///
+/// `slug` is the stable lookup key (e.g. "cyber-retro", "clean-corporate").
+/// `ownerUserId = null` means a global/system character; non-null means
+/// a per-user character (future, when users define their own personas).
+model Character {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  ownerUserId String?
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  references ReferenceImage[]
+
+  @@index([ownerUserId])
+}
+
+/// Visual reference images for a Character. Every character can carry
+/// multiple references (portrait, fullbody, environment); exactly one
+/// per `kind` is marked `isPrimary` and used by the asset generator for
+/// `AssetGenerationRequest.referenceImageUrl` injection.
+model ReferenceImage {
+  id          String    @id @default(uuid())
+  characterId String
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  url         String
+  kind        String    @default("portrait") // "portrait" | "fullbody" | "environment"
+  description String?
+  isPrimary   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([characterId])
+  @@index([characterId, isPrimary])
 }

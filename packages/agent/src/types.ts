@@ -393,6 +393,14 @@ export interface ProductionRequest {
   readonly montageProfile?: string;
   /** FREE-tier watermark config. Server-authoritative, never client-set. */
   readonly watermark?: { enabled: boolean; seed?: string };
+  /**
+   * Persona/character reference image, resolved from the reference bank
+   * by the caller (worker). The asset generator injects this URL into
+   * `AssetGenerationRequest.referenceImageUrl` for every ai-video,
+   * ai-image and primary-avatar task so the same persona stays visually
+   * consistent across shots. Tier 2.3 (master plan).
+   */
+  readonly referenceImageUrl?: string;
   /** Progress callback */
   readonly onProgress?: (step: string) => void;
 }

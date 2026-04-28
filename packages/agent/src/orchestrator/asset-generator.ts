@@ -26,7 +26,19 @@ interface GenerationTask {
     aspectRatio?: '9:16' | '16:9' | '1:1';
     searchQuery?: string;
     imageUrl?: string;
+    /** Persona/character reference for cross-shot consistency (Tier 2.3). */
+    referenceImageUrl?: string;
   };
+}
+
+/**
+ * Options for `generateAssets`. Currently carries the resolved persona
+ * reference image — see ProductionRequest.referenceImageUrl for the
+ * caller-side contract. Stays optional so existing call sites (tests,
+ * compose path) compile without churn.
+ */
+export interface GenerateAssetsOptions {
+  readonly referenceImageUrl?: string;
 }
 
 /**
@@ -40,9 +52,10 @@ interface GenerationTask {
 export async function generateAssets(
   plan: ProductionPlan,
   registry: ToolRegistry,
-  onProgress?: (msg: string) => void
+  onProgress?: (msg: string) => void,
+  options?: GenerateAssetsOptions
 ): Promise<GeneratedAsset[]> {
-  const tasks = collectTasks(plan);
+  const tasks = collectTasks(plan, options);
 
   if (tasks.length === 0) {
     log.info('No assets to generate');
@@ -203,7 +216,7 @@ export async function regenerateAsset(
   plan: ProductionPlan,
   shotId: string,
   registry: ToolRegistry,
-  options?: { prompt?: string; toolId?: string }
+  options?: { prompt?: string; toolId?: string; referenceImageUrl?: string }
 ): Promise<GeneratedAsset | null> {
   const shot = plan.shots.find((s) => s.id === shotId);
   if (!shot) {
@@ -211,7 +224,7 @@ export async function regenerateAsset(
     return null;
   }
 
-  const task = shotToTask(shot);
+  const task = shotToTask(shot, options?.referenceImageUrl);
   if (!task) {
     log.warn({ shotId, visualType: shot.visual.type }, 'Shot type does not need asset generation');
     return null;
@@ -230,10 +243,14 @@ export async function regenerateAsset(
   return generateSingle(overriddenTask, registry);
 }
 
-function collectTasks(plan: ProductionPlan): GenerationTask[] {
+function collectTasks(plan: ProductionPlan, options?: GenerateAssetsOptions): GenerationTask[] {
   const tasks: GenerationTask[] = [];
+  const ref = options?.referenceImageUrl;
 
-  // Primary source generation (avatar or AI video)
+  // Primary source generation (avatar or AI video). Both flavours can
+  // benefit from a persona reference: avatar tools that accept an image
+  // (Kling Avatar V, HeyGen V) and chained ai-video starts both wire it
+  // through. Tools that ignore referenceImageUrl simply discard the field.
   if (plan.primarySource.type === 'avatar') {
     tasks.push({
       toolId: plan.primarySource.toolId,
@@ -243,6 +260,7 @@ function collectTasks(plan: ProductionPlan): GenerationTask[] {
         voice: plan.primarySource.voice,
         avatarId: plan.primarySource.avatarId,
         aspectRatio: '9:16',
+        ...(ref ? { referenceImageUrl: ref } : {}),
       },
     });
   } else if (plan.primarySource.type === 'ai-video') {
@@ -252,22 +270,24 @@ function collectTasks(plan: ProductionPlan): GenerationTask[] {
         purpose: 'Primary AI video',
         prompt: plan.primarySource.prompt,
         aspectRatio: '9:16',
+        ...(ref ? { referenceImageUrl: ref } : {}),
       },
     });
   }
 
   // Shot-level assets
   for (const shot of plan.shots) {
-    const task = shotToTask(shot);
+    const task = shotToTask(shot, ref);
     if (task) tasks.push(task);
   }
 
   return tasks;
 }
 
-function shotToTask(shot: ShotPlan): GenerationTask | null {
+function shotToTask(shot: ShotPlan, referenceImageUrl?: string): GenerationTask | null {
   switch (shot.visual.type) {
     case 'b-roll':
+      // B-roll is stock footage — persona reference doesn't apply.
       return {
         shotId: shot.id,
         toolId: shot.visual.toolId,
@@ -287,6 +307,7 @@ function shotToTask(shot: ShotPlan): GenerationTask | null {
           prompt: shot.visual.prompt,
           durationSeconds: shot.endTime - shot.startTime,
           aspectRatio: '9:16',
+          ...(referenceImageUrl ? { referenceImageUrl } : {}),
         },
       };
     case 'ai-image':
@@ -296,6 +317,7 @@ function shotToTask(shot: ShotPlan): GenerationTask | null {
         request: {
           purpose: `AI image: ${shot.reason}`,
           prompt: shot.visual.prompt,
+          ...(referenceImageUrl ? { referenceImageUrl } : {}),
         },
       };
     case 'primary':

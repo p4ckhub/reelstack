@@ -99,7 +99,8 @@ export interface GeneratePipelineDeps {
   generateAssets: (
     plan: ProductionPlan,
     registry: ToolRegistry,
-    onProgress?: (msg: string) => void
+    onProgress?: (msg: string) => void,
+    options?: { referenceImageUrl?: string }
   ) => Promise<GeneratedAsset[]>;
   persistAssets: (assets: readonly GeneratedAsset[], jobId: string) => Promise<GeneratedAsset[]>;
   validatePlan: (
@@ -420,11 +421,13 @@ function createAssetGenStep(deps: GeneratePipelineDeps): StepDefinition {
       const expansionResult = ctx.results['prompt-expansion'] as { plan: ProductionPlan };
       const toolsResult = ctx.results['discover-tools'] as { registry: ToolRegistry };
       const onProgress = ctx.input.onProgress as ((msg: string) => void) | undefined;
+      const referenceImageUrl = ctx.input.referenceImageUrl as string | undefined;
 
       const assets = await deps.generateAssets(
         expansionResult.plan,
         toolsResult.registry,
-        onProgress
+        onProgress,
+        referenceImageUrl ? { referenceImageUrl } : undefined
       );
 
       return { assets };
