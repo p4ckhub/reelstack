@@ -20,7 +20,7 @@
     "@auth/prisma-adapter": "^2.11.2",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
-    "@huggingface/transformers": "^3.8.1",
+    "@huggingface/transformers": "^4.2.0",
     "@reelstack/agent": "workspace:*",
     "@reelstack/core": "workspace:*",
     "@reelstack/database": "workspace:*",
