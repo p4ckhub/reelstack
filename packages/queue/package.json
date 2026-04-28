@@ -13,7 +13,7 @@
   "dependencies": {
     "@reelstack/types": "workspace:*",
     "bullmq": "^5.76.2",
-    "inngest": "^3.54.1"
+    "inngest": "^4.2.5"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
