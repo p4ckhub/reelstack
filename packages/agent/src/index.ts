@@ -1,3 +1,18 @@
+// ── Shared CTA / end-card system ──────────────────────────────
+// Per-platform end-card templates (IG/FB comment-DM, TT/IG link in
+// bio, YT/LinkedIn description link). Used by every reel mode that
+// renders a closing CTA so the same `endCard: { platform, keyword? }`
+// payload produces consistent platform-correct copy regardless of
+// whether the reel is n8n-explainer, slideshow, presenter, etc.
+export {
+  type CtaPlatform,
+  type CtaTemplate,
+  type EndCardConfig,
+  type ResolveEndCardOptions,
+  getCtaTemplate,
+  resolveEndCard,
+} from './cta';
+
 // ── Core orchestration ────────────────────────────────────────
 export { produce, produceComposition } from './orchestrator/production-orchestrator';
 export {
@@ -49,6 +64,16 @@ export { validatePlan } from './planner/plan-validator';
 export { supervisePlan } from './planner/plan-supervisor';
 export type { SupervisorResult } from './planner/plan-supervisor';
 export { reviewScript, isScriptReviewEnabled } from './planner/script-reviewer';
+export { lintScript } from './planner/script-linter';
+export type { LintIssue, LintReport, LintInput } from './planner/script-linter';
+export {
+  reviewStructuredScript,
+  buildGenericCorrectionPrompt,
+} from './planner/structured-script-reviewer';
+export type {
+  StructuredScriptReview,
+  ReviewStructuredScriptOptions,
+} from './planner/structured-script-reviewer';
 export { rewriteScript, isScriptWriterEnabled } from './planner/script-writer';
 export type { ScriptRewriteResult, ScriptRewriteAssessment } from './planner/script-writer';
 export { writePrompt, isPromptWriterEnabled } from './planner/prompt-writer';
@@ -60,6 +85,7 @@ export {
   loadGuideline,
   loadAllPartials,
 } from './prompts';
+export { GEMINI_TTS_GUIDELINES } from './tools/prompt-guidelines';
 export { persistAssetsToStorage } from './orchestrator/asset-persistence';
 export { pollUntilDone } from './polling';
 export { AgentError, PlanningError, GenerationError } from './errors';
@@ -103,9 +129,18 @@ export {
   listModules,
   isModuleMode,
   isCoreMode,
+  resolveRuntime,
+  getRuntimeImpl,
   CORE_MODES,
 } from './modules';
-export type { ReelModule, BaseModuleRequest, ModuleResult, ProgressCallback } from './modules';
+export type {
+  ReelModule,
+  BaseModuleRequest,
+  ModuleResult,
+  ProgressCallback,
+  ModuleRuntime,
+  RuntimeImpl,
+} from './modules';
 
 export { detectLanguage } from './utils/detect-language';
 export { isPublicUrl, isPrivateHost } from './utils/url-validation';

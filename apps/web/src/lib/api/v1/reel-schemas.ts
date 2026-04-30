@@ -182,14 +182,24 @@ export const reelModeSchema = z.enum([
   'n8n-explainer',
   'presenter-explainer',
   'ai-short-film',
+  'ai-storytelling',
+  'zoom-reframe',
   'hello-hf',
 ]);
 
 export type ReelMode = z.infer<typeof reelModeSchema>;
 
+/** Video runtime for module-based modes. Module must declare support
+ *  for the requested runtime — the worker rejects unsupported combos. */
+export const moduleRuntimeSchema = z.enum(['remotion', 'hyperframes']);
+export type ModuleRuntimeApi = z.infer<typeof moduleRuntimeSchema>;
+
 export const generateReelSchema = z
   .object({
     mode: reelModeSchema.optional().default('generate'),
+    /** Override the renderer runtime for module-based modes. Falls back
+     *  to the module's `defaultRuntime` when omitted. */
+    runtime: moduleRuntimeSchema.optional(),
     /** Required for generate/compose/captions modes. Auto-generated for n8n-explainer/ai-tips/presenter-explainer. */
     script: z.string().min(1).max(50000).optional(),
     style: z.enum(['dynamic', 'calm', 'cinematic', 'educational']).optional(),
@@ -225,11 +235,16 @@ export const generateReelSchema = z
         message: 'Workflow URL must be a valid public HTTP(S) URL',
       })
       .optional(),
-    /** Optional closing CTA shown over the last N seconds of the reel. */
+    /** Optional closing CTA shown over the last N seconds of the reel.
+     *  When `platform` is set, missing copy fields (headline / sub /
+     *  action) default from the per-platform CTA template — so callers
+     *  can pass `endCard: { platform: 'ig' }` and let the renderer pick
+     *  the right keyword and lead-capture mechanic per network. */
     endCard: z
       .object({
         enabled: z.boolean().default(true),
-        headline: z.string().min(1).max(120),
+        platform: z.enum(['ig', 'fb', 'tiktok', 'youtube', 'linkedin', 'universal']).optional(),
+        headline: z.string().min(1).max(120).optional(),
         subheadline: z.string().max(200).optional(),
         action: z.string().max(80).optional(),
         durationSeconds: z.number().min(1).max(10).default(3),
@@ -295,10 +310,33 @@ export const generateReelSchema = z
     template: z.string().max(50).optional(),
     /** Caption highlight mode (text = karaoke phrase, single-word = one word at a time, pill = colored pill) */
     highlightMode: z.string().max(30).optional(),
-    /** Video URL for captions mode (existing video to overlay captions on) */
+    /** Video URL for captions / zoom-reframe modes (existing video to overlay captions or punch-in zooms on) */
     videoUrl: publicUrlSchema.optional(),
     /** Pre-computed subtitle cues for captions mode (skips TTS and transcription) */
     cues: z.array(cueSchema).min(1).max(500).optional(),
+    /** Zoom intensity preset (zoom-reframe mode) */
+    zoomIntensity: z.enum(['subtle', 'standard', 'dramatic']).optional(),
+    /** Caption style overrides (zoom-reframe / captions modes) — fontSize, fontColor, highlightColor, position, etc. */
+    captionStyle: z.record(z.string(), z.unknown()).optional(),
+    /** Lip sync tool override (ai-storytelling mode) — kling | seedance */
+    lipSyncTool: z.enum(['kling', 'seedance']).optional(),
+    /** Template ID for content+montage modes (presenter-explainer / ai-storytelling / ai-short-film) */
+    templateId: z.string().max(50).optional(),
+    /** Pre-defined scenes for ai-storytelling mode (skips LLM scene planning) */
+    scenes: z
+      .array(
+        z.object({
+          prompt: z.string().min(1).max(2000),
+          sectionIndices: z.array(z.number().int().nonnegative()).min(1),
+        })
+      )
+      .min(1)
+      .max(20)
+      .optional(),
+    /** Preferred i2v tool ID (ai-short-film mode) */
+    preferredI2VToolId: z.string().max(80).optional(),
+    /** Tool ID for the scene-0 seed frame (ai-short-film mode) */
+    seedImageToolId: z.string().max(80).optional(),
     /** Number of slides for slideshow LLM generation */
     numberOfSlides: z.number().int().min(2).max(10).optional(),
     /** Number of tips for ai-tips mode */

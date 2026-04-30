@@ -144,7 +144,13 @@
       data-width="1080"
       data-height="1920"
     >
-      <div id="screenshot-wrap" class="clip" data-start="0" data-duration="{{durationSeconds}}" data-track-index="1">
+      <div
+        id="screenshot-wrap"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="1"
+      >
         <img id="screenshot" src="{{screenshotUrl}}" alt="" />
         <!-- Node markers + arrow overlay sit on top of the screenshot.
              Populated by JS from nodesB64 / connectionsB64 / sectionsB64.
@@ -162,7 +168,59 @@
         preload="auto"
       ></audio>
 
-      <div id="captions" class="clip" data-start="0" data-duration="{{durationSeconds}}" data-track-index="3"></div>
+      <div
+        id="captions"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="3"
+      ></div>
+
+      <!-- End card / CTA — fades in over the last `endCardDurationSeconds`
+           of the reel. Always rendered; visibility is gated by GSAP
+           opacity tween whose start is pushed past video end when no
+           endCard was requested (display:none also covers that case). -->
+      <div
+        id="end-card"
+        class="clip"
+        data-start="{{endCardStartSeconds}}"
+        data-duration="{{endCardDurationSeconds}}"
+        data-track-index="30"
+        style="position:absolute;inset:0;background:{{endCardBackgroundColor}};display:{{endCardDisplay}};flex-direction:column;align-items:center;justify-content:center;padding:140px 90px;text-align:center;opacity:0;will-change:opacity,transform;"
+      >
+        <div
+          id="end-card-headline"
+          style="
+            font-size: 104px;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            margin-bottom: 48px;
+          "
+        >
+          {{endCardHeadline}}
+        </div>
+        <div
+          id="end-card-subheadline"
+          style="
+            font-size: 46px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.78);
+            line-height: 1.3;
+            margin-bottom: 96px;
+            max-width: 900px;
+          "
+        >
+          {{endCardSubheadline}}
+        </div>
+        <div
+          id="end-card-action"
+          style="font-size:54px;font-weight:800;color:#ffffff;background:{{endCardAccentColor}};padding:36px 72px;border-radius:96px;box-shadow:0 16px 48px rgba(0,0,0,0.35);"
+        >
+          {{endCardAction}} →
+        </div>
+      </div>
     </div>
 
     <script>
@@ -372,7 +430,7 @@
             tl.to(
               sel,
               { x: tStart.x, y: tStart.y, scale: tStart.scale, duration: 0.4, ease: 'power2.out' },
-              section.startTime,
+              section.startTime
             );
           });
         }
@@ -380,7 +438,7 @@
           tl.to(
             sel,
             { x: tEnd.x, y: tEnd.y, scale: tEnd.scale, duration: dur, ease: 'none' },
-            section.startTime + (i > 0 ? 0.4 : 0),
+            section.startTime + (i > 0 ? 0.4 : 0)
           );
         });
 
@@ -395,18 +453,25 @@
         //   2. Pulse     — 1.0 ↔ 1.04 + glow weak ↔ strong, yoyo every
         //                  0.7 s for the duration of the active window
         //   3. Exit      — tighten + fade out (~0.32 s)
-        const highlight = section.highlightNodes || [];
-        const sectionStart = section.startTime;
+        // Per-node windows from the orchestrator. Each window says
+        // "node N is the visual focus from `start` to `end`" — driven
+        // by Whisper-aligned narration so the halo lights up as the
+        // narrator names the node, then drops as we move on. Falls
+        // back to `highlightNodes` only (single section-wide window)
+        // when the producer didn't supply windows (older cached jobs
+        // or sections where fuzzy matching against narration failed).
+        const windows =
+          section.highlightWindows && section.highlightWindows.length
+            ? section.highlightWindows
+            : (section.highlightNodes || []).map((name) => ({
+                name,
+                start: section.startTime,
+                end: section.endTime,
+              }));
         const entryDur = 0.28;
         const settleDur = 0.18;
         const exitDur = 0.32;
         const pulsePeriod = 0.7;
-        const sectionDur = Math.max(0, section.endTime - section.startTime);
-        const pulseWindow = Math.max(
-          0,
-          sectionDur - entryDur - settleDur - exitDur,
-        );
-        const pulseRepeats = Math.max(0, Math.floor(pulseWindow / pulsePeriod) - 1);
 
         const STRONG_GLOW =
           '0 0 0 2px rgba(167, 139, 250, 1.0), 0 0 28px 8px rgba(124, 58, 237, 0.65), 0 0 72px 22px rgba(124, 58, 237, 0.35)';
@@ -415,10 +480,20 @@
         const OFF_GLOW =
           '0 0 0 2px rgba(167, 139, 250, 0.0), 0 0 24px 6px rgba(124, 58, 237, 0.0), 0 0 56px 18px rgba(124, 58, 237, 0.0)';
 
-        highlight.forEach((nodeName) => {
-          const id = `#node-marker-${cssEscape(nodeName)}`;
-          // 1. Entry pop with overshoot — opacity ramps in faster than
-          // the scale settles for a satisfying "snap" feel.
+        windows.forEach((win) => {
+          const id = `#node-marker-${cssEscape(win.name)}`;
+          const winDur = Math.max(0, win.end - win.start);
+          // Collapse entry/settle/exit if the window is shorter than the
+          // sum of phases (rare — only on very short sub-windows). Keeps
+          // the relative rhythm: ~30 % entry, 50 % hold, 20 % exit.
+          const minDur = entryDur + settleDur + exitDur + 0.1;
+          const eDur = winDur < minDur ? winDur * 0.3 : entryDur;
+          const sDur = winDur < minDur ? winDur * 0.2 : settleDur;
+          const xDur = winDur < minDur ? winDur * 0.2 : exitDur;
+          const pulseWindow = Math.max(0, winDur - eDur - sDur - xDur);
+          const pulseRepeats = Math.max(0, Math.floor(pulseWindow / pulsePeriod) - 1);
+
+          // 1. Entry pop with overshoot
           tl.fromTo(
             id,
             { opacity: 0, scale: 0.92, boxShadow: OFF_GLOW },
@@ -426,17 +501,13 @@
               opacity: 1,
               scale: 1.06,
               boxShadow: STRONG_GLOW,
-              duration: entryDur,
+              duration: eDur,
               ease: 'back.out(2)',
             },
-            sectionStart,
+            win.start
           );
-          tl.to(
-            id,
-            { scale: 1.0, duration: settleDur, ease: 'power2.out' },
-            sectionStart + entryDur,
-          );
-          // 2. Breathing pulse for the rest of the active window.
+          tl.to(id, { scale: 1.0, duration: sDur, ease: 'power2.out' }, win.start + eDur);
+          // 2. Breathing pulse during the hold
           if (pulseRepeats > 0) {
             tl.to(
               id,
@@ -448,43 +519,40 @@
                 repeat: pulseRepeats,
                 yoyo: true,
               },
-              sectionStart + entryDur + settleDur,
+              win.start + eDur + sDur
             );
           }
-          // 3. Exit — fade out to OFF_GLOW. Aligned to section.endTime
-          // so adjacent sections don't double-render the same marker.
+          // 3. Exit — fades just before the next node's window starts
+          // so the handoff is visible (prev fading while next pops in).
           tl.to(
             id,
-            {
-              opacity: 0,
-              scale: 0.94,
-              boxShadow: OFF_GLOW,
-              duration: exitDur,
-              ease: 'power2.in',
-            },
-            section.endTime - exitDur,
+            { opacity: 0, scale: 0.94, boxShadow: OFF_GLOW, duration: xDur, ease: 'power2.in' },
+            Math.max(win.start + eDur + sDur, win.end - xDur)
           );
         });
 
-        // ── Per-section arrow draw ───────────────────────────────
-        // Arrow appears when both endpoints are in highlightNodes for this
-        // section. Stroke-dashoffset → 0 = "drawing" effect over 0.6s.
-        arrowEdges.forEach((edge) => {
-          if (!highlight.includes(edge.source) || !highlight.includes(edge.target)) return;
+        // ── Arrow handoff between sequential windows ─────────────
+        // Draw the connecting arrow at the moment the next node's
+        // window opens (so it visually "guides" the eye from prev →
+        // next). When window pairs aren't in the workflow's connection
+        // map, skip silently — the arrow overlay only knows about
+        // declared edges.
+        for (let i = 0; i < windows.length - 1; i++) {
+          const from = windows[i];
+          const to = windows[i + 1];
+          const edge = arrowEdges.find((e) => e.source === from.name && e.target === to.name);
+          if (!edge) continue;
           const sel = `#${edge.id}`;
           tl.to(
             sel,
-            { opacity: 1, strokeDashoffset: 0, duration: 0.6, ease: 'power2.out' },
-            sectionStart + 0.2,
+            { opacity: 1, strokeDashoffset: 0, duration: 0.5, ease: 'power2.out' },
+            to.start - 0.1
           );
-          tl.to(
-            sel,
-            { opacity: 0, duration: 0.25 },
-            section.endTime - 0.25,
-          );
-          // Reset for next loop / next section that re-highlights this edge
-          tl.set(sel, { strokeDashoffset: edge.length }, section.endTime);
-        });
+          // Hold while the target is in its hold phase, then fade with
+          // the target's exit.
+          tl.to(sel, { opacity: 0, duration: 0.25 }, Math.max(to.start, to.end - 0.25));
+          tl.set(sel, { strokeDashoffset: edge.length }, to.end);
+        }
       });
 
       // ── Captions (same word-karaoke pattern as slideshow / captions) ─
@@ -527,6 +595,44 @@
           tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '#ffffff' }, w.endTime);
         });
       });
+
+      // ── End-card fade-in ──────────────────────────────────────
+      // Card div is always in the DOM, but the GSAP tween only fires
+      // when `endCardStartSeconds` lands inside the timeline. When the
+      // orchestrator disables the card it ships `display: none` plus a
+      // start time past the video end — both gates skip the animation.
+      const endCardStart = parseFloat('{{endCardStartSeconds}}');
+      const endCardDur = parseFloat('{{endCardDurationSeconds}}');
+      if (Number.isFinite(endCardStart) && endCardDur > 0) {
+        // Sit on top of everything (z-index already via track-index 30
+        // in HF, but explicit here defends against future changes).
+        document.getElementById('end-card').style.zIndex = '30';
+        tl.fromTo(
+          '#end-card',
+          { opacity: 0, scale: 0.96 },
+          { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.6)' },
+          endCardStart
+        );
+        // Headline drops in slightly later for a layered reveal.
+        tl.fromTo(
+          '#end-card-headline',
+          { opacity: 0, y: 28 },
+          { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' },
+          endCardStart + 0.12
+        );
+        tl.fromTo(
+          '#end-card-subheadline',
+          { opacity: 0, y: 22 },
+          { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out' },
+          endCardStart + 0.24
+        );
+        tl.fromTo(
+          '#end-card-action',
+          { opacity: 0, scale: 0.85 },
+          { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(2)' },
+          endCardStart + 0.36
+        );
+      }
 
       window.__timelines['n8n-explainer'] = tl;
     </script>
