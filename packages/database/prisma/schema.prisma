@@ -277,6 +277,13 @@ model ReelJob {
   callbackUrl    String? // Webhook URL - POST result when job completes/fails
   callbackSent   Boolean   @default(false)
   parentJobId    String? // For batch jobs - links back to the original batch request
+  /// Fork lineage. When set, this job inherited cached pipeline context
+  /// (MinIO `jobs/{sourceJobId}/`) from another completed job and was
+  /// resumed from a specific step with `configOverrides` applied (e.g.
+  /// rendering the same n8n-explainer with a different endCard.platform).
+  /// Distinct from `parentJobId` which groups batch siblings.
+  sourceJobId    String?
+  forkedAt       DateTime? // Set when the job was created as a fork.
   language       String? // ISO language code (e.g., "en", "pl") - for multi-language reels
   productionMeta Json? // AI production metadata: plan, prompts, models, generated assets
   startedAt      DateTime?
@@ -288,6 +295,7 @@ model ReelJob {
   @@index([status])
   @@index([userId, createdAt])
   @@index([parentJobId])
+  @@index([sourceJobId])
 }
 
 /// Reference bank — Character + ReferenceImage tables backing the
