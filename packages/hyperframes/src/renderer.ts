@@ -168,9 +168,15 @@ function runHyperframesCli(args: CliArgs): Promise<void> {
         ? ['render', args.projectDir, '-o', args.outputPath, '--quiet']
         : ['hyperframes', 'render', args.projectDir, '-o', args.outputPath, '--quiet'];
 
+    // stdio: stdout='ignore' so the OS discards it without buffering — eliminates
+    // the pipe back-pressure failure mode entirely. With longer renders
+    // (n8n-explainer composition, ~70s output) even a `data` listener that
+    // discards each chunk wasn't enough — Node's internal stream buffering
+    // still let the child block on close. 'ignore' = file descriptor → /dev/null.
+    // stderr stays piped because we want diagnostics on failure.
     const child = spawn(cmd, cmdArgs, {
       env: args.env ?? process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['ignore', 'ignore', 'pipe'],
     });
 
     let stderr = '';
@@ -178,8 +184,64 @@ function runHyperframesCli(args: CliArgs): Promise<void> {
       stderr += chunk.toString();
     });
 
-    child.on('error', reject);
+    // Subprocess hang workaround: hyperframes binary occasionally fails to
+    // exit after writing the MP4 (some pending DevTools / Chrome socket).
+    // We watchdog the output file: when its size has been stable for 3
+    // consecutive 1-second polls, we declare the render complete and
+    // SIGTERM the child. SIGKILL after 2s if SIGTERM is ignored. We start
+    // polling 5s after spawn so we don't trip on a 0-byte placeholder file
+    // that exists during early initialization.
+    let resolved = false;
+    let lastSize = -1;
+    let stableTicks = 0;
+    let watchdogTimer: NodeJS.Timeout | null = null;
+    const STABLE_TICKS = 3;
+    const POLL_MS = 1_000;
+    const START_DELAY_MS = 5_000;
+
+    const tick = () => {
+      if (resolved) return;
+      try {
+        if (fs.existsSync(args.outputPath)) {
+          const size = fs.statSync(args.outputPath).size;
+          if (size > 0 && size === lastSize) {
+            stableTicks++;
+            if (stableTicks >= STABLE_TICKS) {
+              resolved = true;
+              try {
+                child.kill('SIGTERM');
+              } catch {}
+              setTimeout(() => {
+                try {
+                  child.kill('SIGKILL');
+                } catch {}
+              }, 2_000);
+              resolve();
+              return;
+            }
+          } else {
+            stableTicks = 0;
+            lastSize = size;
+          }
+        }
+      } catch {
+        /* fs error — keep polling */
+      }
+      watchdogTimer = setTimeout(tick, POLL_MS);
+    };
+    watchdogTimer = setTimeout(tick, START_DELAY_MS);
+
+    child.on('error', (err) => {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      if (!resolved) {
+        resolved = true;
+        reject(err);
+      }
+    });
     child.on('close', (code) => {
+      if (watchdogTimer) clearTimeout(watchdogTimer);
+      if (resolved) return; // watchdog beat us to it
+      resolved = true;
       if (code !== 0) {
         reject(
           new Error(`hyperframes render exited with code ${code}. stderr: ${stderr.slice(0, 500)}`)
