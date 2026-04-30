@@ -11,8 +11,19 @@ export {
   type ResolveEndCardOptions,
   getCtaTemplate,
   resolveEndCard,
-  buildHfEndCardBlock,
 } from './cta';
+
+// ── HF cards (shimmer + 3 representative cards now; 27 total target) ──
+export { buildHfCardBlock, buildHfEndCardBlock, CARD_BUILDERS, REGISTERED_SLUGS } from './cards';
+export type {
+  CardRenderInput,
+  CardBlockOutput,
+  CardBuilder,
+  CardPalette,
+  CardData,
+  CardMode,
+  Anchor,
+} from './cards';
 
 // ── Core orchestration ────────────────────────────────────────
 export { produce, produceComposition } from './orchestrator/production-orchestrator';

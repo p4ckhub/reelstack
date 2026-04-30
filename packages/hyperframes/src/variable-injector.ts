@@ -12,9 +12,16 @@
  * - Keeps the template format identical to what a human author would
  *   write + preview with `hyperframes preview`
  *
- * Security: values are HTML-escaped. URLs go through a stricter check
- * (http/https only) before substitution to prevent `javascript:` URIs
- * leaking into `src` attributes.
+ * Three substitution modes, picked by variable-name suffix:
+ *
+ *   - `*Url` / `*Src` — sanitized URL (http/https only). Rejects
+ *     `javascript:`, relative paths, anything with whitespace or
+ *     control chars.
+ *   - `*Block` / `*Html` — raw HTML block. The caller is responsible
+ *     for escaping any user input INSIDE the block. Used for server-
+ *     generated HTML+JS snippets (e.g. `endCardBlock` from
+ *     `buildHfEndCardBlock` in `@reelstack/agent`).
+ *   - everything else — HTML-escaped (`<` → `&lt;`, etc).
  */
 
 export type TemplateVariables = Readonly<Record<string, string | number | boolean>>;
@@ -38,6 +45,17 @@ function htmlEscape(v: unknown): string {
  */
 function isUrlKey(key: string): boolean {
   return /url|src$/i.test(key);
+}
+
+/**
+ * Is this variable name a raw HTML block? The orchestrator is
+ * responsible for escaping any user input INSIDE the block. We pass
+ * the value through verbatim so HTML+CSS+JS snippets (e.g. the
+ * shared end-card overlay built by `buildHfEndCardBlock`) reach the
+ * browser as DOM rather than as escaped text.
+ */
+function isHtmlBlockKey(key: string): boolean {
+  return /(Block|Html)$/.test(key);
 }
 
 const SAFE_URL = /^https?:\/\/[^\s'"<>]+$/;
@@ -64,6 +82,8 @@ export function injectVariables(source: string, vars: TemplateVariables): string
       throw new Error(`Template variable "${key}" is not defined in vars.`);
     }
     const value = vars[key];
-    return isUrlKey(key) ? sanitizeUrl(value) : htmlEscape(value);
+    if (isUrlKey(key)) return sanitizeUrl(value);
+    if (isHtmlBlockKey(key)) return String(value);
+    return htmlEscape(value);
   });
 }

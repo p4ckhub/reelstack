@@ -51,4 +51,15 @@ describe('injectVariables', () => {
     const out = injectVariables(template, {});
     expect(out).toBe(template);
   });
+
+  it('passes *Block / *Html keys through without escaping', () => {
+    const block = '<div id="x" style="color:#fff">hi</div><script>foo();</script>';
+    const out = injectVariables('<body>{{endCardBlock}}</body>', { endCardBlock: block });
+    expect(out).toBe(`<body>${block}</body>`);
+  });
+
+  it('still escapes a key that does not match URL / Block / Html suffix', () => {
+    const out = injectVariables('<p>{{title}}</p>', { title: '<x>' });
+    expect(out).toBe('<p>&lt;x&gt;</p>');
+  });
 });

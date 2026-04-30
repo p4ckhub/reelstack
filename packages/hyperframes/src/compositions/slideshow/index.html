@@ -211,6 +211,10 @@
         });
       });
 
+      // Splice every registered card instance onto the main timeline.
+      // HF seeks only the captured timeline; cards have to ride this one.
+      Object.values(window.__hfAttachCardInstances || {}).forEach(function (fn) { fn(tl); });
+
       window.__timelines['slideshow'] = tl;
     </script>
   </body>

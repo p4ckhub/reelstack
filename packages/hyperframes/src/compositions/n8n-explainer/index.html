@@ -176,51 +176,11 @@
         data-track-index="3"
       ></div>
 
-      <!-- End card / CTA — fades in over the last `endCardDurationSeconds`
-           of the reel. Always rendered; visibility is gated by GSAP
-           opacity tween whose start is pushed past video end when no
-           endCard was requested (display:none also covers that case). -->
-      <div
-        id="end-card"
-        class="clip"
-        data-start="{{endCardStartSeconds}}"
-        data-duration="{{endCardDurationSeconds}}"
-        data-track-index="30"
-        style="position:absolute;inset:0;background:{{endCardBackgroundColor}};display:{{endCardDisplay}};flex-direction:column;align-items:center;justify-content:center;padding:140px 90px;text-align:center;opacity:0;will-change:opacity,transform;"
-      >
-        <div
-          id="end-card-headline"
-          style="
-            font-size: 104px;
-            font-weight: 900;
-            color: #ffffff;
-            line-height: 1.05;
-            letter-spacing: -0.02em;
-            margin-bottom: 48px;
-          "
-        >
-          {{endCardHeadline}}
-        </div>
-        <div
-          id="end-card-subheadline"
-          style="
-            font-size: 46px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.78);
-            line-height: 1.3;
-            margin-bottom: 96px;
-            max-width: 900px;
-          "
-        >
-          {{endCardSubheadline}}
-        </div>
-        <div
-          id="end-card-action"
-          style="font-size:54px;font-weight:800;color:#ffffff;background:{{endCardAccentColor}};padding:36px 72px;border-radius:96px;box-shadow:0 16px 48px rgba(0,0,0,0.35);"
-        >
-          {{endCardAction}}
-        </div>
-      </div>
+      <!-- End-card overlay. Empty string when no card was requested;
+           otherwise the orchestrator emits a self-contained HTML+JS
+           snippet via `buildHfEndCardBlock` from `@reelstack/agent`
+           (1:1 port of the Remotion ShimmerCard). -->
+      {{endCardBlock}}
     </div>
 
     <script>
@@ -596,43 +556,12 @@
         });
       });
 
-      // ── End-card fade-in ──────────────────────────────────────
-      // Card div is always in the DOM, but the GSAP tween only fires
-      // when `endCardStartSeconds` lands inside the timeline. When the
-      // orchestrator disables the card it ships `display: none` plus a
-      // start time past the video end — both gates skip the animation.
-      const endCardStart = parseFloat('{{endCardStartSeconds}}');
-      const endCardDur = parseFloat('{{endCardDurationSeconds}}');
-      if (Number.isFinite(endCardStart) && endCardDur > 0) {
-        // Sit on top of everything (z-index already via track-index 30
-        // in HF, but explicit here defends against future changes).
-        document.getElementById('end-card').style.zIndex = '30';
-        tl.fromTo(
-          '#end-card',
-          { opacity: 0, scale: 0.96 },
-          { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.6)' },
-          endCardStart
-        );
-        // Headline drops in slightly later for a layered reveal.
-        tl.fromTo(
-          '#end-card-headline',
-          { opacity: 0, y: 28 },
-          { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' },
-          endCardStart + 0.12
-        );
-        tl.fromTo(
-          '#end-card-subheadline',
-          { opacity: 0, y: 22 },
-          { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out' },
-          endCardStart + 0.24
-        );
-        tl.fromTo(
-          '#end-card-action',
-          { opacity: 0, scale: 0.85 },
-          { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(2)' },
-          endCardStart + 0.36
-        );
-      }
+      // Splice every registered card instance onto the main timeline.
+      // HF's frame-by-frame seek drives only the captured timeline, so
+      // cards have to ride this one. `buildHfCardBlock` (in
+      // `@reelstack/agent`) registers each instance under
+      // `window.__hfAttachCardInstances[<instanceId>]`.
+      Object.values(window.__hfAttachCardInstances || {}).forEach(function (fn) { fn(tl); });
 
       window.__timelines['n8n-explainer'] = tl;
     </script>
