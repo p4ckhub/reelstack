@@ -18,6 +18,8 @@ export {
   listModules,
   isModuleMode,
   isCoreMode,
+  resolveRuntime,
+  getRuntimeImpl,
   CORE_MODES,
 } from './module-registry';
 
@@ -27,6 +29,8 @@ export type {
   BaseModuleRequest,
   ModuleResult,
   ProgressCallback,
+  ModuleRuntime,
+  RuntimeImpl,
 } from './module-interface';
 
 // ── Module registration ───────────────────────────────────────

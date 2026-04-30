@@ -2,7 +2,16 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import type { ReelModule } from '../module-interface';
 
 // Import from the barrel to get registry API
-import { registerModule, getModule, listModules, isModuleMode, isCoreMode, CORE_MODES } from '..';
+import {
+  registerModule,
+  getModule,
+  listModules,
+  isModuleMode,
+  isCoreMode,
+  resolveRuntime,
+  getRuntimeImpl,
+  CORE_MODES,
+} from '..';
 
 /**
  * These tests verify the module registry mechanism itself.
@@ -84,5 +93,124 @@ describe('module-registry', () => {
         expect(value).toBeLessThanOrEqual(100);
       }
     }
+  });
+
+  // ── Dual-runtime + BC ──────────────────────────────────────
+
+  describe('dual-runtime', () => {
+    it('legacy module (only `runtime` + `compositionId`) is auto-promoted to runtimes shape', () => {
+      const legacy: ReelModule = {
+        id: 'legacy-bc',
+        name: 'Legacy BC',
+        runtime: 'remotion',
+        compositionId: 'LegacyComp',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      registerModule(legacy);
+      const stored = getModule('legacy-bc')!;
+      expect(stored.runtimes).toBeDefined();
+      expect(stored.runtimes!.remotion?.compositionId).toBe('LegacyComp');
+      expect(stored.defaultRuntime).toBe('remotion');
+    });
+
+    it('legacy module without `runtime` defaults to remotion', () => {
+      const legacy: ReelModule = {
+        id: 'legacy-default-rt',
+        name: 'Legacy Default Runtime',
+        compositionId: 'LegacyDefault',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      registerModule(legacy);
+      expect(getModule('legacy-default-rt')!.defaultRuntime).toBe('remotion');
+    });
+
+    it('dual-runtime module preserves both runtime impls', () => {
+      const dual: ReelModule = {
+        id: 'dual-test',
+        name: 'Dual Test',
+        compositionId: 'DualRemotion', // unused once runtimes is set, kept for legacy field
+        runtimes: {
+          remotion: { compositionId: 'DualRemotion' },
+          hyperframes: { compositionId: '/path/to/dual-hf' },
+        },
+        defaultRuntime: 'remotion',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      registerModule(dual);
+      const stored = getModule('dual-test')!;
+      expect(stored.runtimes!.remotion?.compositionId).toBe('DualRemotion');
+      expect(stored.runtimes!.hyperframes?.compositionId).toBe('/path/to/dual-hf');
+    });
+
+    it('resolveRuntime returns requested when supported', () => {
+      const mod = getModule('dual-test')!;
+      expect(resolveRuntime(mod, 'hyperframes')).toBe('hyperframes');
+      expect(resolveRuntime(mod, 'remotion')).toBe('remotion');
+    });
+
+    it('resolveRuntime falls back to defaultRuntime when no request', () => {
+      const mod = getModule('dual-test')!;
+      expect(resolveRuntime(mod)).toBe('remotion');
+    });
+
+    it('resolveRuntime throws when requested runtime is not supported', () => {
+      const mod = getModule('legacy-bc')!;
+      expect(() => resolveRuntime(mod, 'hyperframes')).toThrow(
+        /does not support runtime "hyperframes"/
+      );
+    });
+
+    it('getRuntimeImpl returns the impl for the runtime', () => {
+      const mod = getModule('dual-test')!;
+      expect(getRuntimeImpl(mod, 'remotion').compositionId).toBe('DualRemotion');
+      expect(getRuntimeImpl(mod, 'hyperframes').compositionId).toBe('/path/to/dual-hf');
+    });
+
+    it('registerModule rejects empty compositionId (legacy + new shape)', () => {
+      // Legacy path: empty compositionId synthesized into runtimes.
+      const badLegacy: ReelModule = {
+        id: 'bad-legacy-empty',
+        name: 'Bad Legacy Empty',
+        compositionId: '',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      expect(() => registerModule(badLegacy)).toThrow(/missing compositionId/);
+    });
+
+    it('registerModule rejects defaultRuntime not in runtimes', () => {
+      const bad: ReelModule = {
+        id: 'bad-default-mismatch',
+        name: 'Bad Default',
+        compositionId: '',
+        runtimes: { remotion: { compositionId: 'X' } },
+        defaultRuntime: 'hyperframes',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      expect(() => registerModule(bad)).toThrow(/not in runtimes/);
+    });
+
+    it('registerModule rejects runtime impl with empty compositionId', () => {
+      const bad: ReelModule = {
+        id: 'bad-empty-comp',
+        name: 'Bad Empty Comp',
+        compositionId: '',
+        runtimes: { remotion: { compositionId: '' } },
+        defaultRuntime: 'remotion',
+        configFields: [],
+        progressSteps: { Step: 100 },
+        orchestrate: async () => ({ outputPath: '/x.mp4', durationSeconds: 1 }),
+      };
+      expect(() => registerModule(bad)).toThrow(/missing compositionId/);
+    });
   });
 });
