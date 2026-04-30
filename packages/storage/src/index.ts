@@ -15,3 +15,4 @@ export async function createStorage(): Promise<StorageAdapter> {
 
 export { SupabaseStorageAdapter } from './supabase-storage';
 export { MinioStorageAdapter } from './minio-storage';
+export { copyJobContext } from './copy-job-context';
