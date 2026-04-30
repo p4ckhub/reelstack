@@ -1,4 +1,4 @@
-import type { ProductionStep, BrandPreset } from '@reelstack/agent';
+import type { ProductionStep, BrandPreset, ModuleRuntime, EndCardConfig } from '@reelstack/agent';
 
 export interface Slide {
   title: string;
@@ -24,6 +24,23 @@ export interface SlideshowRequest {
   template?: string;
   brand?: string;
   highlightMode?: string;
+  /**
+   * Per-request caption style overrides. Most useful field is `position`
+   * (0-100, % from top of frame) — default 65 puts captions in the
+   * cross-platform safe zone above all social media UI overlays.
+   */
+  captionStyle?: {
+    position?: number;
+    fontSize?: number;
+    fontColor?: string;
+    highlightColor?: string;
+    backgroundColor?: string;
+    backgroundOpacity?: number;
+    padding?: number;
+    outlineWidth?: number;
+    outlineColor?: string;
+    shadowBlur?: number;
+  };
   language?: string;
   tts?: {
     provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
@@ -40,6 +57,15 @@ export interface SlideshowRequest {
   llmCall?: (prompt: string) => Promise<string>;
   outputPath?: string;
   onProgress?: (step: string) => void;
+  /** Render runtime (default: 'remotion'). Set 'hyperframes' for HF render. */
+  runtime?: ModuleRuntime;
+  /**
+   * Closing CTA card. When set, picks per-platform copy from the shared
+   * template registry (see `@reelstack/agent`'s `resolveEndCard`).
+   * `endCard: { platform: 'ig' }` is enough — copy fields default from
+   * the template + module fallback. Omit for "no end card".
+   */
+  endCard?: EndCardConfig;
 }
 
 export interface SlideshowResult {

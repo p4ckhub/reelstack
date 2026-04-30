@@ -11,6 +11,7 @@ export {
   type ResolveEndCardOptions,
   getCtaTemplate,
   resolveEndCard,
+  buildHfEndCardBlock,
 } from './cta';
 
 // ── Core orchestration ────────────────────────────────────────

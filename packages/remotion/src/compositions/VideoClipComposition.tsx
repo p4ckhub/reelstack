@@ -9,6 +9,7 @@ import {
 } from 'remotion';
 import { CaptionOverlay } from '../components/CaptionOverlay';
 import { SegmentedProgressBar } from '../components/SegmentedProgressBar';
+import { EndCardLayer } from '../components/EndCardLayer';
 import { resolveMediaUrl } from '../utils/resolve-media-url';
 import { computeEntrance } from '../utils/compute-entrance';
 import type { VideoClipProps, VideoClip } from '../schemas/video-clip-props';
@@ -37,6 +38,7 @@ export const VideoClipComposition: React.FC<VideoClipProps> = (props) => {
     highlightMode,
     showSegmentedProgress = true,
     segmentedProgressStyle,
+    endCard,
   } = props;
 
   return (
@@ -82,6 +84,11 @@ export const VideoClipComposition: React.FC<VideoClipProps> = (props) => {
 
       {/* Background music */}
       {musicUrl && <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} />}
+
+      {/* Closing CTA. Orchestrators feed an `EndCardSelection` (built
+          from the resolved `EndCardConfig` via `endCardConfigToSelection`).
+          Renders nothing when omitted. */}
+      <EndCardLayer endCard={endCard} />
     </AbsoluteFill>
   );
 };

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: {{backgroundColor}};
+        font-family:
+          'Inter',
+          -apple-system,
+          system-ui,
+          sans-serif;
+        color: #fff;
+      }
+      /* Each slide is one .clip on the timeline. Hyperframes places these
+         absolutely. We layer them for crossfades. */
+      .slide {
+        width: 1080px;
+        height: 1920px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        will-change: opacity, transform;
+      }
+      /* Caption layer sits on top — single .clip spanning the full duration.
+         Word-level karaoke handled by GSAP timeline at the bottom. */
+      #captions {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        /* Caption pill children stack at parent's bottom edge — keep
+           the container `bottom`-anchored (not `top`) so the 0-height
+           parent has a stable bottom for the pill `bottom: 0` to lock
+           onto. See n8n-explainer/index.html for the full reasoning;
+           short version: switching to `top: X%` causes Chromium to
+           collapse caption pills off-canvas in this layout.
+           `captionBottomPercent = 100 - position`, default 35 (= 65%
+           from top). */
+        bottom: {{captionBottomPercent}}%;
+        text-align: center;
+        font-size: 56px;
+        font-weight: 800;
+        line-height: 1.25;
+        pointer-events: none;
+      }
+      /* One pill per cue. We position cues stacked at the same point, fade
+         the active one in via GSAP. The pill matches the Remotion VideoClip
+         caption look (dark rounded box, white text, gold active word). */
+      #captions .cue {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.65);
+        padding: 18px 28px;
+        border-radius: 18px;
+        max-width: 100%;
+      }
+      #captions .word {
+        display: inline-block;
+        margin-right: 0.25em;
+        color: #ffffff;
+        will-change: color;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="slideshow"
+      data-start="0"
+      data-duration="{{durationSeconds}}"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Slides container — populated by GSAP from the slidesJson variable.
+           Hyperframes substitutes literal strings only, so we ship the
+           data as a JSON string and parse + DOM-build at runtime. -->
+      <div
+        id="slides"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="1"
+      ></div>
+
+      <!-- Caption layer — separate clip on track 2 so it stacks above slides. -->
+      <div
+        id="captions"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="2"
+      ></div>
+
+      <!-- Voiceover audio — Hyperframes wires <audio class="clip"> as a
+           timeline-controlled audio source. Empty src is fine if no VO. -->
+      <audio
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="3"
+        src="{{voiceoverUrl}}"
+        preload="auto"
+      ></audio>
+
+      <!-- End-card overlay. Empty string when no card was requested;
+           otherwise the orchestrator emits a self-contained HTML+JS
+           snippet via `buildHfEndCardBlock` from `@reelstack/agent`. -->
+      {{endCardBlock}}
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // ── Build slides from variable ─────────────────────────
+      // slidesJson is a JSON-encoded array of { imageUrl, startTime, endTime, transition, transitionDurationMs }
+      // base64 → UTF-8 string. atob() yields Latin-1 bytes; we decode as UTF-8
+      // so Polish diacritics survive (atob alone produces "folderÃ³w" garbage).
+      function b64ToUtf8(b64) {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+
+      let slidesData = [];
+      try {
+        slidesData = JSON.parse(b64ToUtf8('{{slidesB64}}'));
+      } catch (e) {
+        console.error('slideshow: failed to parse slidesB64', e);
+      }
+
+      const slidesContainer = document.getElementById('slides');
+      slidesData.forEach((slide, i) => {
+        const el = document.createElement('div');
+        el.className = 'slide';
+        el.id = `slide-${i}`;
+        el.style.position = 'absolute';
+        el.style.inset = '0';
+        el.style.opacity = '0';
+        el.style.backgroundImage = `url('${slide.imageUrl}')`;
+        slidesContainer.appendChild(el);
+
+        // Timing on the master timeline.
+        const fadeMs = slide.transitionDurationMs ?? 400;
+        const fadeS = fadeMs / 1000;
+        tl.to(`#slide-${i}`, { opacity: 1, duration: fadeS, ease: 'power2.out' }, slide.startTime);
+        // Fade out at endTime - fadeS so the next one crossfades in cleanly.
+        if (i < slidesData.length - 1) {
+          tl.to(
+            `#slide-${i}`,
+            { opacity: 0, duration: fadeS, ease: 'power2.in' },
+            slide.endTime - fadeS
+          );
+        }
+      });
+
+      // ── Build word-level captions ───────────────────────────
+      // cuesJson: array of { text: string, words: [{ text, startTime, endTime }] }
+      let cuesData = [];
+      try {
+        cuesData = JSON.parse(b64ToUtf8('{{cuesB64}}'));
+      } catch (e) {
+        console.error('slideshow: failed to parse cuesB64', e);
+      }
+
+      const captionsEl = document.getElementById('captions');
+      // Render each cue as a pill stacked at the same anchor; fade the active
+      // pill in via GSAP. Word-level highlighting drives the gold color
+      // directly (no className plugin dependency, no class string juggling).
+      cuesData.forEach((cue, cueIdx) => {
+        const words = cue.words ?? [];
+        if (words.length === 0) return;
+        const pill = document.createElement('span');
+        pill.id = `cue-${cueIdx}`;
+        pill.className = 'cue';
+        // Stack all pills at the same position; opacity drives visibility.
+        pill.style.opacity = '0';
+        pill.style.position = 'absolute';
+        pill.style.left = '50%';
+        pill.style.bottom = '0';
+        pill.style.transform = 'translateX(-50%)';
+        pill.style.whiteSpace = 'normal';
+        words.forEach((w, wIdx) => {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.id = `cue-${cueIdx}-w-${wIdx}`;
+          span.textContent = w.text;
+          pill.appendChild(span);
+        });
+        captionsEl.appendChild(pill);
+
+        const cueStart = words[0]?.startTime ?? 0;
+        const cueEnd = words[words.length - 1]?.endTime ?? cueStart;
+        tl.to(`#cue-${cueIdx}`, { opacity: 1, duration: 0.18 }, cueStart);
+        tl.to(`#cue-${cueIdx}`, { opacity: 0, duration: 0.15 }, cueEnd);
+
+        // Per-word gold highlight via direct color tween. Avoids GSAP's
+        // ClassesPlugin (which Hyperframes Chrome bundle does not load).
+        words.forEach((w, wIdx) => {
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '#ffd700' }, w.startTime);
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '#ffffff' }, w.endTime);
+        });
+      });
+
+      window.__timelines['slideshow'] = tl;
+    </script>
+  </body>
+</html>

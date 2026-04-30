@@ -11,6 +11,21 @@ const slideSegmentSchema = z.object({
   transitionDurationMs: z.number().min(0).max(2000).default(400),
 });
 
+// Resolved end-card config (post `resolveEndCard()` from @reelstack/agent).
+// Kept loose here because the shared resolver fills in / nullifies fields
+// before the props ever reach the Remotion bundler.
+const endCardSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    headline: z.string().optional(),
+    subheadline: z.string().optional(),
+    action: z.string().optional(),
+    durationSeconds: z.number().positive().optional(),
+    accentColor: z.string().optional(),
+    backgroundColor: z.string().optional(),
+  })
+  .optional();
+
 export const slideshowPropsSchema = z.object({
   slides: z.array(slideSegmentSchema).min(1),
   cues: z.array(captionCueSchema),
@@ -19,13 +34,15 @@ export const slideshowPropsSchema = z.object({
   musicVolume: z.number().min(0).max(1).default(0.2),
   durationSeconds: z.number().positive(),
   backgroundColor: z.string().default('#000000'),
+  endCard: endCardSchema,
   captionStyle: z
     .object({
       fontSize: z.number().default(56),
       fontColor: z.string().default('#FFFFFF'),
       fontWeight: z.enum(['normal', 'bold']).default('bold'),
       highlightColor: z.string().default('#FFD700'),
-      position: z.number().min(0).max(100).default(78),
+      // Cross-platform safe zone — see video-clip-props comment.
+      position: z.number().min(0).max(100).default(65),
       backgroundColor: z.string().default('#000000'),
       backgroundOpacity: z.number().min(0).max(1).default(0.6),
       padding: z.number().default(16),

@@ -9,9 +9,28 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { renderToFile } from '@reelstack/image-gen';
-import { uploadVoiceover, renderVideo, resolvePresetConfig } from '@reelstack/agent';
-import type { ProductionStep } from '@reelstack/agent';
-import { createTTSProvider } from '@reelstack/tts';
+import {
+  uploadVoiceover,
+  renderVideo,
+  resolvePresetConfig,
+  resolveEndCard,
+  buildHfEndCardBlock,
+} from '@reelstack/agent';
+import type {
+  ProductionStep,
+  ModuleRuntime,
+  BaseModuleRequest,
+  PipelineDefinition,
+  PipelineContext,
+  EndCardConfig,
+} from '@reelstack/agent';
+import { compositionPath } from '@reelstack/hyperframes';
+import {
+  createTTSProvider,
+  buildVoicePrompt,
+  makeTTSFriendly,
+  stripAudioTags,
+} from '@reelstack/tts';
 import type { TTSConfig } from '@reelstack/tts';
 import { groupWordsIntoCues, alignWordsWithScript } from '@reelstack/transcription';
 import {
@@ -22,7 +41,8 @@ import {
 import { createStorage } from '@reelstack/storage';
 import { createLogger } from '@reelstack/logger';
 import { generateSlideshowScript, wrapManualSlides } from './script-generator';
-import type { SlideshowRequest, SlideshowResult, SlideshowScript } from './types';
+import { reviewSlideshowScript } from './script-reviewer';
+import type { Slide, SlideshowRequest, SlideshowResult, SlideshowScript } from './types';
 import type { SlideshowProps } from './remotion/schema';
 
 const baseLog = createLogger('slideshow');
@@ -30,6 +50,50 @@ const baseLog = createLogger('slideshow');
 /** Default background music (served from Remotion public/ dir). */
 const DEFAULT_MUSIC_PATH = 'music/bg-upbeat.mp3';
 const DEFAULT_MUSIC_VOLUME = 0.13;
+
+// ── Hyperframes variable adapter (pure, testable) ──────────
+
+/**
+ * Map a Remotion-shape SlideshowProps into the variable bag the HF
+ * composition (`compositions/slideshow/index.html`) expects.
+ *
+ * `slides` and `cues` are base64-encoded JSON. The HF variable injector
+ * HTML-escapes every value (including `"` → `&quot;`), which would break
+ * inlined JS template literals. base64 is opaque to HTML escaping, so
+ * the template `atob()`s + `JSON.parse()`s at runtime.
+ *
+ * `compositionId` points the HF renderer at the bundled template dir.
+ */
+/**
+ * Module-level CTA fallbacks. Used by the shared `resolveEndCard()` to
+ * fill in copy when the request doesn't override. Keep generic — the
+ * slideshow mode covers many topics, so the default subheadline reads
+ * as "more in my profile / DMs / description" rather than mode-specific.
+ */
+const SLIDESHOW_CTA_DEFAULTS = {
+  defaultKeyword: 'INFO',
+  defaultSubheadline: undefined,
+} as const;
+
+export function buildHyperframesProps(props: SlideshowProps): Record<string, unknown> {
+  return {
+    compositionId: compositionPath('slideshow'),
+    durationSeconds: props.durationSeconds,
+    backgroundColor: props.backgroundColor ?? '#000000',
+    voiceoverUrl: props.voiceoverUrl ?? '',
+    slidesB64: Buffer.from(JSON.stringify(props.slides), 'utf8').toString('base64'),
+    cuesB64: Buffer.from(JSON.stringify(props.cues), 'utf8').toString('base64'),
+    // Caption position is exposed as "% from top" (0-100). HF caption
+    // container is bottom-anchored (see slideshow/index.html for why),
+    // so we convert to "% from bottom" here. Default 65 (top) → 35
+    // (bottom) = cross-platform safe zone above all social UI overlays.
+    captionBottomPercent: 100 - (props.captionStyle?.position ?? 65),
+    // End-card block. Empty string when no card is requested; otherwise
+    // a self-contained HTML+JS snippet that the HF template drops into
+    // its body via the `{{endCardBlock}}` placeholder.
+    endCardBlock: buildHfEndCardBlock(props.endCard, props.durationSeconds),
+  };
+}
 
 // ── Props builder (pure, testable) ──────────────────────────
 
@@ -50,6 +114,25 @@ export interface BuildSlideshowPropsInput {
   musicUrl?: string;
   musicVolume?: number;
   highlightMode?: string;
+  /**
+   * Caller-provided caption style overrides. Anything missing falls back
+   * to the slideshow defaults (cross-platform safe zone: position 65).
+   * Pass `position` here to override per-request.
+   */
+  captionStyle?: {
+    position?: number;
+    fontSize?: number;
+    fontColor?: string;
+    highlightColor?: string;
+    backgroundColor?: string;
+    backgroundOpacity?: number;
+    padding?: number;
+    outlineWidth?: number;
+    outlineColor?: string;
+    shadowBlur?: number;
+  };
+  /** Resolved end-card (post `resolveEndCard()`). Forwarded to props. */
+  endCard?: EndCardConfig;
 }
 
 export function buildSlideshowProps(input: BuildSlideshowPropsInput): SlideshowProps {
@@ -62,6 +145,7 @@ export function buildSlideshowProps(input: BuildSlideshowPropsInput): SlideshowP
     musicUrl,
     musicVolume,
     highlightMode,
+    captionStyle: callerCaptionStyle,
   } = input;
 
   const TRANSITIONS = ['crossfade', 'slide-left', 'zoom-in', 'wipe', 'slide-right'] as const;
@@ -86,19 +170,22 @@ export function buildSlideshowProps(input: BuildSlideshowPropsInput): SlideshowP
     musicVolume: musicVolume ?? DEFAULT_MUSIC_VOLUME,
     durationSeconds,
     backgroundColor: '#000000',
+    endCard: input.endCard,
     captionStyle: {
-      fontSize: 60,
-      fontColor: '#FFFFFF',
+      fontSize: callerCaptionStyle?.fontSize ?? 60,
+      fontColor: callerCaptionStyle?.fontColor ?? '#FFFFFF',
       fontWeight: 'bold' as const,
       ...(highlightMode ? { highlightMode } : {}),
-      highlightColor: '#FFD700',
-      position: 72,
-      backgroundColor: '#000000',
-      backgroundOpacity: 0.65,
-      padding: 18,
-      outlineWidth: 3,
-      outlineColor: '#000000',
-      shadowBlur: 8,
+      highlightColor: callerCaptionStyle?.highlightColor ?? '#FFD700',
+      // 65% from top = caller-overridable cross-platform safe zone default.
+      // Pass captionStyle.position in the API request to move it.
+      position: callerCaptionStyle?.position ?? 65,
+      backgroundColor: callerCaptionStyle?.backgroundColor ?? '#000000',
+      backgroundOpacity: callerCaptionStyle?.backgroundOpacity ?? 0.65,
+      padding: callerCaptionStyle?.padding ?? 18,
+      outlineWidth: callerCaptionStyle?.outlineWidth ?? 3,
+      outlineColor: callerCaptionStyle?.outlineColor ?? '#000000',
+      shadowBlur: callerCaptionStyle?.shadowBlur ?? 8,
     },
   };
 }
@@ -212,6 +299,13 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
   };
   const ttsProvider = createTTSProvider(ttsConfig);
 
+  // Build a Gemini-style voicePrompt once. Other providers ignore it
+  // (they read only `voice` and `language` from synthesize options).
+  const isGeminiTts = ttsConfig.provider === 'gemini-tts';
+  const voicePrompt = isGeminiTts
+    ? buildVoicePrompt({ useCase: 'slideshow' }).voicePrompt
+    : undefined;
+
   const WHISPER_OFFSET = 0.12; // seconds - tuned empirically with edge-tts
   const presetConfig = resolvePresetConfig(request.brandPreset);
   const whisperLang = ttsLanguage?.split('-')[0];
@@ -226,14 +320,25 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
 
   for (let i = 0; i < script.slides.length; i++) {
     const slide = script.slides[i]!;
-    const slideText = slide.text || slide.title;
+    // For Gemini: phoneticize PL acronyms + numbers, keep audio tags so
+    // the model can steer delivery. For other providers: strip audio
+    // tags so they don't get read as literal text ("excitedly", etc.).
+    const rawText = slide.text || slide.title;
+    const ttsText = isGeminiTts
+      ? makeTTSFriendly(rawText, ttsLanguage ?? 'en')
+      : stripAudioTags(rawText);
+    // Captions ALWAYS show the clean original spelling — strip audio tags,
+    // never use the phonetic conversion. alignWordsWithScript handles the
+    // token-count mismatch (Whisper hears "en osiem en", we display "n8n").
+    const captionText = stripAudioTags(rawText);
     onProgress?.(`TTS slide ${i + 1}/${script.slides.length}...`);
 
     // TTS for this slide
     const ttsStart = performance.now();
-    const ttsResult = await ttsProvider.synthesize(slideText, {
+    const ttsResult = await ttsProvider.synthesize(ttsText, {
       voice: request.tts?.voice,
       language: ttsLanguage,
+      voicePrompt,
     });
     totalTtsMs += performance.now() - ttsStart;
 
@@ -241,19 +346,20 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     const segmentDuration = getAudioDuration(ttsResult.audioBuffer, ttsResult.format);
     const wavBuffer = normalizeAudioForWhisper(ttsResult.audioBuffer, ttsResult.format);
 
-    // Transcribe this segment
+    // Transcribe this segment — give Whisper the speech text so its
+    // language model lines up with what was actually spoken.
     const whisperStart = performance.now();
     const transcription = await transcribeAudio(wavBuffer, {
       apiKey: request.whisper?.apiKey,
       language: whisperLang,
-      text: slideText,
+      text: ttsText,
       durationSeconds: segmentDuration,
     });
     totalWhisperMs += performance.now() - whisperStart;
     totalWordCount += transcription.words.length;
 
-    // Align whisper output with original slide text
-    const alignedWords = alignWordsWithScript(transcription.words, slideText);
+    // Align whisper output with the CAPTION text (clean original spelling).
+    const alignedWords = alignWordsWithScript(transcription.words, captionText);
 
     // Offset timestamps by cumulative duration + whisper correction
     const offsetWords = alignedWords.map((w) => ({
@@ -308,6 +414,13 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
 
   // ── 6. ASSEMBLE COMPOSITION PROPS ──────────────────────────
   onProgress?.('Assembling composition...');
+  // Resolve template-driven end-card before building props so platform-
+  // only requests (`endCard: { platform: 'ig' }`) get the right copy.
+  const resolvedEndCard = resolveEndCard(
+    request.endCard,
+    request.language ?? 'pl',
+    SLIDESHOW_CTA_DEFAULTS
+  );
   const props = buildSlideshowProps({
     script,
     imageUrls,
@@ -318,13 +431,23 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     musicUrl: request.musicUrl,
     musicVolume: request.musicVolume,
     highlightMode: request.highlightMode,
+    captionStyle: request.captionStyle,
+    endCard: resolvedEndCard,
   });
 
   // ── 7. RENDER ──────────────────────────────────────────────
+  // Pick composition + runtime per request. Hyperframes wants the bundled
+  // template path; Remotion wants the registered composition ID.
+  const runtime: ModuleRuntime = request.runtime ?? 'remotion';
+  const renderProps =
+    runtime === 'hyperframes'
+      ? buildHyperframesProps(props)
+      : ({ ...props, compositionId: 'Slideshow' } as unknown as Record<string, unknown>);
   const { outputPath, step: renderStep } = await renderVideo(
-    { ...props, compositionId: 'Slideshow' } as unknown as Record<string, unknown>,
+    renderProps,
     request.outputPath,
-    onProgress
+    onProgress,
+    runtime
   );
   steps.push(renderStep);
 
@@ -343,5 +466,322 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     durationSeconds: totalDuration,
     script,
     steps,
+  };
+}
+
+// ── Multi-step pipeline (PipelineEngine-driven, resumable) ───────────────
+//
+// 5 steps with persisted results so /resume {fromStepId} can replay just
+// the cheap downstream work. Re-render after fixing the HF composition =
+// 0$ LLM, 0$ TTS, 0$ image-gen — only the render step runs again.
+
+interface SlideshowGenerateScriptResult {
+  script: SlideshowScript;
+}
+interface SlideshowReviewScriptResult {
+  script: SlideshowScript;
+  corrected: boolean;
+}
+interface SlideshowRenderSlidesResult {
+  imageUrls: string[];
+}
+interface SlideshowTTSResult {
+  voiceoverUrl: string;
+  cues: SlideshowProps['cues'];
+  slideBoundaries: number[];
+  durationSeconds: number;
+}
+interface SlideshowAssemblePropsResult {
+  props: Record<string, unknown>;
+  durationSeconds: number;
+}
+interface SlideshowRenderResult {
+  outputPath: string;
+  durationSeconds: number;
+}
+
+export interface BuildSlideshowPipelineDeps {
+  llmCall: (prompt: string) => Promise<string>;
+}
+
+export function buildSlideshowPipeline(
+  base: BaseModuleRequest,
+  _config: Record<string, unknown>,
+  runtime: ModuleRuntime,
+  deps: BuildSlideshowPipelineDeps
+): PipelineDefinition {
+  const onProgress = base.onProgress;
+
+  return {
+    id: 'slideshow',
+    name: 'Slideshow (multi-step)',
+    steps: [
+      {
+        id: 'generate-script',
+        name: 'Generate slideshow script (LLM or manual)',
+        dependsOn: [],
+        async execute(ctx: PipelineContext): Promise<SlideshowGenerateScriptResult> {
+          const topic = ctx.input.topic as string;
+          const manualSlides = ctx.input.slides as Slide[] | undefined;
+          if (manualSlides && manualSlides.length > 0) {
+            const script = wrapManualSlides(topic, manualSlides);
+            baseLog.info({ jobId: ctx.jobId, slides: script.slides.length }, 'Using manual slides');
+            return { script };
+          }
+          onProgress?.('Generating slideshow script...');
+          const script = await generateSlideshowScript({
+            topic,
+            numberOfSlides: ctx.input.numberOfSlides as number | undefined,
+            language: ctx.input.language as string | undefined,
+            llmCall: deps.llmCall,
+          });
+          baseLog.info({ jobId: ctx.jobId, slides: script.slides.length }, 'Script generated');
+          return { script };
+        },
+      },
+      {
+        id: 'review-script',
+        name: 'Lint + correct slideshow script',
+        dependsOn: ['generate-script'],
+        async execute(ctx: PipelineContext): Promise<SlideshowReviewScriptResult> {
+          const { script } = ctx.results['generate-script'] as SlideshowGenerateScriptResult;
+          onProgress?.('Reviewing script...');
+          const result = await reviewSlideshowScript(script, {
+            llmCall: deps.llmCall,
+            language: ctx.input.language as string | undefined,
+          });
+          return { script: result.script, corrected: result.corrected };
+        },
+      },
+      {
+        id: 'render-slides',
+        name: 'Render + upload slide images',
+        dependsOn: ['review-script'],
+        async execute(ctx: PipelineContext): Promise<SlideshowRenderSlidesResult> {
+          const { script } = ctx.results['review-script'] as SlideshowReviewScriptResult;
+          const template = (ctx.input.template as string | undefined) ?? 'tip-card';
+          const brand = (ctx.input.brand as string | undefined) ?? 'example';
+          const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelstack-slideshow-img-'));
+          try {
+            const imagePaths: string[] = [];
+            for (let i = 0; i < script.slides.length; i++) {
+              const slide = script.slides[i]!;
+              onProgress?.(`Rendering slide ${i + 1}/${script.slides.length}`);
+              const outPath = path.join(tmpDir, `slide-${i}.png`);
+              await renderToFile(
+                {
+                  brand,
+                  template: slide.template ?? template,
+                  size: 'story',
+                  title: slide.title,
+                  text: slide.text ?? '',
+                  badge: slide.badge ?? `${i + 1}`,
+                  num: slide.num ?? `${i + 1}`,
+                },
+                outPath
+              );
+              imagePaths.push(outPath);
+            }
+            onProgress?.('Uploading slide images...');
+            const storage = await createStorage();
+            const imageUrls: string[] = [];
+            for (let i = 0; i < imagePaths.length; i++) {
+              const key = `slideshow/${ctx.jobId}/${Date.now()}-slide-${i}.png`;
+              const buffer = fs.readFileSync(imagePaths[i]!);
+              await storage.upload(buffer, key);
+              imageUrls.push(await storage.getSignedUrl(key, 7200));
+            }
+            return { imageUrls };
+          } finally {
+            try {
+              fs.rmSync(tmpDir, { recursive: true, force: true });
+            } catch {
+              /* ignore */
+            }
+          }
+        },
+      },
+      {
+        id: 'tts-pipeline',
+        name: 'TTS + whisper per slide + concat audio + upload',
+        dependsOn: ['review-script'],
+        async execute(ctx: PipelineContext): Promise<SlideshowTTSResult> {
+          const { script } = ctx.results['review-script'] as SlideshowReviewScriptResult;
+          const tts = ctx.input.tts as
+            | {
+                provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
+                voice?: string;
+                language?: string;
+              }
+            | undefined;
+          const language = ctx.input.language as string | undefined;
+          const ttsLanguage =
+            tts?.language ??
+            (language === 'pl'
+              ? 'pl-PL'
+              : language === 'en'
+                ? 'en-US'
+                : language
+                  ? `${language}-${language.toUpperCase()}`
+                  : undefined);
+          const ttsConfig: TTSConfig = {
+            provider: tts?.provider ?? 'edge-tts',
+            apiKey:
+              tts?.provider === 'elevenlabs'
+                ? process.env.ELEVENLABS_API_KEY
+                : tts?.provider === 'openai'
+                  ? process.env.OPENAI_API_KEY
+                  : undefined,
+            defaultLanguage: ttsLanguage ?? 'en-US',
+          };
+          const ttsProvider = createTTSProvider(ttsConfig);
+          const isGeminiTts = ttsConfig.provider === 'gemini-tts';
+          const voicePrompt = isGeminiTts
+            ? buildVoicePrompt({ useCase: 'slideshow' }).voicePrompt
+            : undefined;
+          const WHISPER_OFFSET = 0.12;
+          const presetConfig = resolvePresetConfig(
+            ctx.input.brandPreset as Parameters<typeof resolvePresetConfig>[0]
+          );
+          const whisperLang = ttsLanguage?.split('-')[0];
+
+          const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelstack-slideshow-tts-'));
+          try {
+            const segmentBuffers: Buffer[] = [];
+            const allWords: Array<{ text: string; startTime: number; endTime: number }> = [];
+            const slideBoundaries: number[] = [0];
+            let cumulativeDuration = 0;
+
+            for (let i = 0; i < script.slides.length; i++) {
+              const slide = script.slides[i]!;
+              const rawText = slide.text || slide.title;
+              const ttsText = isGeminiTts
+                ? makeTTSFriendly(rawText, ttsLanguage ?? 'en')
+                : stripAudioTags(rawText);
+              // Captions show clean original (no audio tags, no phonetic).
+              const captionText = stripAudioTags(rawText);
+              onProgress?.(`TTS slide ${i + 1}/${script.slides.length}...`);
+              const ttsResult = await ttsProvider.synthesize(ttsText, {
+                voice: tts?.voice,
+                language: ttsLanguage,
+                voicePrompt,
+              });
+              const segmentDuration = getAudioDuration(ttsResult.audioBuffer, ttsResult.format);
+              const wavBuffer = normalizeAudioForWhisper(ttsResult.audioBuffer, ttsResult.format);
+              const transcription = await transcribeAudio(wavBuffer, {
+                apiKey: (ctx.input.whisper as { apiKey?: string } | undefined)?.apiKey,
+                language: whisperLang,
+                text: ttsText,
+                durationSeconds: segmentDuration,
+              });
+              const aligned = alignWordsWithScript(transcription.words, captionText);
+              const offsetWords = aligned.map((w) => ({
+                text: w.text,
+                startTime: w.startTime + WHISPER_OFFSET + cumulativeDuration,
+                endTime: w.endTime + WHISPER_OFFSET + cumulativeDuration,
+              }));
+              allWords.push(...offsetWords);
+              segmentBuffers.push(ttsResult.audioBuffer);
+              cumulativeDuration += segmentDuration;
+              slideBoundaries.push(cumulativeDuration);
+            }
+
+            const combinedBuffer = Buffer.concat(segmentBuffers);
+            const voiceoverPath = path.join(tmpDir, 'voiceover.mp3');
+            fs.writeFileSync(voiceoverPath, combinedBuffer);
+
+            const cues = groupWordsIntoCues(allWords, {
+              maxWordsPerCue: Math.max(presetConfig.maxWordsPerCue, 6),
+              maxDurationPerCue: Math.max(presetConfig.maxDurationPerCue, 4),
+              breakOnPunctuation: true,
+            });
+            const formattedCues = cues.map((c) => ({
+              id: c.id,
+              text: c.text,
+              startTime: c.startTime,
+              endTime: c.endTime,
+              words: c.words?.map((w) => ({
+                text: w.text,
+                startTime: w.startTime,
+                endTime: w.endTime,
+              })),
+            }));
+
+            onProgress?.('Uploading voiceover...');
+            const voiceoverUrl = await uploadVoiceover(voiceoverPath);
+
+            return {
+              voiceoverUrl,
+              cues: formattedCues,
+              slideBoundaries,
+              durationSeconds: cumulativeDuration,
+            };
+          } finally {
+            try {
+              fs.rmSync(tmpDir, { recursive: true, force: true });
+            } catch {
+              /* ignore */
+            }
+          }
+        },
+      },
+      {
+        id: 'assemble-props',
+        name: 'Assemble Remotion / Hyperframes props',
+        dependsOn: ['review-script', 'render-slides', 'tts-pipeline'],
+        async execute(ctx: PipelineContext): Promise<SlideshowAssemblePropsResult> {
+          onProgress?.('Assembling composition...');
+          const { script } = ctx.results['review-script'] as SlideshowReviewScriptResult;
+          const { imageUrls } = ctx.results['render-slides'] as SlideshowRenderSlidesResult;
+          const { voiceoverUrl, cues, slideBoundaries, durationSeconds } = ctx.results[
+            'tts-pipeline'
+          ] as SlideshowTTSResult;
+
+          const ctxLang = (ctx.input.language as string | undefined) ?? 'pl';
+          const ctxEndCard = resolveEndCard(
+            ctx.input.endCard as EndCardConfig | undefined,
+            ctxLang,
+            SLIDESHOW_CTA_DEFAULTS
+          );
+          const remotionProps = buildSlideshowProps({
+            script,
+            imageUrls,
+            cues,
+            slideBoundaries,
+            voiceoverUrl,
+            durationSeconds,
+            musicUrl: ctx.input.musicUrl as string | undefined,
+            musicVolume: ctx.input.musicVolume as number | undefined,
+            highlightMode: ctx.input.highlightMode as string | undefined,
+            captionStyle: ctx.input.captionStyle as SlideshowRequest['captionStyle'] | undefined,
+            endCard: ctxEndCard,
+          });
+
+          const props =
+            runtime === 'hyperframes'
+              ? buildHyperframesProps(remotionProps)
+              : ({ ...remotionProps, compositionId: 'Slideshow' } as unknown as Record<
+                  string,
+                  unknown
+                >);
+
+          return { props, durationSeconds };
+        },
+      },
+      {
+        id: 'render',
+        name: `Render via ${runtime}`,
+        dependsOn: ['assemble-props'],
+        async execute(ctx: PipelineContext): Promise<SlideshowRenderResult> {
+          onProgress?.('Rendering video...');
+          const { props, durationSeconds } = ctx.results[
+            'assemble-props'
+          ] as SlideshowAssemblePropsResult;
+          const outputPathOverride = ctx.input.outputPath as string | undefined;
+          const { outputPath } = await renderVideo(props, outputPathOverride, onProgress, runtime);
+          return { outputPath, durationSeconds };
+        },
+      },
+    ],
   };
 }

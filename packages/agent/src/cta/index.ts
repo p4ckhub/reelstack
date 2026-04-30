@@ -6,3 +6,4 @@ export {
   getCtaTemplate,
   resolveEndCard,
 } from './cta-templates';
+export { buildHfEndCardBlock } from './build-hf-end-card';

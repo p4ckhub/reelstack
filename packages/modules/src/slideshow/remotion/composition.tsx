@@ -10,6 +10,7 @@ import {
   useVideoConfig,
 } from 'remotion';
 import { CaptionOverlay } from '@reelstack/remotion/components/CaptionOverlay';
+import { ResolvedEndCardLayer } from '@reelstack/remotion/components/ResolvedEndCardLayer';
 import { resolveMediaUrl } from '@reelstack/remotion/utils/resolve-media-url';
 import type { SlideshowProps } from './schema';
 
@@ -222,6 +223,7 @@ export const SlideshowComposition: React.FC<SlideshowProps> = (props) => {
     musicVolume = 0.2,
     backgroundColor = '#000000',
     captionStyle,
+    endCard,
   } = props;
 
   return (
@@ -259,6 +261,11 @@ export const SlideshowComposition: React.FC<SlideshowProps> = (props) => {
 
       {/* Music */}
       {musicUrl && <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} />}
+
+      {/* Closing CTA — fades in over the last `endCard.durationSeconds`.
+          Picks per-platform copy via the shared resolver upstream;
+          renders nothing when `endCard` is omitted / disabled. */}
+      <ResolvedEndCardLayer endCard={endCard} />
     </AbsoluteFill>
   );
 };

@@ -40,7 +40,10 @@ export const videoClipPropsSchema = z.object({
       fontSize: z.number().default(64),
       fontColor: z.string().default('#FFFFFF'),
       highlightColor: z.string().default('#FFD700'),
-      position: z.number().min(0).max(100).default(80),
+      // 65% from top = caption baseline in the cross-platform safe zone:
+      // above YouTube Shorts' ~18% bottom UI overlay, TikTok's ~14% music
+      // bar, IG Reels' ~13% description. 80 was inside YT Shorts chrome.
+      position: z.number().min(0).max(100).default(65),
     })
     .optional(),
   /** Show segmented progress bar (Instagram Stories-style) when 2+ clips */
@@ -59,6 +62,19 @@ export const videoClipPropsSchema = z.object({
    * shouldShowWatermark(user) — never client-configurable.
    */
   watermark: watermarkSchema.optional(),
+  /**
+   * Closing CTA card. Built by orchestrators via
+   * `endCardConfigToSelection()` from the resolved `EndCardConfig`.
+   * The composition renders this through `EndCardLayer`.
+   */
+  endCard: z
+    .object({
+      cardSlug: z.string(),
+      paletteSlug: z.string(),
+      durationSeconds: z.number().positive().optional(),
+      data: z.record(z.string(), z.string().optional()),
+    })
+    .optional(),
 });
 
 export type VideoClipProps = z.infer<typeof videoClipPropsSchema>;

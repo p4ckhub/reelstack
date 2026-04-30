@@ -24,6 +24,8 @@
     "./components/WatermarkOverlay": "./src/components/WatermarkOverlay.tsx",
     "./components/WithWatermarkOverlay": "./src/components/WithWatermarkOverlay.tsx",
     "./components/EndCardLayer": "./src/components/EndCardLayer.tsx",
+    "./components/ResolvedEndCardLayer": "./src/components/ResolvedEndCardLayer.tsx",
+    "./components/end-card-config-adapter": "./src/components/end-card-config-adapter.ts",
     "./cards": "./src/cards/index.ts",
     "./cards/compositions/CardsDemo": "./src/cards/compositions/CardsDemoComposition.tsx",
     "./transitions": "./src/transitions/index.ts",
