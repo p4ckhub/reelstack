@@ -27,6 +27,16 @@ export {
   type ResolvedTTSDefaults,
 } from './config/tts-defaults';
 
+// ── Image / video tool defaults (priority-aware resolver over discovered tools) ──
+export {
+  IMAGE_TOOL_PRIORITY,
+  VIDEO_TOOL_PRIORITY,
+  resolveDefaultImageTool,
+  resolveDefaultVideoTool,
+  classifyAssetTool,
+  type AssetMediaType,
+} from './config/asset-defaults';
+
 export type {
   CardRenderInput,
   CardBlockOutput,

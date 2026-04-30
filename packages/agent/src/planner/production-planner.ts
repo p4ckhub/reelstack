@@ -15,6 +15,11 @@ import { TRANSITION_TYPES, CAPTION_PROPERTY_CATALOG } from '@reelstack/remotion/
 import type { MontageProfileEntry } from '@reelstack/remotion/catalog';
 import { PlanningError } from '../errors';
 import { detectProvider, callLLMWithSystem } from '../llm';
+import {
+  resolveDefaultImageTool,
+  resolveDefaultVideoTool,
+  classifyAssetTool,
+} from '../config/asset-defaults';
 import { isPublicUrl } from '../utils/url-validation';
 import { createLogger } from '@reelstack/logger';
 
@@ -949,38 +954,18 @@ function enforceToolPreferences(
   availableToolIds: string[],
   preferredToolIds?: readonly string[]
 ): ProductionPlan {
-  const VIDEO_PRIORITY = [
-    'seedance2-kie',
-    'seedance2-fast-kie',
-    'seedance2-piapi',
-    'veo31-gemini',
-    'kling-piapi',
-    'seedance-piapi',
-    'kling-kie',
-    'wan-kie',
-    'hunyuan-piapi',
-    'hailuo-piapi',
-    'seedance-kie',
-  ];
-  const IMAGE_PRIORITY = ['nanobanana2-kie', 'nanobanana', 'flux-kie', 'flux-piapi'];
-
-  // Split user prefs into video vs image by checking which category each
-  // tool produces. If a preferred tool is unavailable we ignore it (the
-  // enforcement fall back to the default priority list for that type).
-  const userPref = (preferredToolIds ?? []).filter((id) => availableToolIds.includes(id));
-  const preferredVideo = userPref.find(
-    (id) =>
-      VIDEO_PRIORITY.includes(id) ||
-      /video|veo|kling|seedance|wan|hunyuan|hailuo|minimax|humo/.test(id)
-  );
-  const preferredImage = userPref.find(
-    (id) =>
-      IMAGE_PRIORITY.includes(id) ||
-      /image|gpt-image|banana|flux|ideogram|recraft|seedream|imagen|sd35/.test(id)
-  );
-
-  const bestVideo = preferredVideo ?? VIDEO_PRIORITY.find((id) => availableToolIds.includes(id));
-  const bestImage = preferredImage ?? IMAGE_PRIORITY.find((id) => availableToolIds.includes(id));
+  // Priority chains + classifier live in `config/asset-defaults.ts` so
+  // there is one place to update when a new provider lands. Env vars
+  // IMAGE_PROVIDER_PRIORITY / VIDEO_PROVIDER_PRIORITY override the
+  // baked-in order without code changes.
+  const userPrefVideo = (preferredToolIds ?? []).filter((id) => classifyAssetTool(id) === 'video');
+  const userPrefImage = (preferredToolIds ?? []).filter((id) => classifyAssetTool(id) === 'image');
+  const bestVideo = resolveDefaultVideoTool(availableToolIds, {
+    preferredToolIds: userPrefVideo,
+  });
+  const bestImage = resolveDefaultImageTool(availableToolIds, {
+    preferredToolIds: userPrefImage,
+  });
 
   if (!bestVideo && !bestImage) return plan;
 
