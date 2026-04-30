@@ -7,6 +7,8 @@ vi.mock('@reelstack/agent', () => ({
   uploadVoiceover: vi.fn(),
   runTTSPipeline: vi.fn(),
   resolvePresetConfig: vi.fn(),
+  resolveEndCard: vi.fn(() => undefined),
+  buildHfEndCardBlock: vi.fn(() => ''),
   createLogger: () => ({
     info: vi.fn(),
     warn: vi.fn(),
@@ -353,7 +355,7 @@ describe('buildCaptionsProps edge cases', () => {
       fontSize: 64,
       fontColor: '#FFFFFF',
       highlightColor: '#FFD700',
-      position: 80,
+      position: 65,
     });
   });
 
@@ -368,7 +370,7 @@ describe('buildCaptionsProps edge cases', () => {
       fontSize: 48,
       fontColor: '#FFFFFF',
       highlightColor: '#FF0000',
-      position: 80,
+      position: 65,
     });
   });
 

@@ -98,11 +98,18 @@ describe('GET /api/v1/reel/render/[id]/steps', () => {
       status: 'PROCESSING',
       reelConfig: { mode: 'generate' },
     });
-    mockPipelineEngineGetStatus.mockResolvedValue([
-      { id: 'tts', name: 'Generate voiceover', status: 'completed', durationMs: 5000 },
-      { id: 'plan', name: 'Plan production', status: 'running' },
-      { id: 'render', name: 'Render video', status: 'pending' },
-    ]);
+    // The endpoint reads completed steps from the persisted pipeline
+    // context (`jobs/{id}/context.json`), not from PipelineEngine.getStatus().
+    // Listing the actually-completed step IDs is enough for the
+    // re-render UI; the worker rebuilds the full PipelineDefinition
+    // when the resume job is dequeued.
+    mockPipelineEngineLoadContext.mockResolvedValue({
+      results: {
+        tts: { audioPath: '...' },
+        plan: { plan: {} },
+        render: { videoPath: '...' },
+      },
+    });
 
     const { GET } = await import('../../v1/reel/render/[id]/steps/route');
     const res = await GET(makeGetRequest('http://localhost/api/v1/reel/render/job-1/steps'));
@@ -263,8 +270,10 @@ describe('POST /api/v1/reel/render/[id]/resume', () => {
     );
 
     expect(res.status).toBe(202);
+    // BullMQ dedupes by job key, so the route suffixes the queue job id
+    // with a fresh timestamp. The reel job id rides in `data.jobId`.
     expect(mockEnqueue).toHaveBeenCalledWith(
-      'job-1',
+      expect.stringMatching(/^job-1-resume-\d+$/),
       expect.objectContaining({ jobId: 'job-1', fromStepId: 'plan' }),
       'reel-render'
     );

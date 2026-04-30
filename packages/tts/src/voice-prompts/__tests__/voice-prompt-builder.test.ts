@@ -38,7 +38,7 @@ describe('buildVoicePrompt', () => {
       extraNotes: 'Mention the workflow uses 5 nodes.',
     });
 
-    expect(voicePrompt).toContain(VOICE_PRESETS['n8n-explainer'].directorsNotes);
+    expect(voicePrompt).toContain(unwrapLocalized(VOICE_PRESETS['n8n-explainer'].directorsNotes));
     expect(voicePrompt).toContain('Mention the workflow uses 5 nodes.');
     // extraNotes joined with a space, not a newline
     expect(voicePrompt).toMatch(/\. Mention the workflow uses 5 nodes\./);
@@ -58,9 +58,16 @@ describe('buildVoicePrompt', () => {
     for (const uc of useCases) {
       const preset = getVoicePreset(uc);
       expect(preset.defaultVoice.length).toBeGreaterThan(0);
-      expect(preset.audioProfile.length).toBeGreaterThan(20);
+      expect(unwrapLocalized(preset.audioProfile).length).toBeGreaterThan(20);
       expect(preset.scene.length).toBeGreaterThan(20);
-      expect(preset.directorsNotes.length).toBeGreaterThan(20);
+      expect(unwrapLocalized(preset.directorsNotes).length).toBeGreaterThan(20);
     }
   });
 });
+
+// Voice presets carry `audioProfile` and `directorsNotes` as a
+// `LocalizedString` (string | {default, byLanguage}); these assertions
+// only need to know the default text exists, so unwrap once and reuse.
+function unwrapLocalized(value: string | { default: string }): string {
+  return typeof value === 'string' ? value : value.default;
+}
