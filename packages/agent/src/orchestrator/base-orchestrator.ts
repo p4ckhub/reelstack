@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { createTTSProvider } from '@reelstack/tts';
+import { createTTSProvider, stripAudioTags } from '@reelstack/tts';
 import type { TTSConfig } from '@reelstack/tts';
 import { groupWordsIntoCues, alignWordsWithScript } from '@reelstack/transcription';
 import {
@@ -96,11 +96,29 @@ export interface TTSPipelineResult {
 }
 
 export interface TTSPipelineInput {
+  /**
+   * Text fed to TTS. May include audio tags (`[short pause]`) and phonetic
+   * spellings (`en-osiem-en`) — those steer the synthesizer but MUST NOT
+   * appear in captions.
+   */
   script: string;
+  /**
+   * Optional clean text for caption display. When omitted, the pipeline
+   * derives it from `script` by stripping audio tags. Callers that have
+   * already applied phonetic conversion (e.g. `makeTTSFriendly()`) MUST
+   * pass the original raw text here so captions show "n8n" not
+   * "En-osiem-en", "Jeśli" not "[short pause] Jeśli".
+   */
+  displayScript?: string;
   tts?: {
     provider?: 'edge-tts' | 'elevenlabs' | 'openai' | 'gemini-tts';
     voice?: string;
     language?: string;
+    /**
+     * Style steering for the provider (currently honored by Gemini TTS).
+     * Build via `buildVoicePrompt()` in `@reelstack/tts`. Other providers ignore.
+     */
+    voicePrompt?: string;
   };
   whisper?: WhisperConfig;
   brandPreset?: BrandPreset;
@@ -133,9 +151,16 @@ export async function runTTSPipeline(
     defaultLanguage: request.tts?.language ?? 'en-US',
   };
   const ttsProvider = createTTSProvider(ttsConfig);
-  const ttsResult = await ttsProvider.synthesize(request.script, {
+  // Strip Gemini-style audio tags ([excitedly], [serious], …) for any
+  // provider that doesn't understand them — edge-tts / OpenAI / ElevenLabs
+  // would read the bracket contents literally otherwise. Gemini TTS keeps
+  // the tags so it can steer delivery.
+  const isGemini = (request.tts?.provider ?? 'edge-tts') === 'gemini-tts';
+  const speechText = isGemini ? request.script : stripAudioTags(request.script);
+  const ttsResult = await ttsProvider.synthesize(speechText, {
     voice: request.tts?.voice,
     language: request.tts?.language,
+    voicePrompt: request.tts?.voicePrompt,
   });
 
   const voiceoverPath = path.join(tmpDir, `voiceover.${ttsResult.format}`);
@@ -198,11 +223,16 @@ export async function runTTSPipeline(
     durationMs: whisperDurationMs,
   });
 
-  // Align Whisper output with original script text.
-  // Whisper provides timings, but may mishear technical terms (e.g. "tsconfig" → "strictNTS").
-  // Since we know the original text, replace Whisper's words with the correct ones.
-  const alignedWords = request.script
-    ? alignWordsWithScript(transcription.words, request.script)
+  // Align Whisper output with the DISPLAY script — never the speech text.
+  // The speech text (request.script when caller applied makeTTSFriendly /
+  // kept audio tags) contains "en-osiem-en" and "[short pause]"; using it
+  // for alignment puts those literal strings into captions. The display
+  // text is the clean original — captions render "n8n" with the timing
+  // Whisper detected for "en osiem en", redistributed proportionally by
+  // alignWordsWithScript when token counts differ.
+  const captionScript = request.displayScript ?? stripAudioTags(request.script);
+  const alignedWords = captionScript
+    ? alignWordsWithScript(transcription.words, captionScript)
     : [...transcription.words];
 
   // Validate: Whisper timestamps must not exceed audio duration significantly.

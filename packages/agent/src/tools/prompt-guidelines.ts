@@ -40,3 +40,7 @@ export const GPT_IMAGE_GUIDELINES = loadGuideline('gpt-image');
 export const PEXELS_GUIDELINES = loadGuideline('pexels');
 export const HEYGEN_AGENT_GUIDELINES = loadGuideline('heygen-agent');
 export const HEYGEN_GUIDELINES = loadGuideline('heygen');
+
+// ── TTS ─────────────────────────────────────────────────────────
+
+export const GEMINI_TTS_GUIDELINES = loadGuideline('gemini-tts');

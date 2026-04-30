@@ -1,8 +1,8 @@
 /**
  * Gemini Flash TTS provider — Google's Generative Language API
  * (`generativelanguage.googleapis.com`), model
- * `gemini-2.5-flash-preview-tts` (the current preview at the time of
- * writing; pass `modelName` to override).
+ * `gemini-3.1-flash-tts-preview` (current preview as of April 2026;
+ * pass `modelName` to override).
  *
  * Why this endpoint and not Cloud TTS (`texttospeech.googleapis.com`):
  * - AI Studio keys (what users get from aistudio.google.com) work here
@@ -69,12 +69,6 @@ const GEMINI_VOICES: readonly string[] = [
 ];
 
 export interface GeminiTTSOptions extends TTSSynthesizeOptions {
-  /**
-   * Voice direction / style instruction prepended to the text
-   * ("Say warmly:", "Narrate as a tense thriller:"). Gemini TTS
-   * interprets prose prefixes naturally — we just concatenate.
-   */
-  readonly voicePrompt?: string;
   /**
    * Override the model. Defaults to `gemini-3.1-flash-tts-preview`.
    * Other options as of April 2026: `gemini-2.5-flash-preview-tts`,

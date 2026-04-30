@@ -28,6 +28,12 @@ export interface TTSSynthesizeOptions {
   readonly pitch?: string;
   /** Output format preference */
   readonly outputFormat?: 'wav' | 'mp3';
+  /**
+   * Style/persona/director-notes prefix that steers delivery. Currently honored
+   * by Gemini TTS (3-section "Audio Profile + Scene + Director's Notes" pattern).
+   * Other providers ignore it. Build via `buildVoicePrompt()` in voice-prompts/.
+   */
+  readonly voicePrompt?: string;
 }
 
 export interface TTSProvider {

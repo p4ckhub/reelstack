@@ -35,6 +35,7 @@ import rulesTextDuplication from './partials/rules-text-duplication.md' with { t
 
 // ── Guidelines (per-tool) ──────────────────────────────────
 import guidelineFlux from './guidelines/flux.md' with { type: 'text' };
+import guidelineGeminiTts from './guidelines/gemini-tts.md' with { type: 'text' };
 import guidelineGptImage from './guidelines/gpt-image.md' with { type: 'text' };
 import guidelineHailuo from './guidelines/hailuo.md' with { type: 'text' };
 import guidelineHeygenAgent from './guidelines/heygen-agent.md' with { type: 'text' };
@@ -79,6 +80,7 @@ const PARTIALS: Record<string, string> = {
 
 const GUIDELINES: Record<string, string> = {
   flux: guidelineFlux,
+  'gemini-tts': guidelineGeminiTts,
   'gpt-image': guidelineGptImage,
   hailuo: guidelineHailuo,
   'heygen-agent': guidelineHeygenAgent,
