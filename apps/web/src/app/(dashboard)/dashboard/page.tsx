@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/auth-provider';
+import { RerenderDialog } from './_components/rerender-dialog';
 
 interface ReelJobItem {
   id: string;
@@ -44,6 +45,14 @@ export default function DashboardPage() {
   const [reels, setReels] = useState<ReelJobItem[]>([]);
   const [usage, setUsage] = useState<(UsageData & { daysUntilReset: number }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rerenderJobId, setRerenderJobId] = useState<string | null>(null);
+
+  const refetchReels = useCallback(() => {
+    fetch('/api/v1/reel/list')
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((resp) => setReels(resp.data ?? []))
+      .catch((err) => console.warn('[dashboard] reel refetch failed:', err));
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -189,11 +198,16 @@ export default function DashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     {reel.status === 'COMPLETED' && reel.outputUrl && (
-                      <a href={reel.outputUrl} download>
-                        <Button variant="ghost" size="sm">
-                          Download
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => setRerenderJobId(reel.id)}>
+                          Re-render
                         </Button>
-                      </a>
+                        <a href={reel.outputUrl} download>
+                          <Button variant="ghost" size="sm">
+                            Download
+                          </Button>
+                        </a>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -201,6 +215,17 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {rerenderJobId && (
+        <RerenderDialog
+          jobId={rerenderJobId}
+          open={!!rerenderJobId}
+          onOpenChange={(open) => {
+            if (!open) setRerenderJobId(null);
+          }}
+          onResumed={refetchReels}
+        />
       )}
     </div>
   );
