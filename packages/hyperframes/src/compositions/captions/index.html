@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: {{backgroundColor}};
+        font-family:
+          'Inter',
+          -apple-system,
+          system-ui,
+          sans-serif;
+        color: #fff;
+      }
+      /* Background video — fills the canvas, content-fit cover. */
+      #video {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        object-fit: cover;
+      }
+      /* Caption layer — single .clip spanning full duration so it stacks
+         above the video timeline track. */
+      #captions {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: {{captionTopPercent}}%;
+        padding: 0 80px;
+        text-align: center;
+        font-size: {{fontSize}}px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: {{fontColor}};
+        text-shadow:
+          -3px -3px 0 #000,
+          3px -3px 0 #000,
+          -3px 3px 0 #000,
+          3px 3px 0 #000,
+          0 0 8px rgba(0, 0, 0, 0.6);
+        pointer-events: none;
+      }
+      #captions .word {
+        display: inline-block;
+        margin-right: 0.25em;
+        will-change: color, transform;
+      }
+      #captions .word.active {
+        color: {{highlightColor}};
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="captions"
+      data-start="0"
+      data-duration="{{durationSeconds}}"
+      data-width="1080"
+      data-height="1920"
+    >
+      <!-- Source video — Hyperframes treats <video class="clip"> as a
+           timeline-controlled video source on the master timeline. -->
+      <video
+        id="video"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="1"
+        src="{{videoUrl}}"
+        preload="auto"
+        muted="{{videoMuted}}"
+      ></video>
+
+      <!-- Optional voiceover audio — empty src means no overlay VO. -->
+      <audio
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="2"
+        src="{{voiceoverUrl}}"
+        preload="auto"
+      ></audio>
+
+      <!-- Captions container — populated by GSAP from cuesJson. -->
+      <div
+        id="captions"
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="3"
+      ></div>
+
+      <!-- End-card overlay. Empty when no card requested; otherwise a
+           self-contained HTML+JS snippet from `buildHfEndCardBlock`. -->
+      {{endCardBlock}}
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // base64 → UTF-8 — atob() alone returns Latin-1 bytes which mangles
+      // non-ASCII characters (Polish diacritics, emoji, etc).
+      function b64ToUtf8(b64) {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+
+      let cuesData = [];
+      try {
+        cuesData = JSON.parse(b64ToUtf8('{{cuesB64}}'));
+      } catch (e) {
+        console.error('captions: failed to parse cuesB64', e);
+      }
+
+      const captionsEl = document.getElementById('captions');
+      cuesData.forEach((cue, cueIdx) => {
+        const words = cue.words ?? [];
+        if (words.length === 0) return;
+        const wrap = document.createElement('span');
+        wrap.id = `cue-${cueIdx}`;
+        wrap.style.opacity = '0';
+        wrap.style.position = 'absolute';
+        wrap.style.left = '0';
+        wrap.style.right = '0';
+        words.forEach((w, wIdx) => {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.id = `cue-${cueIdx}-w-${wIdx}`;
+          span.textContent = w.text;
+          wrap.appendChild(span);
+        });
+        captionsEl.appendChild(wrap);
+
+        const cueStart = words[0]?.startTime ?? 0;
+        const cueEnd = words[words.length - 1]?.endTime ?? cueStart;
+        tl.to(`#cue-${cueIdx}`, { opacity: 1, duration: 0.18 }, cueStart);
+        tl.to(`#cue-${cueIdx}`, { opacity: 0, duration: 0.15 }, cueEnd);
+
+        words.forEach((w, wIdx) => {
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '{{highlightColor}}' }, w.startTime);
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '{{fontColor}}' }, w.endTime);
+        });
+      });
+
+      window.__timelines['captions'] = tl;
+    </script>
+  </body>
+</html>

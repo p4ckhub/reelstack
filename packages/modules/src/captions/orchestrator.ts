@@ -10,9 +10,17 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { runTTSPipeline, renderVideo, uploadVoiceover } from '@reelstack/agent';
-import type { BrandPreset, ProgressCallback } from '@reelstack/agent';
+import {
+  runTTSPipeline,
+  renderVideo,
+  uploadVoiceover,
+  resolveEndCard,
+  buildHfEndCardBlock,
+} from '@reelstack/agent';
+import type { BrandPreset, ProgressCallback, ModuleRuntime, EndCardConfig } from '@reelstack/agent';
+import { endCardConfigToSelection } from '@reelstack/remotion/components/end-card-config-adapter';
 import { createLogger } from '@reelstack/logger';
+import { compositionPath } from '@reelstack/hyperframes';
 import type { VideoClipProps } from '@reelstack/remotion/schemas/video-clip-props';
 
 const log = createLogger('captions-orchestrator');
@@ -63,11 +71,62 @@ export interface CaptionsRequest {
   brandPreset?: BrandPreset;
   outputPath?: string;
   onProgress?: ProgressCallback;
+  /** Render runtime (default: 'remotion'). */
+  runtime?: ModuleRuntime;
+  /**
+   * Closing CTA card. Per-platform template via `endCard.platform`.
+   * Module fallback uses `defaultKeyword: 'INFO'`.
+   */
+  endCard?: EndCardConfig;
 }
+
+const CAPTIONS_CTA_DEFAULTS = {
+  defaultKeyword: 'INFO',
+  defaultSubheadline: undefined,
+} as const;
 
 export interface CaptionsResult {
   outputPath: string;
   durationSeconds: number;
+}
+
+// ── Hyperframes variable adapter (pure, testable) ──────────────
+
+/**
+ * Map a Remotion-shape VideoClipProps into the variable bag the HF
+ * captions composition expects. The HF template renders the source
+ * video, optional voiceover audio, and a karaoke caption layer driven
+ * by `cuesJson`. The first clip drives the layout — extra clips are
+ * not rendered (HF captions composition is single-clip; concat happens
+ * server-side if needed).
+ */
+export function buildCaptionsHyperframesProps(
+  props: VideoClipProps,
+  durationSeconds: number,
+  endCard?: EndCardConfig
+): Record<string, unknown> {
+  const firstClip = props.clips[0];
+  const captionStyle = props.captionStyle;
+  return {
+    compositionId: compositionPath('captions'),
+    durationSeconds,
+    backgroundColor: props.backgroundColor ?? '#000000',
+    videoUrl: firstClip?.url ?? '',
+    // The captions composition has its own audio track when a voiceover URL
+    // is supplied — the source video would otherwise double-up on sound. We
+    // mute the <video> when voiceoverUrl is present.
+    videoMuted: props.voiceoverUrl ? 'muted' : '',
+    voiceoverUrl: props.voiceoverUrl ?? '',
+    cuesB64: Buffer.from(JSON.stringify(props.cues ?? []), 'utf8').toString('base64'),
+    fontSize: captionStyle?.fontSize ?? 56,
+    fontColor: captionStyle?.fontColor ?? '#FFFFFF',
+    highlightColor: captionStyle?.highlightColor ?? '#FFD700',
+    // 65% from top = caption baseline in the cross-platform safe zone
+    // (above YouTube Shorts' ~18% bottom-UI overlay, TikTok's ~14% music
+    // bar, IG Reels' ~13% description). 78 was inside the YT chrome.
+    captionTopPercent: captionStyle?.position ?? 65,
+    endCardBlock: buildHfEndCardBlock(endCard, durationSeconds),
+  };
 }
 
 // ── Pure props builder (exported for testability) ──────────────
@@ -99,7 +158,9 @@ export function buildCaptionsProps(input: BuildCaptionsPropsInput): VideoClipPro
       fontSize: captionStyle?.fontSize ?? 64,
       fontColor: captionStyle?.fontColor ?? '#FFFFFF',
       highlightColor: captionStyle?.highlightColor ?? '#FFD700',
-      position: captionStyle?.position ?? 80,
+      // See `captionTopPercent` comment above — 65 keeps captions out
+      // of every social UI overlay zone simultaneously.
+      position: captionStyle?.position ?? 65,
     },
   };
 }
@@ -226,6 +287,11 @@ export async function produceCaptions(request: CaptionsRequest): Promise<Caption
 
   // Build composition props
   request.onProgress?.('Assembling composition...');
+  const resolvedEndCard = resolveEndCard(
+    request.endCard,
+    request.language ?? 'pl',
+    CAPTIONS_CTA_DEFAULTS
+  );
   const props = buildCaptionsProps({
     videoUrl: request.videoUrl,
     cues,
@@ -234,12 +300,21 @@ export async function produceCaptions(request: CaptionsRequest): Promise<Caption
     highlightMode: request.highlightMode,
     captionStyle: request.captionStyle,
   });
+  // Inject endCard into Remotion props for the VideoClip composition path.
+  (props as VideoClipProps & { endCard?: ReturnType<typeof endCardConfigToSelection> }).endCard =
+    endCardConfigToSelection(resolvedEndCard);
 
-  // Render
+  // Render — pick runtime per request.
+  const runtime: ModuleRuntime = request.runtime ?? 'remotion';
+  const renderProps =
+    runtime === 'hyperframes'
+      ? buildCaptionsHyperframesProps(props, durationSeconds, resolvedEndCard)
+      : ({ ...props, compositionId: 'VideoClip' } as unknown as Record<string, unknown>);
   const { outputPath } = await renderVideo(
-    { ...props, compositionId: 'VideoClip' } as unknown as Record<string, unknown>,
+    renderProps,
     request.outputPath,
-    request.onProgress
+    request.onProgress,
+    runtime
   );
 
   logger.info({ outputPath, durationSeconds }, 'Captions render complete');

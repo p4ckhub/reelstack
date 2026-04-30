@@ -6,7 +6,7 @@
  */
 
 import type { ContentPackage, EffectsMode } from './content-package';
-import type { ProductionPlan, GeneratedAsset, BrandPreset } from '../types';
+import type { ProductionPlan, GeneratedAsset, BrandPreset, CardSelection } from '../types';
 import { buildTemplatePlan } from './template-montage';
 import { assembleComposition } from '../orchestrator/composition-assembler';
 import { renderVideo } from '../orchestrator/base-orchestrator';
@@ -28,6 +28,13 @@ export interface RenderContentRequest {
   outputPath?: string;
   /** Progress callback */
   onProgress?: (step: string) => void;
+  /**
+   * Closing CTA card. Overrides `plan.endCard` (which the template
+   * may have set on its own) when provided. Modules pass this in
+   * after running the resolved `EndCardConfig` through
+   * `endCardConfigToSelection()` from `@reelstack/remotion`.
+   */
+  endCard?: CardSelection;
   /**
    * Optional SFX director: replaces deterministic SFX with AI-planned SFX.
    * Called after plan is built, receives plan + content, returns sfxSegments.
@@ -58,6 +65,11 @@ export async function renderContentPackage(
   // ── 1. Build plan from template ────────────────────────────
   onProgress?.('Building montage plan...');
   const plan = buildTemplatePlan(content, templateId);
+  // Per-request CTA override beats whatever the template baked in.
+  // Modules feed this from `endCardConfigToSelection(resolveEndCard(...))`.
+  if (request.endCard) {
+    (plan as { endCard?: CardSelection }).endCard = request.endCard;
+  }
 
   // ── 1b. AI Director SFX override (if provided) ───────────
   if (request.sfxDirector) {
