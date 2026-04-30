@@ -10,6 +10,7 @@ import os from 'os';
 import path from 'path';
 import { createTTSProvider, stripAudioTags } from '@reelstack/tts';
 import type { TTSConfig } from '@reelstack/tts';
+import { resolveTTSDefaults } from '../config/tts-defaults';
 import { groupWordsIntoCues, alignWordsWithScript } from '@reelstack/transcription';
 import {
   normalizeAudioForWhisper,
@@ -135,31 +136,38 @@ export async function runTTSPipeline(
   onProgress?.('Generating voiceover...');
   const ttsStart = performance.now();
 
+  // Single source of truth for provider/voice/language defaults. Falls back
+  // to gemini-tts when GEMINI_API_KEY is set, edge-tts when no keys at all.
+  const ttsDefaults = resolveTTSDefaults({
+    provider: request.tts?.provider,
+    voice: request.tts?.voice,
+    language: request.tts?.language,
+  });
   const ttsConfig: TTSConfig = {
-    provider: request.tts?.provider ?? 'edge-tts',
+    provider: ttsDefaults.provider,
     apiKey:
-      request.tts?.provider === 'elevenlabs'
+      ttsDefaults.provider === 'elevenlabs'
         ? process.env.ELEVENLABS_API_KEY
-        : request.tts?.provider === 'openai'
+        : ttsDefaults.provider === 'openai'
           ? process.env.OPENAI_API_KEY
-          : request.tts?.provider === 'gemini-tts'
+          : ttsDefaults.provider === 'gemini-tts'
             ? // The provider itself also picks up GOOGLE_TTS_ACCESS_TOKEN
               // from env. We pass the API key here for the one-env-var path;
               // either auth route is enough to instantiate the client.
               (process.env.GOOGLE_TTS_API_KEY ?? process.env.GEMINI_API_KEY)
             : undefined,
-    defaultLanguage: request.tts?.language ?? 'en-US',
+    defaultLanguage: ttsDefaults.language,
   };
   const ttsProvider = createTTSProvider(ttsConfig);
   // Strip Gemini-style audio tags ([excitedly], [serious], …) for any
   // provider that doesn't understand them — edge-tts / OpenAI / ElevenLabs
   // would read the bracket contents literally otherwise. Gemini TTS keeps
   // the tags so it can steer delivery.
-  const isGemini = (request.tts?.provider ?? 'edge-tts') === 'gemini-tts';
+  const isGemini = ttsDefaults.provider === 'gemini-tts';
   const speechText = isGemini ? request.script : stripAudioTags(request.script);
   const ttsResult = await ttsProvider.synthesize(speechText, {
-    voice: request.tts?.voice,
-    language: request.tts?.language,
+    voice: ttsDefaults.voice,
+    language: ttsDefaults.language,
     voicePrompt: request.tts?.voicePrompt,
   });
 
@@ -177,7 +185,7 @@ export async function runTTSPipeline(
     step: 'tts',
     provider: ttsProvider.name,
     type: 'tts',
-    costUSD: calculateTTSCost(ttsConfig.provider ?? 'edge-tts', request.script.length),
+    costUSD: calculateTTSCost(ttsConfig.provider, request.script.length),
     inputUnits: request.script.length,
     durationMs: ttsDurationMs,
   });

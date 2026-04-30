@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import { createTTSProvider } from '@reelstack/tts';
 import type { TTSConfig } from '@reelstack/tts';
+import { resolveTTSDefaults } from '@reelstack/agent';
 import { groupWordsIntoCues } from '@reelstack/transcription';
 import type { ReelCreationRequest, ReelCreationResult, PipelineStep } from './types';
 import type { ReelProps } from '../schemas/reel-props';
@@ -40,20 +41,27 @@ export async function createReel(
     onStep?.('Generating voiceover...');
     const ttsStart = performance.now();
 
+    const ttsDefaults = resolveTTSDefaults({
+      provider: request.tts?.provider,
+      voice: request.tts?.voice,
+      language: request.tts?.language,
+    });
     const ttsConfig: TTSConfig = {
-      provider: request.tts?.provider ?? 'edge-tts',
+      provider: ttsDefaults.provider,
       apiKey:
-        request.tts?.provider === 'elevenlabs'
+        ttsDefaults.provider === 'elevenlabs'
           ? process.env.ELEVENLABS_API_KEY
-          : request.tts?.provider === 'openai'
+          : ttsDefaults.provider === 'openai'
             ? process.env.OPENAI_API_KEY
-            : undefined,
-      defaultLanguage: request.tts?.language ?? 'pl-PL',
+            : ttsDefaults.provider === 'gemini-tts'
+              ? (process.env.GOOGLE_TTS_API_KEY ?? process.env.GEMINI_API_KEY)
+              : undefined,
+      defaultLanguage: ttsDefaults.language,
     };
     const ttsProvider = createTTSProvider(ttsConfig);
     const ttsResult = await ttsProvider.synthesize(request.script, {
-      voice: request.tts?.voice,
-      language: request.tts?.language,
+      voice: ttsDefaults.voice,
+      language: ttsDefaults.language,
     });
 
     const voiceoverPath = path.join(tmpDir, `voiceover.${ttsResult.format}`);

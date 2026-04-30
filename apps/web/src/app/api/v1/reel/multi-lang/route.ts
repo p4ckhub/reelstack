@@ -132,8 +132,11 @@ export const POST = withAuth(
         reelConfig: {
           layout: parsed.data.layout,
           style: parsed.data.style,
+          // provider stays optional here so the worker can resolve env-aware
+          // defaults via `resolveTTSDefaults()` (gemini-tts when GEMINI_API_KEY
+          // is set, edge-tts as free fallback). Don't bake `'edge-tts'` here.
           tts: {
-            provider: parsed.data.tts?.provider ?? 'edge-tts',
+            provider: parsed.data.tts?.provider,
             voice: parsed.data.tts?.voice,
             language: ttsLanguage,
           },

@@ -30,6 +30,7 @@ import {
   resolvePresetConfig,
   resolveEndCard,
   buildHfEndCardBlock,
+  resolveTTSDefaults,
 } from '@reelstack/agent';
 import type {
   ProductionStep,
@@ -302,25 +303,24 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
   // Generate TTS audio separately for each slide, then concatenate.
   // This gives exact slide-to-audio synchronization instead of heuristic matching.
 
-  const ttsLanguage =
-    request.tts?.language ??
-    (request.language === 'pl'
-      ? 'pl-PL'
-      : request.language === 'en'
-        ? 'en-US'
-        : request.language
-          ? `${request.language}-${request.language.toUpperCase()}`
-          : undefined);
+  // Single source of truth for provider/voice/language defaults — env-aware,
+  // useCase-aware. Falls back to edge-tts when no API keys are configured.
+  const ttsDefaults = resolveTTSDefaults({
+    provider: request.tts?.provider,
+    voice: request.tts?.voice,
+    language: request.tts?.language ?? request.language,
+    useCase: 'slideshow',
+  });
 
   const ttsConfig: TTSConfig = {
-    provider: request.tts?.provider ?? 'edge-tts',
+    provider: ttsDefaults.provider,
     apiKey:
-      request.tts?.provider === 'elevenlabs'
+      ttsDefaults.provider === 'elevenlabs'
         ? process.env.ELEVENLABS_API_KEY
-        : request.tts?.provider === 'openai'
+        : ttsDefaults.provider === 'openai'
           ? process.env.OPENAI_API_KEY
           : undefined,
-    defaultLanguage: ttsLanguage ?? 'en-US',
+    defaultLanguage: ttsDefaults.language,
   };
   const ttsProvider = createTTSProvider(ttsConfig);
 
@@ -333,7 +333,7 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
 
   const WHISPER_OFFSET = 0.12; // seconds - tuned empirically with edge-tts
   const presetConfig = resolvePresetConfig(request.brandPreset);
-  const whisperLang = ttsLanguage?.split('-')[0];
+  const whisperLang = ttsDefaults.language.split('-')[0];
 
   const segmentBuffers: Buffer[] = [];
   const allWords: Array<{ text: string; startTime: number; endTime: number }> = [];
@@ -350,7 +350,7 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     // tags so they don't get read as literal text ("excitedly", etc.).
     const rawText = slide.text || slide.title;
     const ttsText = isGeminiTts
-      ? makeTTSFriendly(rawText, ttsLanguage ?? 'en')
+      ? makeTTSFriendly(rawText, ttsDefaults.language)
       : stripAudioTags(rawText);
     // Captions ALWAYS show the clean original spelling — strip audio tags,
     // never use the phonetic conversion. alignWordsWithScript handles the
@@ -361,8 +361,8 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     // TTS for this slide
     const ttsStart = performance.now();
     const ttsResult = await ttsProvider.synthesize(ttsText, {
-      voice: request.tts?.voice,
-      language: ttsLanguage,
+      voice: ttsDefaults.voice,
+      language: ttsDefaults.language,
       voicePrompt,
     });
     totalTtsMs += performance.now() - ttsStart;
@@ -662,24 +662,21 @@ export function buildSlideshowPipeline(
               }
             | undefined;
           const language = ctx.input.language as string | undefined;
-          const ttsLanguage =
-            tts?.language ??
-            (language === 'pl'
-              ? 'pl-PL'
-              : language === 'en'
-                ? 'en-US'
-                : language
-                  ? `${language}-${language.toUpperCase()}`
-                  : undefined);
+          const ttsDefaults = resolveTTSDefaults({
+            provider: tts?.provider,
+            voice: tts?.voice,
+            language: tts?.language ?? language,
+            useCase: 'slideshow',
+          });
           const ttsConfig: TTSConfig = {
-            provider: tts?.provider ?? 'edge-tts',
+            provider: ttsDefaults.provider,
             apiKey:
-              tts?.provider === 'elevenlabs'
+              ttsDefaults.provider === 'elevenlabs'
                 ? process.env.ELEVENLABS_API_KEY
-                : tts?.provider === 'openai'
+                : ttsDefaults.provider === 'openai'
                   ? process.env.OPENAI_API_KEY
                   : undefined,
-            defaultLanguage: ttsLanguage ?? 'en-US',
+            defaultLanguage: ttsDefaults.language,
           };
           const ttsProvider = createTTSProvider(ttsConfig);
           const isGeminiTts = ttsConfig.provider === 'gemini-tts';
@@ -690,7 +687,7 @@ export function buildSlideshowPipeline(
           const presetConfig = resolvePresetConfig(
             ctx.input.brandPreset as Parameters<typeof resolvePresetConfig>[0]
           );
-          const whisperLang = ttsLanguage?.split('-')[0];
+          const whisperLang = ttsDefaults.language.split('-')[0];
 
           const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelstack-slideshow-tts-'));
           try {
@@ -703,14 +700,14 @@ export function buildSlideshowPipeline(
               const slide = script.slides[i]!;
               const rawText = slide.text || slide.title;
               const ttsText = isGeminiTts
-                ? makeTTSFriendly(rawText, ttsLanguage ?? 'en')
+                ? makeTTSFriendly(rawText, ttsDefaults.language)
                 : stripAudioTags(rawText);
               // Captions show clean original (no audio tags, no phonetic).
               const captionText = stripAudioTags(rawText);
               onProgress?.(`TTS slide ${i + 1}/${script.slides.length}...`);
               const ttsResult = await ttsProvider.synthesize(ttsText, {
-                voice: tts?.voice,
-                language: ttsLanguage,
+                voice: ttsDefaults.voice,
+                language: ttsDefaults.language,
                 voicePrompt,
               });
               const segmentDuration = getAudioDuration(ttsResult.audioBuffer, ttsResult.format);

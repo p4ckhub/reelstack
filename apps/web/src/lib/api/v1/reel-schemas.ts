@@ -84,9 +84,15 @@ const brandPresetSchema = z
   })
   .optional();
 
+// Provider/voice are optional. Runtime defaults come from
+// `resolveTTSDefaults()` in `@reelstack/agent` (env-aware: prefers
+// gemini-tts when GEMINI_API_KEY is set, falls back to edge-tts when
+// no keys are configured). Never bake a default here — schemas can't
+// see the env, and a stale 'edge-tts' default silently downgrades
+// quality for users who already pay for Gemini.
 const ttsSchema = z
   .object({
-    provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).default('edge-tts'),
+    provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).optional(),
     voice: z.string().optional(),
     language: z.string().optional(),
   })
@@ -448,9 +454,11 @@ export const multiLangReelSchema = z.object({
     }),
   layout: z.enum(['split-screen', 'fullscreen', 'picture-in-picture']).default('fullscreen'),
   style: z.enum(['dynamic', 'calm', 'cinematic', 'educational']).optional(),
+  // See note on `ttsSchema` above — provider stays optional so the
+  // worker can resolve env-aware defaults via `resolveTTSDefaults()`.
   tts: z
     .object({
-      provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).default('edge-tts'),
+      provider: z.enum(['edge-tts', 'elevenlabs', 'openai', 'gemini-tts']).optional(),
       voice: z.string().optional(),
     })
     .optional(),

@@ -312,12 +312,17 @@ describe('generateReelSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('defaults tts provider to edge-tts and language is optional', () => {
+  it('leaves tts provider/voice/language undefined for runtime resolution', () => {
+    // Schemas no longer bake `provider: 'edge-tts'` as a default — that
+    // forced edge-tts even on installs with GEMINI_API_KEY configured.
+    // The worker resolves env-aware defaults via `resolveTTSDefaults()`
+    // in `@reelstack/agent` instead.
     const result = generateReelSchema.safeParse({ script: 'Hello', tts: {} });
     expect(result.success).toBe(true);
     if (result.success) {
+      expect(result.data.tts?.provider).toBeUndefined();
+      expect(result.data.tts?.voice).toBeUndefined();
       expect(result.data.tts?.language).toBeUndefined();
-      expect(result.data.tts?.provider).toBe('edge-tts');
     }
   });
 });
