@@ -4,6 +4,26 @@ AI video production platform. Generates short-form reels from text or content: T
 
 Extensible via pluggable modules for specialized reel types (talking objects, workflow explainers, presenter reels, and more).
 
+## CRITICAL — never run a full pipeline when iterating
+
+ReelStack is a multi-step pipeline (`fetch-workflow → generate-script → review-script → capture-screenshot → tts-pipeline → assemble-props → render`). Every step persists its output to MinIO under `jobs/{id}/context.json`. **Do not call `POST /api/v1/reel/generate` to test a fix.** That re-runs the LLM, the TTS provider, Whisper, and screenshot capture — minutes of compute and real money — when 9 times out of 10 the change you're testing only affects one step.
+
+Iterate via `POST /api/v1/reel/render/{id}/resume {"fromStepId": "<step>"}` from the latest cached step that contains your change. Mapping:
+
+| Change                                                                                                                          | Resume from                      |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| HTML / CSS / GSAP timeline (e.g. `hyperframes/src/compositions/<id>/index.html`, Remotion `<*Composition>.tsx`)                 | `render`                         |
+| Props mapping, runtime selection, sections augmentation (orchestrator's `buildHyperframes…Props` / `buildScreenExplainerProps`) | `assemble-props`                 |
+| TTS voice / preset / phonetic transforms / mood-tag stripping                                                                   | `tts-pipeline`                   |
+| Script reviewer (linter + LLM correction)                                                                                       | `review-script`                  |
+| Script generator prompt                                                                                                         | `generate-script`                |
+| Workflow fetch logic                                                                                                            | `fetch-workflow`                 |
+| New workflow URL / new language / new voice model / fresh creative                                                              | only here is `/generate` correct |
+
+**Hard rule:** before invoking `/generate`, ask "does my change affect anything strictly upstream of every cached step?" If not, it's a `/resume` case.
+
+Worker note: bun caches TS bytecode. After editing any `.ts` in the orchestrator / module layer, restart the worker (`pkill -f "bun run worker/reel-worker.ts"` → re-launch) before resuming, otherwise the resume runs the stale build.
+
 ## Stack
 
 - **Monorepo**: Bun workspaces + Turbo

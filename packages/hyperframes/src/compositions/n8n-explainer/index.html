@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: {{backgroundColor}};
+        font-family:
+          'Inter',
+          -apple-system,
+          system-ui,
+          sans-serif;
+        color: #fff;
+      }
+      /* Workflow screenshot — positioned + scaled by GSAP per section
+         (Ken Burns from `sectionsJson`). Image is loaded once and the
+         transform animates per section. */
+      #screenshot-wrap {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      #screenshot {
+        position: absolute;
+        left: 0;
+        top: 0;
+        will-change: transform, opacity;
+        transform-origin: 0 0;
+      }
+      /* Node + arrow overlays live INSIDE the screenshot wrap so they share
+         the Ken Burns transform automatically. Both layers use the source
+         pixel coordinate system (3840x2160) — markers and arrow paths are
+         positioned from `workflow.nodes[].position` directly. */
+      #node-overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+        will-change: transform, opacity;
+        pointer-events: none;
+      }
+      #arrow-overlay {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+        will-change: transform, opacity;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .node-marker {
+        position: absolute;
+        /* Width/height are set per-marker from precomputed `pxW/pxH` so
+           the highlight ring matches the actual rendered node size in
+           the screenshot (n8n zoom-to-fit shrinks them on big workflows).
+           Marker is centered on `pxX/pxY` via translate(-50%, -50%). */
+        border-radius: 18px;
+        opacity: 0;
+        will-change: opacity, box-shadow, transform;
+        background: rgba(124, 58, 237, 0.0);
+        border: 3px solid rgba(167, 139, 250, 1);
+        /* Two-layer glow: tight inner ring + soft outer halo. Both
+           values are tweened by GSAP for the breathing pulse. */
+        box-shadow:
+          0 0 0 2px rgba(167, 139, 250, 0.0),
+          0 0 24px 6px rgba(124, 58, 237, 0.0),
+          0 0 56px 18px rgba(124, 58, 237, 0.0);
+        transform: translate(-50%, -50%) scale(1);
+        transform-origin: center;
+      }
+      .arrow-path {
+        fill: none;
+        stroke: rgba(124, 58, 237, 0.9);
+        stroke-width: 12;
+        stroke-linecap: round;
+        opacity: 0;
+        will-change: opacity, stroke-dashoffset;
+      }
+      /* Caption layer — positioned in the cross-platform safe zone.
+         TikTok / Instagram / YouTube Shorts all overlay UI in the
+         bottom ~14-18% of the frame (description, music label, share
+         buttons) — captions at `bottom: 8%` got eaten by that overlay.
+         Sweet spot for the caption baseline is ~65% from top
+         (`bottom: 35%`): below center for the lower-third feel but
+         well above YouTube Shorts' aggressive bottom chrome. */
+      #captions {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        /* Caption position: pill children are absolutely positioned with
+           `bottom: 0` and stack on top of each other (only one fades in
+           at a time). They anchor to THIS container's bottom edge — and
+           only `bottom: X%` on the container produces a stable bottom
+           edge when the container has no explicit height (absolute
+           children contribute zero to auto-height). Switching to
+           `top: X%` gave a 0-height container whose bottom collapsed to
+           the same y as its top; mathematically equivalent in the spec
+           but Chromium's positioning of `bottom: 0` children breaks in
+           that configuration — captions disappear off-canvas.
+           So we keep `bottom: X%` and convert from the user-facing
+           "top%" position via `captionBottomPercent = 100 - position`. */
+        bottom: {{captionBottomPercent}}%;
+        text-align: center;
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1.25;
+        pointer-events: none;
+      }
+      /* Dark pill per cue (matches slideshow look). White text on light n8n
+         canvas would otherwise disappear; the rounded box makes captions
+         legible regardless of zoom level. */
+      #captions .cue {
+        display: inline-block;
+        background: rgba(0, 0, 0, 0.78);
+        padding: 16px 26px;
+        border-radius: 18px;
+        max-width: 100%;
+      }
+      #captions .word {
+        display: inline-block;
+        margin-right: 0.25em;
+        color: #ffffff;
+        will-change: color;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="n8n-explainer"
+      data-start="0"
+      data-duration="{{durationSeconds}}"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="screenshot-wrap" class="clip" data-start="0" data-duration="{{durationSeconds}}" data-track-index="1">
+        <img id="screenshot" src="{{screenshotUrl}}" alt="" />
+        <!-- Node markers + arrow overlay sit on top of the screenshot.
+             Populated by JS from nodesB64 / connectionsB64 / sectionsB64.
+             Both share the same screenshot Ken Burns transform via the wrap. -->
+        <svg id="arrow-overlay" preserveAspectRatio="xMinYMin meet"></svg>
+        <div id="node-overlay"></div>
+      </div>
+
+      <audio
+        class="clip"
+        data-start="0"
+        data-duration="{{durationSeconds}}"
+        data-track-index="2"
+        src="{{voiceoverUrl}}"
+        preload="auto"
+      ></audio>
+
+      <div id="captions" class="clip" data-start="0" data-duration="{{durationSeconds}}" data-track-index="3"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const screenshotWidth = parseInt(`{{screenshotWidth}}`, 10) || 3840;
+      const screenshotHeight = parseInt(`{{screenshotHeight}}`, 10) || 2160;
+      const canvasWidth = 1080;
+      const canvasHeight = 1920;
+
+      const screenshotEl = document.getElementById('screenshot');
+      screenshotEl.style.width = `${screenshotWidth}px`;
+      screenshotEl.style.height = `${screenshotHeight}px`;
+
+      // base64 → UTF-8 — atob() alone returns Latin-1 bytes which mangles
+      // non-ASCII characters (Polish diacritics, emoji, etc).
+      function b64ToUtf8(b64) {
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+
+      // Match Remotion's ScreenExplainer math (composition.tsx:108-162):
+      //   baseScale = canvasWidth / screenshotWidth      (fit-to-canvas-width)
+      //   imgW = canvasWidth * userScale                 (image width on canvas)
+      //   imgH = (screenshotHeight * baseScale) * userScale
+      //   focal = (pos% / 100) * imgW/imgH
+      //   imgLeft = canvasW/2 - focalX  (clamped so empty space doesn't show)
+      //
+      // CSS-side: <img> is set to native screenshotWidth/Height; we scale by
+      // `cssScale = baseScale * userScale` and translate by imgLeft/imgTop
+      // (transform-origin: 0 0).
+      const baseScale = canvasWidth / screenshotWidth;
+      const imgBaseH = screenshotHeight * baseScale;
+
+      // Vertical anchor for the workflow within the 1080×1920 reel frame.
+      // 0.5 = centered. 0.28 sat the workflow too high and left a large
+      // gap between the upper-third nodes and the captions at 65 % from
+      // top. 0.38 keeps the focal point in the upper portion while
+      // shrinking that gap — highlighted nodes land ~35-45 % from top,
+      // captions at 65 %, ~20 % clean band between them.
+      const VERTICAL_ANCHOR_PCT = 0.38;
+      function frameTransform(userScale, posPctX, posPctY) {
+        const cssScale = baseScale * userScale;
+        const imgWOnCanvas = canvasWidth * userScale;
+        const imgHOnCanvas = imgBaseH * userScale;
+        const focalX = (posPctX / 100) * imgWOnCanvas;
+        const focalY = (posPctY / 100) * imgHOnCanvas;
+        let imgLeft = canvasWidth / 2 - focalX;
+        let imgTop = canvasHeight * VERTICAL_ANCHOR_PCT - focalY;
+        if (imgWOnCanvas >= canvasWidth) {
+          imgLeft = Math.min(0, Math.max(canvasWidth - imgWOnCanvas, imgLeft));
+        } else {
+          imgLeft = (canvasWidth - imgWOnCanvas) / 2;
+        }
+        if (imgHOnCanvas >= canvasHeight) {
+          // Lift bound — `canvasHeight - imgHOnCanvas` would lock the
+          // image bottom to the canvas bottom, which sinks any zoom on
+          // lower-portion nodes (AI Agent / tools row) into the caption
+          // band. Allowing a mirror of VERTICAL_ANCHOR_PCT empty space
+          // below lets the focal point reach the intended upper-third
+          // anchor. The exposed strip is the n8n canvas dot pattern,
+          // which matches the body backgroundColor — visually seamless.
+          const minImgTop = canvasHeight * (1 - VERTICAL_ANCHOR_PCT) - imgHOnCanvas;
+          imgTop = Math.min(0, Math.max(minImgTop, imgTop));
+        } else {
+          // Letterbox case (workflow shorter than frame). Top padding =
+          // VERTICAL_ANCHOR_PCT × empty space — shifts the workflow up
+          // by the same amount the focal-point math does for the zoom case.
+          imgTop = (canvasHeight - imgHOnCanvas) * VERTICAL_ANCHOR_PCT;
+        }
+        return { x: imgLeft, y: imgTop, scale: cssScale };
+      }
+
+      // sections: { startTime, endTime, kenBurns: {
+      //   startScale, endScale, startPosition: {x, y}, endPosition: {x, y}
+      // }, highlightNodes: string[] } — positions are percentages of the
+      // screenshot (0-100); highlightNodes match `workflow.nodes[].name`.
+      let sectionsData = [];
+      try {
+        sectionsData = JSON.parse(b64ToUtf8('{{sectionsB64}}'));
+      } catch (e) {
+        console.error('n8n-explainer: failed to parse sectionsB64', e);
+      }
+
+      // Workflow data for the highlight overlay (Faza C). Nodes are positioned
+      // in source pixel space; the overlay sits inside #screenshot-wrap and
+      // inherits the Ken Burns transform automatically.
+      let nodesData = [];
+      let connectionsData = {};
+      try {
+        nodesData = JSON.parse(b64ToUtf8('{{nodesB64}}'));
+        connectionsData = JSON.parse(b64ToUtf8('{{connectionsB64}}'));
+      } catch (e) {
+        console.error('n8n-explainer: failed to parse nodes/connections', e);
+      }
+
+      // ── Build node markers (one per workflow node) ───────────
+      const nodeOverlay = document.getElementById('node-overlay');
+      // Match SVG / overlay container size to source pixel space so positions
+      // map 1:1 to workflow.nodes[].position values.
+      nodeOverlay.style.width = `${screenshotWidth}px`;
+      nodeOverlay.style.height = `${screenshotHeight}px`;
+
+      const nodesByName = new Map();
+      // Halo around each node card. Horizontal padding is symmetric, but
+      // vertical is asymmetric: n8n renders the node NAME and operation
+      // subtitle BELOW the card (e.g. "Listen for incoming events" /
+      // "Updates: message"), and pxH covers only the icon card itself.
+      // A symmetric bottom halo overlapped those labels and made them
+      // unreadable. We bias the halo upward so the ring kisses the card
+      // bottom edge but leaves the label band free.
+      const HALO_X = 24;
+      const HALO_TOP = 20;
+      const HALO_BOTTOM = 4;
+      nodesData.forEach((node) => {
+        nodesByName.set(node.name, node);
+        const marker = document.createElement('div');
+        marker.className = 'node-marker';
+        marker.id = `node-marker-${cssEscape(node.name)}`;
+        // pxX/pxY are the precomputed screen-pixel CENTER of the node
+        // (orchestrator applied n8n's zoom-to-fit transform). Marker is
+        // centered via translate(-50%, -50%); to bias the halo upward we
+        // shift the marker's `top` by half the asymmetry.
+        const cardH = Math.max(node.pxH, 80);
+        const totalH = cardH + HALO_TOP + HALO_BOTTOM;
+        const yOffset = (HALO_TOP - HALO_BOTTOM) / 2;
+        marker.style.left = `${node.pxX}px`;
+        marker.style.top = `${node.pxY - yOffset}px`;
+        marker.style.width = `${node.pxW + HALO_X * 2}px`;
+        marker.style.height = `${totalH}px`;
+        nodeOverlay.appendChild(marker);
+      });
+
+      // ── Build SVG arrow paths ────────────────────────────────
+      const arrowSvg = document.getElementById('arrow-overlay');
+      arrowSvg.setAttribute('width', String(screenshotWidth));
+      arrowSvg.setAttribute('height', String(screenshotHeight));
+      arrowSvg.setAttribute('viewBox', `0 0 ${screenshotWidth} ${screenshotHeight}`);
+
+      // Generate arrow per source→target connection. We index them by
+      // `${source}__${target}` so per-section animation can find arrows
+      // whose BOTH endpoints are highlighted in that section.
+      const arrowEdges = []; // { id, source, target, length }
+      Object.entries(connectionsData).forEach(([sourceName, conn]) => {
+        const main = (conn && conn.main) || [];
+        main.forEach((output) => {
+          (output || []).forEach((edge) => {
+            const target = edge && edge.node;
+            if (!target) return;
+            const src = nodesByName.get(sourceName);
+            const tgt = nodesByName.get(target);
+            if (!src || !tgt) return;
+            // Anchor at right edge of source, left edge of target. pxX/pxY
+            // are node centers in screenshot pixel space; pxW/pxH are the
+            // post-zoom-to-fit rendered dimensions.
+            const x1 = src.pxX + src.pxW / 2;
+            const y1 = src.pxY;
+            const x2 = tgt.pxX - tgt.pxW / 2;
+            const y2 = tgt.pxY;
+            // Bezier-ish curve via two control points pulled horizontally.
+            const cp = Math.abs(x2 - x1) * 0.5;
+            const d = `M ${x1} ${y1} C ${x1 + cp} ${y1}, ${x2 - cp} ${y2}, ${x2} ${y2}`;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const id = `arrow-${cssEscape(sourceName)}__${cssEscape(target)}`;
+            path.id = id;
+            path.classList.add('arrow-path');
+            path.setAttribute('d', d);
+            arrowSvg.appendChild(path);
+            // Compute path length so we can animate stroke-dashoffset for a
+            // hand-drawn reveal effect.
+            const length = path.getTotalLength?.() ?? 1000;
+            path.style.strokeDasharray = String(length);
+            path.style.strokeDashoffset = String(length);
+            arrowEdges.push({ id, source: sourceName, target, length });
+          });
+        });
+      });
+
+      // ── CSS-id-safe escape helper (for node names containing spaces, dots) ─
+      function cssEscape(s) {
+        return String(s).replace(/[^a-zA-Z0-9_-]/g, '_');
+      }
+
+      // Initial frame — first section's start.
+      if (sectionsData.length > 0) {
+        const k = sectionsData[0].kenBurns;
+        const t = frameTransform(k.startScale, k.startPosition.x, k.startPosition.y);
+        gsap.set('#screenshot', { x: t.x, y: t.y, scale: t.scale });
+        // Apply same transform to overlays so they pan/zoom in lockstep.
+        gsap.set('#node-overlay', { x: t.x, y: t.y, scale: t.scale });
+        gsap.set('#arrow-overlay', { x: t.x, y: t.y, scale: t.scale });
+      }
+
+      sectionsData.forEach((section, i) => {
+        const dur = section.endTime - section.startTime;
+        const k = section.kenBurns;
+        const tStart = frameTransform(k.startScale, k.startPosition.x, k.startPosition.y);
+        const tEnd = frameTransform(k.endScale, k.endPosition.x, k.endPosition.y);
+
+        // Snap to section start (0.4s ease) then drift to end over the rest.
+        // All three layers (screenshot + node-overlay + arrow-overlay) move
+        // together so highlights stay glued to their nodes.
+        const targets = ['#screenshot', '#node-overlay', '#arrow-overlay'];
+        if (i > 0) {
+          targets.forEach((sel) => {
+            tl.to(
+              sel,
+              { x: tStart.x, y: tStart.y, scale: tStart.scale, duration: 0.4, ease: 'power2.out' },
+              section.startTime,
+            );
+          });
+        }
+        targets.forEach((sel) => {
+          tl.to(
+            sel,
+            { x: tEnd.x, y: tEnd.y, scale: tEnd.scale, duration: dur, ease: 'none' },
+            section.startTime + (i > 0 ? 0.4 : 0),
+          );
+        });
+
+        // ── Per-section node highlights ──────────────────────────
+        // Per-section node highlights — entirely GSAP-driven so the
+        // animation is deterministic under Hyperframes' frame-by-frame
+        // playhead control (CSS @keyframes / class toggles don't tick
+        // when the timeline is set via totalProgress).
+        //
+        // Three phases per highlight:
+        //   1. Entry pop — 0.92 → 1.06 → 1.0 with overshoot (~0.45 s)
+        //   2. Pulse     — 1.0 ↔ 1.04 + glow weak ↔ strong, yoyo every
+        //                  0.7 s for the duration of the active window
+        //   3. Exit      — tighten + fade out (~0.32 s)
+        const highlight = section.highlightNodes || [];
+        const sectionStart = section.startTime;
+        const entryDur = 0.28;
+        const settleDur = 0.18;
+        const exitDur = 0.32;
+        const pulsePeriod = 0.7;
+        const sectionDur = Math.max(0, section.endTime - section.startTime);
+        const pulseWindow = Math.max(
+          0,
+          sectionDur - entryDur - settleDur - exitDur,
+        );
+        const pulseRepeats = Math.max(0, Math.floor(pulseWindow / pulsePeriod) - 1);
+
+        const STRONG_GLOW =
+          '0 0 0 2px rgba(167, 139, 250, 1.0), 0 0 28px 8px rgba(124, 58, 237, 0.65), 0 0 72px 22px rgba(124, 58, 237, 0.35)';
+        const WEAK_GLOW =
+          '0 0 0 2px rgba(167, 139, 250, 0.7), 0 0 18px 5px rgba(124, 58, 237, 0.40), 0 0 48px 14px rgba(124, 58, 237, 0.18)';
+        const OFF_GLOW =
+          '0 0 0 2px rgba(167, 139, 250, 0.0), 0 0 24px 6px rgba(124, 58, 237, 0.0), 0 0 56px 18px rgba(124, 58, 237, 0.0)';
+
+        highlight.forEach((nodeName) => {
+          const id = `#node-marker-${cssEscape(nodeName)}`;
+          // 1. Entry pop with overshoot — opacity ramps in faster than
+          // the scale settles for a satisfying "snap" feel.
+          tl.fromTo(
+            id,
+            { opacity: 0, scale: 0.92, boxShadow: OFF_GLOW },
+            {
+              opacity: 1,
+              scale: 1.06,
+              boxShadow: STRONG_GLOW,
+              duration: entryDur,
+              ease: 'back.out(2)',
+            },
+            sectionStart,
+          );
+          tl.to(
+            id,
+            { scale: 1.0, duration: settleDur, ease: 'power2.out' },
+            sectionStart + entryDur,
+          );
+          // 2. Breathing pulse for the rest of the active window.
+          if (pulseRepeats > 0) {
+            tl.to(
+              id,
+              {
+                scale: 1.04,
+                boxShadow: WEAK_GLOW,
+                duration: pulsePeriod,
+                ease: 'sine.inOut',
+                repeat: pulseRepeats,
+                yoyo: true,
+              },
+              sectionStart + entryDur + settleDur,
+            );
+          }
+          // 3. Exit — fade out to OFF_GLOW. Aligned to section.endTime
+          // so adjacent sections don't double-render the same marker.
+          tl.to(
+            id,
+            {
+              opacity: 0,
+              scale: 0.94,
+              boxShadow: OFF_GLOW,
+              duration: exitDur,
+              ease: 'power2.in',
+            },
+            section.endTime - exitDur,
+          );
+        });
+
+        // ── Per-section arrow draw ───────────────────────────────
+        // Arrow appears when both endpoints are in highlightNodes for this
+        // section. Stroke-dashoffset → 0 = "drawing" effect over 0.6s.
+        arrowEdges.forEach((edge) => {
+          if (!highlight.includes(edge.source) || !highlight.includes(edge.target)) return;
+          const sel = `#${edge.id}`;
+          tl.to(
+            sel,
+            { opacity: 1, strokeDashoffset: 0, duration: 0.6, ease: 'power2.out' },
+            sectionStart + 0.2,
+          );
+          tl.to(
+            sel,
+            { opacity: 0, duration: 0.25 },
+            section.endTime - 0.25,
+          );
+          // Reset for next loop / next section that re-highlights this edge
+          tl.set(sel, { strokeDashoffset: edge.length }, section.endTime);
+        });
+      });
+
+      // ── Captions (same word-karaoke pattern as slideshow / captions) ─
+      let cuesData = [];
+      try {
+        cuesData = JSON.parse(b64ToUtf8('{{cuesB64}}'));
+      } catch (e) {
+        console.error('n8n-explainer: failed to parse cuesB64', e);
+      }
+
+      const captionsEl = document.getElementById('captions');
+      cuesData.forEach((cue, cueIdx) => {
+        const words = cue.words ?? [];
+        if (words.length === 0) return;
+        const wrap = document.createElement('span');
+        wrap.id = `cue-${cueIdx}`;
+        wrap.className = 'cue';
+        wrap.style.opacity = '0';
+        wrap.style.position = 'absolute';
+        wrap.style.left = '50%';
+        wrap.style.bottom = '0';
+        wrap.style.transform = 'translateX(-50%)';
+        wrap.style.whiteSpace = 'normal';
+        words.forEach((w, wIdx) => {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.id = `cue-${cueIdx}-w-${wIdx}`;
+          span.textContent = w.text;
+          wrap.appendChild(span);
+        });
+        captionsEl.appendChild(wrap);
+
+        const cueStart = words[0]?.startTime ?? 0;
+        const cueEnd = words[words.length - 1]?.endTime ?? cueStart;
+        tl.to(`#cue-${cueIdx}`, { opacity: 1, duration: 0.18 }, cueStart);
+        tl.to(`#cue-${cueIdx}`, { opacity: 0, duration: 0.15 }, cueEnd);
+
+        words.forEach((w, wIdx) => {
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '#ffd700' }, w.startTime);
+          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '#ffffff' }, w.endTime);
+        });
+      });
+
+      window.__timelines['n8n-explainer'] = tl;
+    </script>
+  </body>
+</html>
