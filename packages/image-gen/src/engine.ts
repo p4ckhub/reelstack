@@ -12,21 +12,46 @@ export const SIZES: Record<string, [number, number]> = {
   post: [1080, 1080],
   story: [1080, 1920],
   youtube: [1280, 720],
+  carousel: [1080, 1350],
 };
 
 export const CONTENT_KEYS = [
   'text',
   'attr',
   'title',
+  'subtitle',
   'badge',
   'bullets',
   'number',
   'label',
   'date',
+  'time',
   'cta',
   'num',
   'urgency',
   'bg_opacity',
+  'myth',
+  'reality',
+  'heading',
+  'speaker',
+  'price',
+  'price1',
+  'price2',
+  'deadline',
+  'days',
+  'duration',
+  'color',
+  'banner',
+  'features',
+  'footer',
+  'icon',
+  'logo',
+  'optA',
+  'optB',
+  'optC',
+  'optD',
+  'question',
+  'titleHighlight',
 ] as const;
 
 export const META_KEYS = new Set([
@@ -81,30 +106,48 @@ export function validateBrand(brand: string, brandsDir: string): string {
 }
 
 /**
- * Check template HTML file exists, return its path.
+ * Aliases for renamed templates. Keys are old names, values are new canonical names.
+ * Lets old code keep working after a rename without breaking callers.
  */
-export function validateTemplate(template: string, templatesDir = TEMPLATES_DIR): string {
-  const templatePath = path.join(templatesDir, `${template}.html`);
-  if (!fs.existsSync(templatePath)) {
-    const available = fs
-      .readdirSync(templatesDir)
-      .filter((f) => f.endsWith('.html') && !f.startsWith('_'))
-      .map((f) => f.replace('.html', ''))
-      .sort();
-    throw new Error(`Template '${template}' not found. Available: ${available.join(', ')}`);
+export const TEMPLATE_ALIASES: Record<string, string> = {
+  'webinar-point': 'point',
+  'webinar-myth': 'myth',
+};
+
+/**
+ * Check template HTML file exists, return its path.
+ * Searches external dirs first (if provided), then falls back to core templates.
+ */
+export function validateTemplate(template: string, externalDirs: string[] = []): string {
+  const canonical = TEMPLATE_ALIASES[template] ?? template;
+  const searchDirs = [...externalDirs, TEMPLATES_DIR];
+
+  for (const dir of searchDirs) {
+    if (!fs.existsSync(dir)) continue;
+    const templatePath = path.join(dir, `${canonical}.html`);
+    if (fs.existsSync(templatePath)) {
+      return templatePath;
+    }
   }
-  return templatePath;
+
+  const available = listTemplates(externalDirs).sort();
+  throw new Error(`Template '${template}' not found. Available: ${available.join(', ')}`);
 }
 
 /**
- * Return list of available template names.
+ * Return list of available template names across core and any external dirs.
  */
-export function listTemplates(templatesDir = TEMPLATES_DIR): string[] {
-  return fs
-    .readdirSync(templatesDir)
-    .filter((f) => f.endsWith('.html') && !f.startsWith('_'))
-    .map((f) => f.replace('.html', ''))
-    .sort();
+export function listTemplates(externalDirs: string[] = []): string[] {
+  const seen = new Set<string>();
+  for (const dir of [...externalDirs, TEMPLATES_DIR]) {
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) {
+      if (f.endsWith('.html') && !f.startsWith('_')) {
+        seen.add(f.replace('.html', ''));
+      }
+    }
+  }
+  return Array.from(seen).sort();
 }
 
 /**

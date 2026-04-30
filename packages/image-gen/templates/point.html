@@ -3,16 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=1080" />
-    <title>Tip Card</title>
+    <title>Webinar Point</title>
     <!--
-  Tip Card Template
-  Params: ?brand=BRAND&badge=TAG&title=TITLE&bullets=A|B|C&num=001
-  Optional: &bg=/path/to/image.jpg &bg_opacity=0.65
+  Numbered point slide for carousels.
+  Params: ?brand=BRAND&number=1&title=TITLE&text=DESC
+  Optional: &color=#hex (overrides accent circle + footer)
 -->
     <link rel="stylesheet" href="_base.css" />
     <link id="brand-css" rel="stylesheet" href="" />
     <style>
-      /* Accent line top */
       .accent-line {
         position: absolute;
         top: 0;
@@ -22,13 +21,12 @@
         background: linear-gradient(90deg, var(--brand-accent), var(--brand-cta));
       }
 
-      /* Series number */
       .series-num {
         position: absolute;
         top: var(--safe-top);
         right: var(--safe-right);
         font-family: var(--brand-font-mono);
-        font-size: 2vw;
+        font-size: 1.8vw;
         color: var(--brand-accent);
         opacity: 0.7;
         letter-spacing: 0.05em;
@@ -43,13 +41,14 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: flex-start;
         padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--footer-height))
           var(--safe-left);
+        text-align: left;
       }
 
-      /* Badge */
       .badge {
-        display: inline-block;
+        align-self: flex-start;
         font-family: var(--brand-font-mono);
         font-size: 1.4vw;
         font-weight: 600;
@@ -58,64 +57,74 @@
         padding: 0.6vh 2vw;
         border-radius: 100px;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 3vh;
+        letter-spacing: 0.12em;
+        margin-bottom: 4vh;
+      }
+
+      .num-circle {
+        width: 12vw;
+        height: 12vw;
+        border-radius: 50%;
+        background: var(--brand-accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 5vh;
         align-self: flex-start;
       }
 
-      /* Title */
+      .num-text {
+        font-family: var(--brand-font-heading);
+        font-size: 5vw;
+        font-weight: var(--brand-heading-weight-heavy);
+        color: var(--brand-bg-primary);
+        line-height: 1;
+      }
+
       .title {
         font-family: var(--brand-font-heading);
         font-weight: var(--brand-heading-weight);
         color: var(--brand-text-primary);
         line-height: 1.2;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.015em;
+        max-width: 100%;
         margin-bottom: 4vh;
+        text-wrap: balance;
       }
 
-      /* Bullets */
-      .bullets {
-        list-style: none;
-        display: flex;
-        flex-direction: column;
-        gap: 2.5vh;
+      /* Amber underline accent for a highlighted fragment of the title. */
+      .title-highlight {
+        position: relative;
+        display: inline;
+        z-index: 1;
+        padding: 0 0.2vw;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        background-image: linear-gradient(
+          transparent 72%,
+          var(--brand-cta) 72%,
+          var(--brand-cta) 94%,
+          transparent 94%
+        );
       }
 
-      .bullet {
-        display: flex;
-        align-items: flex-start;
-        gap: 1.5vw;
+      .description {
         font-family: var(--brand-font-body);
+        font-size: 2vw;
         color: var(--brand-text-secondary);
-        line-height: 1.5;
+        line-height: 1.6;
+        max-width: 90%;
       }
 
-      .bullet-icon {
-        flex-shrink: 0;
-        width: 2.5vw;
-        height: 2.5vw;
-        margin-top: 0.3vh;
-        border-radius: 50%;
-        background: var(--brand-accent-dim);
-        border: 2px solid var(--brand-accent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      .accent-bar {
+        position: absolute;
+        bottom: calc(var(--footer-bottom) + var(--footer-height));
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--brand-cta);
       }
 
-      .bullet-icon::after {
-        content: '';
-        width: 0.8vw;
-        height: 0.8vw;
-        border-radius: 50%;
-        background: var(--brand-accent);
-      }
-
-      .bullet-text {
-        flex: 1;
-      }
-
-      /* Footer */
       .footer {
         position: absolute;
         bottom: var(--footer-bottom);
@@ -125,7 +134,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1.2vw;
         background: var(--brand-accent);
         z-index: 2;
       }
@@ -138,40 +146,45 @@
         letter-spacing: 0.03em;
       }
 
-      /* Vertical adjustments */
       @media (max-aspect-ratio: 3/4) {
-        .badge {
-          font-size: 2vw;
-          padding: 0.8vh 3vw;
+        .num-circle {
+          width: 16vw;
+          height: 16vw;
         }
-        .bullets {
-          gap: 3vh;
+        .num-text {
+          font-size: 7vw;
         }
-        .bullet-icon {
-          width: 3.5vw;
-          height: 3.5vw;
-        }
-        .bullet-icon::after {
-          width: 1.2vw;
-          height: 1.2vw;
-        }
-        .series-num {
-          font-size: 2.6vw;
+        .description {
+          font-size: 2.8vw;
         }
         .footer-name {
           font-size: 2.6vw;
         }
-      }
-
-      /* Horizontal adjustments */
-      @media (min-aspect-ratio: 4/3) {
-        .badge {
-          font-size: 1.2vw;
-        }
-        .bullets {
-          gap: 2vh;
-        }
         .series-num {
+          font-size: 2.4vw;
+        }
+        .badge {
+          font-size: 2vw;
+          padding: 1vh 2.6vw;
+        }
+      }
+      @media (min-aspect-ratio: 3/4) and (max-aspect-ratio: 1/1) {
+        .series-num {
+          font-size: 2vw;
+        }
+        .badge {
+          font-size: 1.7vw;
+        }
+      }
+      @media (min-aspect-ratio: 4/3) {
+        .num-circle {
+          width: 10vw;
+          height: 10vw;
+        }
+        .num-text {
+          font-size: 4vw;
+        }
+        .description {
           font-size: 1.6vw;
         }
         .footer-name {
@@ -183,18 +196,19 @@
   <body>
     <div class="accent-line"></div>
     <div class="series-num" id="seriesNum"></div>
-
     <div class="card">
       <div class="badge" id="badge"></div>
-      <div class="title" id="title">Tip title here</div>
-      <ul class="bullets" id="bullets"></ul>
+      <div class="num-circle">
+        <span class="num-text" id="numText">#1</span>
+      </div>
+      <div class="title" id="title">Point title</div>
+      <div class="description" id="description"></div>
     </div>
-
+    <div class="accent-bar"></div>
     <div class="footer">
       <span class="footer-name" id="footerName"></span>
     </div>
-
     <script src="_base.js"></script>
-    <script src="tip-card.js"></script>
+    <script src="point.js"></script>
   </body>
 </html>

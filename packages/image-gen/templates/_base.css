@@ -1,5 +1,9 @@
 /* Shared base styles for all templates */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
   width: 100vw;
@@ -40,10 +44,10 @@ body {
 /* Story / Reels / Shorts / TikTok (9:16 vertical) */
 @media (max-aspect-ratio: 3/4) {
   :root {
-    --safe-top: 16vh;      /* ~307px at 1920h — covers YT Shorts status bar + Ken Burns room */
-    --safe-bottom: 24vh;   /* ~460px at 1920h — covers YT Shorts buttons+caption */
-    --safe-left: 8vw;      /* ~86px at 1080w — extra room for Ken Burns pan */
-    --safe-right: 13vw;    /* ~140px at 1080w — covers action buttons + Ken Burns */
+    --safe-top: 16vh; /* ~307px at 1920h — covers YT Shorts status bar + Ken Burns room */
+    --safe-bottom: 24vh; /* ~460px at 1920h — covers YT Shorts buttons+caption */
+    --safe-left: 8vw; /* ~86px at 1080w — extra room for Ken Burns pan */
+    --safe-right: 13vw; /* ~140px at 1080w — covers action buttons + Ken Burns */
     --footer-bottom: 17vh; /* ~326px — sits above platform UI */
     --footer-height: 5vh;
   }
@@ -52,10 +56,10 @@ body {
 /* YouTube thumbnail / landscape (16:9) */
 @media (min-aspect-ratio: 4/3) {
   :root {
-    --safe-top: 10vh;      /* ~72px at 720h */
-    --safe-bottom: 14vh;   /* ~101px at 720h — covers progress bar + duration */
-    --safe-left: 8vw;      /* ~102px at 1280w */
-    --safe-right: 11vw;    /* ~141px at 1280w — covers duration badge */
+    --safe-top: 10vh; /* ~72px at 720h */
+    --safe-bottom: 14vh; /* ~101px at 720h — covers progress bar + duration */
+    --safe-left: 8vw; /* ~102px at 1280w */
+    --safe-right: 11vw; /* ~141px at 1280w — covers duration badge */
     --footer-bottom: 0;
     --footer-height: 8vh;
   }

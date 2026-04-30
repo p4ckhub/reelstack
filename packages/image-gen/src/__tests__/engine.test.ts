@@ -41,13 +41,19 @@ describe('parseSize', () => {
     expect(result).toEqual([{ name: 'youtube', width: 1280, height: 720 }]);
   });
 
-  it('all returns 3 sizes', () => {
+  it('carousel returns 1080x1350', () => {
+    const result = parseSize('carousel');
+    expect(result).toEqual([{ name: 'carousel', width: 1080, height: 1350 }]);
+  });
+
+  it('all returns every preset size', () => {
     const result = parseSize('all');
-    expect(result).toHaveLength(3);
     const names = result.map((r) => r.name);
     expect(names).toContain('post');
     expect(names).toContain('story');
     expect(names).toContain('youtube');
+    expect(names).toContain('carousel');
+    expect(result).toHaveLength(Object.keys(SIZES).length);
   });
 
   it('custom WxH is parsed correctly', () => {
@@ -174,6 +180,7 @@ describe('SIZES', () => {
     expect(SIZES['post']).toEqual([1080, 1080]);
     expect(SIZES['story']).toEqual([1080, 1920]);
     expect(SIZES['youtube']).toEqual([1280, 720]);
+    expect(SIZES['carousel']).toEqual([1080, 1350]);
   });
 });
 

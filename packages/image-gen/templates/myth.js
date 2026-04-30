@@ -3,11 +3,13 @@ initTemplate(function (ctx) {
     brandName = ctx.brandName;
   document.getElementById('footerName').textContent = brandName;
 
-  var number = params.get('number');
+  var heading = params.get('heading');
+  var num = params.get('num');
   var myth = params.get('myth');
   var reality = params.get('reality');
 
-  if (number) document.getElementById('headerText').textContent = 'PRZEKONANIE #' + number;
+  if (heading) document.getElementById('headerBadge').textContent = heading;
+  if (num) document.getElementById('seriesNum').textContent = '#' + num;
   if (myth) document.getElementById('mythText').textContent = myth;
   if (reality) document.getElementById('realityText').textContent = reality;
 

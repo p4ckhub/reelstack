@@ -9,6 +9,7 @@ export {
   extractContentParams,
   SIZES,
   CONTENT_KEYS,
+  TEMPLATE_ALIASES,
   TEMPLATES_DIR,
   DEFAULT_BRANDS_DIR,
 } from './engine';
@@ -21,3 +22,4 @@ export type {
   BrandInfo,
   TemplateInfo,
 } from './types';
+export type { PackManifest, TierName } from './packs';
