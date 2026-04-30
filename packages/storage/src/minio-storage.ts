@@ -24,6 +24,27 @@ export class MinioStorageAdapter implements StorageAdapter {
     if (!accessKey || !secretKey) {
       throw new Error('MINIO_ACCESS_KEY and MINIO_SECRET_KEY environment variables are required');
     }
+    // Catch the duplicate-key-in-.env class of bug at startup. We've
+    // had cases where both a localhost MinIO block and an R2 block
+    // existed in `.env` — workers (first-write-wins env loader) hit
+    // localhost while Next.js (last-write-wins) hit R2, and forks
+    // failed to copy context cross-process. Warn loudly when the
+    // endpoint and bucket disagree about which storage we're talking to.
+    const endpoint = process.env.MINIO_ENDPOINT || 'localhost';
+    const bucket = process.env.MINIO_BUCKET || 'reelstack';
+    const looksR2 = endpoint.endsWith('.cloudflarestorage.com') || endpoint.endsWith('.r2.dev');
+    const bucketLooksProd = bucket.includes('prod');
+    if (looksR2 && !bucketLooksProd) {
+      log.warn(
+        { endpoint, bucket },
+        'MINIO endpoint looks like R2 but bucket name does not include "prod" — check .env for duplicate MINIO_* blocks'
+      );
+    } else if (!looksR2 && bucketLooksProd) {
+      log.warn(
+        { endpoint, bucket },
+        'MINIO bucket looks like prod but endpoint is not R2 — check .env for stale credentials'
+      );
+    }
     // Explicit region skips MinIO's bucket-location probe on first call,
     // which would otherwise try to reach the public endpoint via HTTP —
     // fatal when that endpoint (e.g. "localhost") isn't routable from the
