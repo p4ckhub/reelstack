@@ -290,16 +290,23 @@ export const generateReelSchema = z
     avatarClipDurationSeconds: z.number().positive().max(60).optional(),
     /** LLM provider override (e.g. "openai", "anthropic") */
     provider: z.string().max(100).optional(),
-    /** Slideshow slides (slideshow mode — skips LLM when provided) */
+    /** Slideshow slides (slideshow mode — skips LLM when provided).
+     *  `passthrough()` keeps any extra string params the slide template needs
+     *  (titleHighlight, subtitle, bullets, features, price, price2, heading,
+     *  attr, logo, myth, reality, ...). The orchestrator forwards them to
+     *  image-gen renderToFile so pack templates (carousel-hook, comparison,
+     *  engage-outro) get full content, not just the lowest-common-denominator. */
     slides: z
       .array(
-        z.object({
-          title: z.string().max(200),
-          text: z.string().max(500).optional(),
-          badge: z.string().max(50).optional(),
-          num: z.string().max(10).optional(),
-          template: z.string().max(50).optional(),
-        })
+        z
+          .object({
+            title: z.string().max(200),
+            text: z.string().max(500).optional(),
+            badge: z.string().max(50).optional(),
+            num: z.string().max(10).optional(),
+            template: z.string().max(50).optional(),
+          })
+          .passthrough()
       )
       .min(1)
       .max(20)
@@ -308,6 +315,14 @@ export const generateReelSchema = z
     brand: z.string().max(50).optional(),
     /** Image-gen template name (slideshow mode, default: tip-card) */
     template: z.string().max(50).optional(),
+    /** Image-gen size preset for slide rendering (slideshow mode).
+     *  'story' (1080×1920, default), 'carousel' (1080×1350, IG feed),
+     *  'post' (1080×1080), or custom 'WxH'. */
+    size: z.string().max(20).optional(),
+    /** Skip LLM script review on manual slides (slideshow mode).
+     *  Auto-enabled when slides[] is provided — manual override available
+     *  for callers who want to force a review pass on auto-generated scripts. */
+    skipReview: z.boolean().optional(),
     /** Caption highlight mode (text = karaoke phrase, single-word = one word at a time, pill = colored pill) */
     highlightMode: z.string().max(30).optional(),
     /** Video URL for captions / zoom-reframe modes (existing video to overlay captions or punch-in zooms on) */

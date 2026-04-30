@@ -14,6 +14,7 @@ import { createQueue } from '@reelstack/queue';
 import { withAuth, successResponse, errorResponse } from '@/lib/api/v1/middleware';
 import { generateReelSchema } from '@/lib/api/v1/reel-schemas';
 import type { AuthContext } from '@/lib/api/v1/types';
+import { getModule, resolveRuntime, isCoreMode } from '@reelstack/agent';
 
 /**
  * POST /api/v1/reel/generate
@@ -45,6 +46,25 @@ export const POST = withAuth(
     // Backward compat: if assets provided but mode not explicitly set, treat as compose.
     const mode =
       parsed.data.mode === 'generate' && parsed.data.assets ? 'compose' : parsed.data.mode;
+
+    // Pre-validate runtime against the module's supported runtimes — gives
+    // the API caller a 400 with a clear message instead of a 500 from the
+    // worker after the job is enqueued. Skip for core modes (generate, compose)
+    // which run their own pipeline and ignore the runtime field.
+    if (parsed.data.runtime && !isCoreMode(mode)) {
+      const reelModule = getModule(mode);
+      if (reelModule) {
+        try {
+          resolveRuntime(reelModule, parsed.data.runtime);
+        } catch (err) {
+          return errorResponse(
+            'VALIDATION_ERROR',
+            err instanceof Error ? err.message : 'Invalid runtime for this mode',
+            400
+          );
+        }
+      }
+    }
 
     // Module catalog is the source of truth for both access and pricing.
     // Owner users bypass both.
@@ -123,10 +143,29 @@ export const POST = withAuth(
         slides: parsed.data.slides,
         brand: parsed.data.brand,
         template: parsed.data.template,
+        size: parsed.data.size,
+        skipReview: parsed.data.skipReview,
         numberOfSlides: parsed.data.numberOfSlides,
         musicUrl: parsed.data.musicUrl,
         musicVolume: parsed.data.musicVolume,
         highlightMode: parsed.data.highlightMode,
+        // zoom-reframe specific
+        zoomIntensity: parsed.data.zoomIntensity,
+        captionStyle: parsed.data.captionStyle,
+        // ai-storytelling specific
+        lipSyncTool: parsed.data.lipSyncTool,
+        scenes: parsed.data.scenes,
+        // ai-short-film specific
+        numberOfScenes: parsed.data.numberOfScenes,
+        characterDescription: parsed.data.characterDescription,
+        characterImageUrl: parsed.data.characterImageUrl,
+        preferredI2VToolId: parsed.data.preferredI2VToolId,
+        seedImageToolId: parsed.data.seedImageToolId,
+        // Shared (used by storytelling / short-film / presenter-explainer)
+        templateId: parsed.data.templateId,
+        // Runtime override (remotion vs hyperframes). Validated against the
+        // module's declared `runtimes` by the worker via `resolveRuntime()`.
+        runtime: parsed.data.runtime,
       },
       apiKeyId: ctx.apiKeyId ?? undefined,
       creditCost: cost,

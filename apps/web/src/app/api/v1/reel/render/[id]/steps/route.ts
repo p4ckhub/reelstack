@@ -4,12 +4,20 @@ import { getReelJob } from '@reelstack/database';
 import { PipelineEngine } from '@reelstack/agent/pipeline';
 import { withAuth, successResponse, errorResponse } from '@/lib/api/v1/middleware';
 import type { AuthContext } from '@/lib/api/v1/types';
-import { resolvePipelineDefinition } from '@/lib/api/v1/pipeline-helpers';
 
 /**
  * GET /api/v1/reel/render/:id/steps
  *
- * Get pipeline step statuses for a job.
+ * Return the real persisted step list for a job by reading
+ * `jobs/{jobId}/context.json` from MinIO. Each entry in
+ * `context.results` is a step that completed and persisted output —
+ * exactly the set the resume API will accept as `fromStepId`.
+ *
+ * We don't reconstruct the full PipelineDefinition here (would require
+ * loading the module + its buildPipeline, which has side effects in
+ * Next.js API context). Listing actually-completed steps is enough for
+ * the re-render UI; the worker rebuilds the real definition when the
+ * resume job is dequeued.
  */
 export const GET = withAuth(
   { scope: API_SCOPES.REEL_READ },
@@ -24,16 +32,21 @@ export const GET = withAuth(
       return errorResponse('NOT_FOUND', 'Reel job not found', 404);
     }
 
-    const config = (job.reelConfig as Record<string, unknown>) ?? {};
-    const mode = (config.mode as string) ?? 'generate';
-
-    const definition = resolvePipelineDefinition(mode);
-    if (!definition) {
-      return errorResponse('VALIDATION_ERROR', `No pipeline definition for mode: ${mode}`, 400);
+    const engine = new PipelineEngine();
+    const context = await engine.loadContext(id);
+    if (!context) {
+      // Pre-multi-step jobs (or jobs that crashed before persisting) — surface
+      // the legacy single-step shape so the UI degrades gracefully.
+      return successResponse([
+        { id: 'orchestrate', name: 'Run Module', status: 'pending' as const },
+      ]);
     }
 
-    const engine = new PipelineEngine();
-    const steps = await engine.getStatus(definition, id);
+    const steps = Object.keys(context.results).map((stepId) => ({
+      id: stepId,
+      name: stepId,
+      status: 'completed' as const,
+    }));
 
     return successResponse(steps);
   }

@@ -22,6 +22,10 @@ vi.mock('@reelstack/agent', () => ({
   produceComposition: (...args: unknown[]) => mockProduceComposition(...args),
   getModule: (...args: unknown[]) => mockGetModule(...args),
   isCoreMode: (mode: string) => ['generate', 'compose'].includes(mode),
+  // resolveRuntime is called by the worker's pipeline setup. In tests we
+  // accept any module + return the requested runtime (or 'remotion' default).
+  resolveRuntime: (_mod: unknown, requested?: 'remotion' | 'hyperframes') =>
+    requested ?? 'remotion',
   listModules: () => [],
   registerModule: vi.fn(),
   callLLM: vi.fn(),

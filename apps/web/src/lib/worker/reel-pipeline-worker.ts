@@ -11,18 +11,20 @@ import {
 } from '@reelstack/database';
 import { createLogger } from '@reelstack/logger';
 import { reelJobsTotal, reelRenderDuration } from '@/lib/metrics';
+import { applyRuntimeFlag } from './runtime-flag';
 import {
   produce as agentProduce,
   produceComposition,
   getModule,
   isCoreMode,
+  resolveRuntime,
   PipelineEngine,
   createGeneratePipeline,
   getCostSummary,
   isPublicUrl,
   runPostRenderGates,
 } from '@reelstack/agent';
-import type { QualityCheckResult } from '@reelstack/agent';
+import type { QualityCheckResult, ModuleRuntime } from '@reelstack/agent';
 import type {
   UserAsset,
   ComposeRequest,
@@ -448,11 +450,77 @@ function buildModulePipelineSetup(
   job: { script?: string | null },
   config: Record<string, unknown>
 ): PipelineSetup {
+  // Pre-resolve runtime here so multi-step modules can build their pipeline
+  // definition with the correct runtime baked in (different runtimes may want
+  // different step graphs, e.g. HF needs an extra "upload-screenshot" while
+  // Lambda renderer pipes the buffer directly).
+  const requestedRuntime = config.runtime as ModuleRuntime | undefined;
+  // Canary rollout: when no explicit runtime was requested,
+  // RUNTIME_OVERRIDE_PCT_<MODE> can steer a deterministic share of jobs to
+  // hyperframes. Override is silent when the module doesn't support HF.
+  const supported = Object.keys(reelModule.runtimes ?? {}) as ModuleRuntime[];
+  const flag = applyRuntimeFlag({
+    mode: reelModule.id,
+    jobId,
+    supported,
+    requested: requestedRuntime,
+  });
+  const runtime = resolveRuntime(reelModule, flag.runtime ?? requestedRuntime);
+
   log.info(
-    { jobId, moduleId: reelModule.id, moduleName: reelModule.name },
+    {
+      jobId,
+      moduleId: reelModule.id,
+      moduleName: reelModule.name,
+      runtime,
+      multiStep: !!reelModule.buildPipeline,
+      runtimeFlagApplied: flag.overridden,
+    },
     'Running module pipeline (PipelineEngine)'
   );
 
+  // Multi-step path: module exposes a real PipelineDefinition. Each step
+  // persists separately so /resume can replay cheap work without re-running
+  // LLM / TTS / screenshot.
+  if (reelModule.buildPipeline) {
+    const baseRequest: BaseModuleRequest = {
+      jobId,
+      language: (config.language as string) ?? 'en',
+      tts: config.tts as BaseModuleRequest['tts'],
+      whisper: config.whisper as BaseModuleRequest['whisper'],
+      brandPreset: config.brandPreset as BrandPreset | undefined,
+      musicUrl: config.musicUrl as string | undefined,
+      musicVolume: config.musicVolume as number | undefined,
+      onProgress: makeProgressCallback(jobId, reelModule.progressSteps),
+    };
+    // Merge top-level `job.script` into config before handing it to
+    // buildPipeline — modules validate `config.script` (e.g. ai-storytelling)
+    // and the API stores script on the row, not in reelConfig.
+    const mergedConfig = { ...config, script: config.script ?? job.script };
+    const pipeline = reelModule.buildPipeline(baseRequest, mergedConfig, runtime);
+    return {
+      pipeline,
+      initialInput: {
+        ...mergedConfig,
+        runtime,
+        _runtimeFlagApplied: flag.overridden,
+      },
+      stepProgressMap: pipeline.steps.reduce<Record<string, number>>((acc, step, i) => {
+        // Distribute progress 5..95 evenly across steps so the UI shows movement
+        // even during long single-step subtrees.
+        acc[step.id] = Math.round(5 + (90 * (i + 1)) / pipeline.steps.length);
+        return acc;
+      }, {}),
+      async postProcess(result: PipelineResult) {
+        const renderStepId = pipeline.steps[pipeline.steps.length - 1]?.id ?? 'render';
+        const renderResult = result.context.results[renderStepId] as { outputPath: string };
+        return renderResult.outputPath;
+      },
+    };
+  }
+
+  // Legacy single-step path: wrap the whole orchestrate() call as one step.
+  // /resume can only restart the entire run for these modules.
   const pipeline = createModulePipeline(reelModule);
 
   return {
@@ -460,6 +528,8 @@ function buildModulePipelineSetup(
     initialInput: {
       ...config,
       script: config.script ?? job.script,
+      runtime,
+      _runtimeFlagApplied: flag.overridden,
     },
     stepProgressMap: { orchestrate: 5 },
     async postProcess(result: PipelineResult) {
@@ -495,12 +565,20 @@ function createModulePipeline(reelModule: ReelModule): PipelineDefinition {
             onProgress: makeProgressCallback(ctx.jobId, reelModule.progressSteps),
           };
 
+          // Resolve runtime: API request override → module's defaultRuntime.
+          // resolveRuntime() throws when the module doesn't support the
+          // requested runtime — surfaces as 500 to the API caller (we catch
+          // and log; API-level pre-validation happens in the route).
+          const requestedRuntime = ctx.input.runtime as ModuleRuntime | undefined;
+          const runtime = resolveRuntime(reelModule, requestedRuntime);
+
           const moduleConfig = { ...ctx.input };
-          const result = await reelModule.orchestrate(baseRequest, moduleConfig);
+          const result = await reelModule.orchestrate(baseRequest, moduleConfig, runtime);
 
           return {
             outputPath: result.outputPath,
             durationSeconds: result.durationSeconds,
+            runtime,
             meta: result.meta,
           };
         },
@@ -699,8 +777,16 @@ function buildPipelineProductionMeta(
   const plan = compositionResult?.plan;
   const assets = assetPersistResult?.assets ?? [];
 
+  // Runtime + flag override stored in `initialInput` by `buildModulePipelineSetup`
+  // — surface here so per-runtime metrics can attribute results without
+  // re-resolving the module at query time.
+  const runtime = ctx.input.runtime as ModuleRuntime | undefined;
+  const runtimeFlagApplied = ctx.input._runtimeFlagApplied === true;
+
   return {
     engine: 'pipeline',
+    runtime,
+    runtimeFlagApplied,
     plan: plan
       ? {
           layout: plan.layout,
