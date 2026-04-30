@@ -15,6 +15,18 @@ export {
 
 // ── HF cards (shimmer + 3 representative cards now; 27 total target) ──
 export { buildHfCardBlock, buildHfEndCardBlock, CARD_BUILDERS, REGISTERED_SLUGS } from './cards';
+
+// ── TTS defaults (env-aware provider/voice/language resolver) ──
+export {
+  detectTTSProvider,
+  resolveTTSDefaults,
+  getDefaultTTSVoice,
+  getDefaultTTSLanguage,
+  type TTSProviderName,
+  type ResolveTTSDefaultsInput,
+  type ResolvedTTSDefaults,
+} from './config/tts-defaults';
+
 export type {
   CardRenderInput,
   CardBlockOutput,
