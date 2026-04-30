@@ -324,12 +324,19 @@ export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 /**
  * Valid JobStatus transitions (uppercase, matching DB enum).
  * Any transition not listed here is invalid and will be rejected.
+ *
+ * `COMPLETED → PROCESSING` is allowed so the resume API
+ * (`POST /api/v1/reel/render/:id/resume`) can re-run a job from a chosen
+ * step without forcing the caller to mint a new job id. The original
+ * `outputUrl` stays in place until the new render completes.
+ *
+ * `FAILED → PROCESSING` is the same idea for retry-after-fix.
  */
 export const JOB_STATUS_TRANSITIONS: Record<string, string[]> = {
   QUEUED: ['PROCESSING', 'FAILED'],
   PROCESSING: ['COMPLETED', 'FAILED'],
-  COMPLETED: [],
-  FAILED: ['QUEUED'],
+  COMPLETED: ['PROCESSING'],
+  FAILED: ['QUEUED', 'PROCESSING'],
 };
 
 export function isValidStatusTransition(from: string, to: string): boolean {

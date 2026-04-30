@@ -252,11 +252,14 @@ describe('ReelJob CRUD', () => {
     );
   });
 
-  it('invalid transition COMPLETED → PROCESSING throws', async () => {
+  it('valid resume COMPLETED → PROCESSING succeeds', async () => {
     mockReelJobFindUnique.mockResolvedValue({ status: 'COMPLETED' });
-    await expect(updateReelJobStatus('reel-1', { status: 'PROCESSING' })).rejects.toThrow(
-      'Invalid status transition: COMPLETED → PROCESSING for job reel-1'
-    );
+    mockReelJobUpdate.mockResolvedValue({ id: 'reel-1', status: 'PROCESSING' });
+    await updateReelJobStatus('reel-1', { status: 'PROCESSING', progress: 0 });
+    expect(mockReelJobUpdate).toHaveBeenCalledWith({
+      where: { id: 'reel-1' },
+      data: { status: 'PROCESSING', progress: 0 },
+    });
   });
 
   it('valid retry FAILED → QUEUED succeeds', async () => {
