@@ -7,6 +7,7 @@
 
 import type { Slide, SlideshowScript } from './types';
 import { createLogger } from '@reelstack/logger';
+import { GEMINI_TTS_GUIDELINES } from '@reelstack/agent';
 
 const log = createLogger('slideshow-script');
 
@@ -28,6 +29,11 @@ Each slide should be a concise tip, fact, or point about the topic.
 Also write a short voiceover narration that covers all slides.
 
 Language: ${language === 'pl' ? 'Polish' : language === 'en' ? 'English' : language}
+
+The voiceover (hook, slide texts, cta, fullNarration) will be voiced by
+Gemini 3.1 Flash TTS. Follow these narration rules:
+
+${GEMINI_TTS_GUIDELINES}
 
 Return valid JSON only (no markdown, no code fences):
 {

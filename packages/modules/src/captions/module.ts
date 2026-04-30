@@ -6,14 +6,20 @@
  * - With script: runs TTS pipeline to generate voiceover + captions.
  */
 
-import type { ReelModule, BaseModuleRequest, ModuleResult } from '@reelstack/agent';
+import type { ReelModule, BaseModuleRequest, ModuleResult, ModuleRuntime } from '@reelstack/agent';
 import { registerModule } from '@reelstack/agent';
+import { compositionPath } from '@reelstack/hyperframes';
 import { produceCaptions } from './orchestrator';
 
 export const captionsModule: ReelModule = {
   id: 'captions',
   name: 'Captions (Overlay captions on existing video)',
   compositionId: 'VideoClip',
+  runtimes: {
+    remotion: { compositionId: 'VideoClip' },
+    hyperframes: { compositionId: compositionPath('captions') },
+  },
+  defaultRuntime: 'remotion',
 
   configFields: [
     {
@@ -45,7 +51,8 @@ export const captionsModule: ReelModule = {
 
   async orchestrate(
     base: BaseModuleRequest,
-    config: Record<string, unknown>
+    config: Record<string, unknown>,
+    runtime?: ModuleRuntime
   ): Promise<ModuleResult> {
     const result = await produceCaptions({
       jobId: base.jobId,
@@ -68,11 +75,13 @@ export const captionsModule: ReelModule = {
       whisper: base.whisper,
       brandPreset: base.brandPreset,
       onProgress: base.onProgress,
+      runtime: runtime ?? 'remotion',
     });
 
     return {
       outputPath: result.outputPath,
       durationSeconds: result.durationSeconds,
+      meta: { runtime: runtime ?? 'remotion' },
     };
   },
 };

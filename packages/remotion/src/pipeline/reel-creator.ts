@@ -215,7 +215,8 @@ export async function createReel(
         outlineWidth: 3,
         shadowColor: '#000000',
         shadowBlur: 12,
-        position: 75,
+        // Cross-platform safe zone (TT/IG/YT Shorts UI clearance).
+        position: 65,
         alignment: 'center',
         lineHeight: 1.3,
         padding: 16,

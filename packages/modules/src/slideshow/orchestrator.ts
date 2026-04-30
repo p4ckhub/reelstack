@@ -9,6 +9,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { renderToFile } from '@reelstack/image-gen';
+
+/**
+ * Allow operators to point image-gen at a custom brands directory (e.g. the
+ * private `reelstack-modules/src/brands/` with techskills, fundacja CSS).
+ * If unset, image-gen falls back to its packaged default (`example` only).
+ */
+const CUSTOM_BRANDS_DIR = process.env.REELSTACK_BRANDS_DIR || undefined;
+
+/**
+ * Allow operators to load templates from an external pack (e.g. the private
+ * `reelstack-modules/src/image-gen-templates/carousel-essentials/` with
+ * carousel-hook, comparison, engage-outro). image-gen searches external dirs
+ * first, falls back to core templates.
+ */
+const CUSTOM_TEMPLATES_DIR = process.env.REELSTACK_TEMPLATES_DIR || undefined;
 import {
   uploadVoiceover,
   renderVideo,
@@ -133,6 +148,8 @@ export interface BuildSlideshowPropsInput {
   };
   /** Resolved end-card (post `resolveEndCard()`). Forwarded to props. */
   endCard?: EndCardConfig;
+  /** Output aspect — drives Remotion composition dimensions. */
+  aspect?: 'portrait' | 'carousel' | 'square';
 }
 
 export function buildSlideshowProps(input: BuildSlideshowPropsInput): SlideshowProps {
@@ -170,6 +187,7 @@ export function buildSlideshowProps(input: BuildSlideshowPropsInput): SlideshowP
     musicVolume: musicVolume ?? DEFAULT_MUSIC_VOLUME,
     durationSeconds,
     backgroundColor: '#000000',
+    aspect: input.aspect ?? 'portrait',
     endCard: input.endCard,
     captionStyle: {
       fontSize: callerCaptionStyle?.fontSize ?? 60,
@@ -230,6 +248,7 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
   fs.mkdirSync(imageDir, { recursive: true });
   const genStart = performance.now();
   const imagePaths: string[] = [];
+  const renderSize = request.size ?? 'story';
 
   for (let i = 0; i < script.slides.length; i++) {
     const slide = script.slides[i]!;
@@ -240,15 +259,21 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
 
     await renderToFile(
       {
+        // Spread first so template-specific params (titleHighlight, subtitle,
+        // bullets, features, price, price2, heading, attr, logo, ...) reach
+        // renderToFile. Explicit fields below win for required keys.
+        ...slide,
         brand,
         template: slideTemplate,
-        size: 'story', // 1080x1920 vertical
+        size: renderSize,
         title: slide.title,
         text: slide.text ?? '',
         badge: slide.badge ?? `${i + 1}`,
         num: slide.num ?? `${i + 1}`,
       },
-      outPath
+      outPath,
+      process.env.REELSTACK_BRANDS_DIR || undefined,
+      process.env.REELSTACK_TEMPLATES_DIR || undefined
     );
 
     imagePaths.push(outPath);
@@ -421,6 +446,10 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     request.language ?? 'pl',
     SLIDESHOW_CTA_DEFAULTS
   );
+  // Map image-gen size preset → composition aspect.
+  // 'carousel' → 4:5 (1080×1350, IG feed), 'post' → 1:1, anything else → 9:16 default.
+  const aspect: 'portrait' | 'carousel' | 'square' =
+    request.size === 'carousel' ? 'carousel' : request.size === 'post' ? 'square' : 'portrait';
   const props = buildSlideshowProps({
     script,
     imageUrls,
@@ -433,6 +462,7 @@ export async function produceSlideshow(request: SlideshowRequest): Promise<Slide
     highlightMode: request.highlightMode,
     captionStyle: request.captionStyle,
     endCard: resolvedEndCard,
+    aspect,
   });
 
   // ── 7. RENDER ──────────────────────────────────────────────
@@ -545,6 +575,18 @@ export function buildSlideshowPipeline(
         dependsOn: ['generate-script'],
         async execute(ctx: PipelineContext): Promise<SlideshowReviewScriptResult> {
           const { script } = ctx.results['generate-script'] as SlideshowGenerateScriptResult;
+          // Manual slides come from a caller that already curated copy
+          // (e.g. /carousel skill, where the user reviewed every line).
+          // Running an LLM lint over them would silently rewrite the content,
+          // breaking the contract that "video uses the same copy as the carousel".
+          // skipReview lets callers opt out of the rewrite.
+          const skipReview =
+            (ctx.input.skipReview as boolean | undefined) === true ||
+            (Array.isArray(ctx.input.slides) && (ctx.input.slides as unknown[]).length > 0);
+          if (skipReview) {
+            onProgress?.('Skipping script review (manual slides)...');
+            return { script, corrected: false };
+          }
           onProgress?.('Reviewing script...');
           const result = await reviewSlideshowScript(script, {
             llmCall: deps.llmCall,
@@ -561,6 +603,7 @@ export function buildSlideshowPipeline(
           const { script } = ctx.results['review-script'] as SlideshowReviewScriptResult;
           const template = (ctx.input.template as string | undefined) ?? 'tip-card';
           const brand = (ctx.input.brand as string | undefined) ?? 'example';
+          const renderSize = (ctx.input.size as string | undefined) ?? 'story';
           const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reelstack-slideshow-img-'));
           try {
             const imagePaths: string[] = [];
@@ -570,15 +613,19 @@ export function buildSlideshowPipeline(
               const outPath = path.join(tmpDir, `slide-${i}.png`);
               await renderToFile(
                 {
+                  // Spread slide fields so template-specific params reach renderToFile.
+                  ...slide,
                   brand,
                   template: slide.template ?? template,
-                  size: 'story',
+                  size: renderSize,
                   title: slide.title,
                   text: slide.text ?? '',
                   badge: slide.badge ?? `${i + 1}`,
                   num: slide.num ?? `${i + 1}`,
                 },
-                outPath
+                outPath,
+                process.env.REELSTACK_BRANDS_DIR || undefined,
+                process.env.REELSTACK_TEMPLATES_DIR || undefined
               );
               imagePaths.push(outPath);
             }
@@ -743,6 +790,9 @@ export function buildSlideshowPipeline(
             ctxLang,
             SLIDESHOW_CTA_DEFAULTS
           );
+          const ctxSize = ctx.input.size as string | undefined;
+          const ctxAspect: 'portrait' | 'carousel' | 'square' =
+            ctxSize === 'carousel' ? 'carousel' : ctxSize === 'post' ? 'square' : 'portrait';
           const remotionProps = buildSlideshowProps({
             script,
             imageUrls,
@@ -755,6 +805,7 @@ export function buildSlideshowPipeline(
             highlightMode: ctx.input.highlightMode as string | undefined,
             captionStyle: ctx.input.captionStyle as SlideshowRequest['captionStyle'] | undefined,
             endCard: ctxEndCard,
+            aspect: ctxAspect,
           });
 
           const props =

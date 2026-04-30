@@ -259,8 +259,10 @@ export const SlideshowComposition: React.FC<SlideshowProps> = (props) => {
       {/* Voiceover */}
       {voiceoverUrl && <Audio src={resolveMediaUrl(voiceoverUrl)} volume={1} />}
 
-      {/* Music */}
-      {musicUrl && <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} />}
+      {/* Music — loop'd so the bed nie urywa się gdy track jest krótszy niż video.
+          Domyślny bg-upbeat.mp3 ma 20s, video często 30-60s.
+          Remotion <Audio loop> handles seamless looping. */}
+      {musicUrl && <Audio src={resolveMediaUrl(musicUrl)} volume={musicVolume} loop />}
 
       {/* Closing CTA — fades in over the last `endCard.durationSeconds`.
           Picks per-platform copy via the shared resolver upstream;

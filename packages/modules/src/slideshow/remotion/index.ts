@@ -13,8 +13,22 @@ const MIN_DURATION_SECONDS = 3;
 const DEFAULT_DURATION_SECONDS = 15;
 
 /**
- * Dynamically set composition duration from props.durationSeconds.
- * Falls back to cue end times or DEFAULT_DURATION_SECONDS.
+ * Composition dimensions per aspect preset. Templates are responsive (vw/vh)
+ * so the same HTML renders correctly at every aspect — the renderer only
+ * needs to ask image-gen for the matching size.
+ */
+const ASPECT_DIMS: Record<
+  NonNullable<SlideshowProps['aspect']>,
+  { width: number; height: number }
+> = {
+  portrait: { width: 1080, height: 1920 },
+  carousel: { width: 1080, height: 1350 },
+  square: { width: 1080, height: 1080 },
+};
+
+/**
+ * Dynamically set composition duration from props.durationSeconds + dimensions
+ * from props.aspect. Falls back to cue end times or DEFAULT_DURATION_SECONDS.
  */
 const calculateSlideshowMetadata: CalculateMetadataFunction<SlideshowProps> = async ({ props }) => {
   const durations: number[] = [];
@@ -36,9 +50,13 @@ const calculateSlideshowMetadata: CalculateMetadataFunction<SlideshowProps> = as
   const maxDuration =
     durations.length > 0 ? Math.max(MIN_DURATION_SECONDS, ...durations) : DEFAULT_DURATION_SECONDS;
 
+  const dims = ASPECT_DIMS[props.aspect ?? 'portrait'] ?? ASPECT_DIMS.portrait;
+
   return {
     fps: FPS,
     durationInFrames: Math.ceil(maxDuration * FPS),
+    width: dims.width,
+    height: dims.height,
   };
 };
 

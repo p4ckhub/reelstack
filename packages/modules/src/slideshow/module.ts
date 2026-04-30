@@ -5,15 +5,22 @@
  * Uses @reelstack/image-gen for PNG rendering — zero external API keys required.
  */
 
-import type { ReelModule, BaseModuleRequest, ModuleResult } from '@reelstack/agent';
+import type { ReelModule, BaseModuleRequest, ModuleResult, ModuleRuntime } from '@reelstack/agent';
 import { registerModule, callLLM } from '@reelstack/agent';
-import { produceSlideshow } from './orchestrator';
+import { compositionPath } from '@reelstack/hyperframes';
+import { produceSlideshow, buildSlideshowPipeline } from './orchestrator';
 import type { Slide } from './types';
 
 export const slideshowModule: ReelModule = {
   id: 'slideshow',
   name: 'Slideshow (Image Slides + Voiceover)',
+  // Legacy field — kept for BC. New code reads `runtimes`.
   compositionId: 'Slideshow',
+  runtimes: {
+    remotion: { compositionId: 'Slideshow' },
+    hyperframes: { compositionId: compositionPath('slideshow') },
+  },
+  defaultRuntime: 'remotion',
 
   configFields: [
     { name: 'topic', type: 'string', required: true, description: 'Topic for slide generation' },
@@ -41,6 +48,13 @@ export const slideshowModule: ReelModule = {
       required: false,
       description: 'image-gen brand CSS (default: example)',
     },
+    {
+      name: 'size',
+      type: 'string',
+      required: false,
+      description:
+        "image-gen size preset: 'story' (1080×1920, default), 'carousel' (1080×1350, IG feed), 'post' (1080×1080), or 'WxH' custom",
+    },
   ],
 
   progressSteps: {
@@ -55,7 +69,8 @@ export const slideshowModule: ReelModule = {
 
   async orchestrate(
     base: BaseModuleRequest,
-    config: Record<string, unknown>
+    config: Record<string, unknown>,
+    runtime?: ModuleRuntime
   ): Promise<ModuleResult> {
     const result = await produceSlideshow({
       jobId: base.jobId,
@@ -64,6 +79,7 @@ export const slideshowModule: ReelModule = {
       numberOfSlides: config.numberOfSlides as number | undefined,
       template: config.template as string | undefined,
       brand: config.brand as string | undefined,
+      size: config.size as string | undefined,
       language: base.language,
       tts: base.tts,
       whisper: base.whisper,
@@ -73,13 +89,19 @@ export const slideshowModule: ReelModule = {
       highlightMode: config.highlightMode as string | undefined,
       llmCall: callLLM,
       onProgress: base.onProgress,
+      runtime: runtime ?? 'remotion',
     });
 
     return {
       outputPath: result.outputPath,
       durationSeconds: result.durationSeconds,
-      meta: { slides: result.script.slides.length },
+      meta: { slides: result.script.slides.length, runtime: runtime ?? 'remotion' },
     };
+  },
+
+  // Multi-step pipeline: re-render after CSS tweak = ~10s, $0 LLM/TTS/image-gen.
+  buildPipeline(base, _config, runtime) {
+    return buildSlideshowPipeline(base, _config, runtime ?? 'remotion', { llmCall: callLLM });
   },
 };
 

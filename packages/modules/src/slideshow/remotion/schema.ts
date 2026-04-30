@@ -34,6 +34,13 @@ export const slideshowPropsSchema = z.object({
   musicVolume: z.number().min(0).max(1).default(0.2),
   durationSeconds: z.number().positive(),
   backgroundColor: z.string().default('#000000'),
+  /** Output aspect ratio. Drives Remotion composition dimensions via
+   *  calculateMetadata. Templates są responsive (vw/vh) — ten sam HTML
+   *  renderuje się poprawnie na każdym aspect.
+   *  - 'portrait' → 1080×1920 (9:16, IG/TikTok Reels & Stories — default)
+   *  - 'carousel' → 1080×1350 (4:5, IG feed video — matches carousel aspect)
+   *  - 'square'   → 1080×1080 (1:1) */
+  aspect: z.enum(['portrait', 'carousel', 'square']).default('portrait'),
   endCard: endCardSchema,
   captionStyle: z
     .object({

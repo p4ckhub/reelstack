@@ -1,4 +1,4 @@
-import { AbsoluteFill, OffthreadVideo, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Loop, OffthreadVideo, useCurrentFrame, useVideoConfig } from 'remotion';
 import { resolveMediaUrl } from '../utils/resolve-media-url';
 import { remapFrame } from '../utils/remap-frame';
 
@@ -11,7 +11,11 @@ interface FullscreenLayoutProps {
 /**
  * Fullscreen layout: single video source fills the entire frame.
  * Used for "subtitle burn" mode - video + captions overlay.
- * When primaryVideoDurationSeconds is set, the video loops seamlessly.
+ * When `primaryVideoDurationSeconds` is set, the clip is wrapped in
+ * Remotion's `<Loop>` so it repeats for the full reel duration. Without
+ * the wrapper `OffthreadVideo` plays once and freezes on the last frame
+ * — this regression has come back more than once because the comment
+ * documented the intent but the code lost the wrapper.
  */
 export const FullscreenLayout: React.FC<FullscreenLayoutProps> = ({
   primaryVideoUrl,
@@ -28,7 +32,19 @@ export const FullscreenLayout: React.FC<FullscreenLayoutProps> = ({
     return <AbsoluteFill style={{ backgroundColor: '#0a0a14' }} />;
   }
 
-  const videoEl = (
+  if (primaryVideoDurationSeconds && primaryVideoDurationSeconds > 0 && !hasSpeedRamps) {
+    return (
+      <Loop durationInFrames={Math.max(1, Math.round(primaryVideoDurationSeconds * fps))}>
+        <OffthreadVideo
+          muted
+          src={resolveMediaUrl(primaryVideoUrl)}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </Loop>
+    );
+  }
+
+  return (
     <OffthreadVideo
       muted
       src={resolveMediaUrl(primaryVideoUrl)}
@@ -36,16 +52,4 @@ export const FullscreenLayout: React.FC<FullscreenLayoutProps> = ({
       startFrom={videoFrame}
     />
   );
-
-  if (primaryVideoDurationSeconds && !hasSpeedRamps) {
-    return (
-      <OffthreadVideo
-        muted
-        src={resolveMediaUrl(primaryVideoUrl)}
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-      />
-    );
-  }
-
-  return <>{videoEl}</>;
 };

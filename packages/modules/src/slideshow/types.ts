@@ -6,6 +6,15 @@ export interface Slide {
   badge?: string;
   num?: string;
   template?: string;
+  /**
+   * Pass-through for template-specific params (titleHighlight, subtitle,
+   * bullets, features, price, price2, heading, attr, logo, ...). Forwarded
+   * verbatim to image-gen renderToFile, so any param accepted by the chosen
+   * template can be set here. Allows pack templates like comparison or
+   * carousel-hook to receive full params, not just the lowest-common-denominator
+   * (title/text/badge/num).
+   */
+  [key: string]: string | undefined;
 }
 
 export interface SlideshowScript {
@@ -23,6 +32,15 @@ export interface SlideshowRequest {
   numberOfSlides?: number;
   template?: string;
   brand?: string;
+  /**
+   * Image-gen size preset for slide rendering.
+   * - `story` (1080×1920, 9:16) — default, IG/TikTok stories & reels
+   * - `carousel` (1080×1350, 4:5) — IG feed video, matches carousel aspect
+   * - `post` (1080×1080, 1:1) — square IG/FB feed
+   * - `WxH` custom dimensions
+   * Defaults to 'story' for backward compatibility.
+   */
+  size?: string;
   highlightMode?: string;
   /**
    * Per-request caption style overrides. Most useful field is `position`
