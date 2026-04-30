@@ -65,7 +65,7 @@ interface PlatformTemplates {
 const TEMPLATES: Record<CtaPlatform, PlatformTemplates> = {
   ig: {
     pl: (kw) => ({
-      headline: `Komentuj "${kw}"`,
+      headline: `Skomentuj "${kw}"`,
       subheadline: 'Wyślę Ci link w DM',
       action: '↓ Komentarz pod rolką',
     }),
@@ -77,7 +77,7 @@ const TEMPLATES: Record<CtaPlatform, PlatformTemplates> = {
   },
   fb: {
     pl: (kw) => ({
-      headline: `Komentuj "${kw}"`,
+      headline: `Skomentuj "${kw}"`,
       subheadline: 'Wyślę Ci link w wiadomości',
       action: '↓ Komentarz pod postem',
     }),
@@ -102,8 +102,8 @@ const TEMPLATES: Record<CtaPlatform, PlatformTemplates> = {
   youtube: {
     pl: () => ({
       headline: 'Link w opisie',
-      subheadline: 'Sprawdź description poniżej',
-      action: '↓ Description',
+      subheadline: 'Sprawdź opis pod rolką',
+      action: '↓ Opis',
     }),
     en: () => ({
       headline: 'Link in description',
