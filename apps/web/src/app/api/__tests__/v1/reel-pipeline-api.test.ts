@@ -21,10 +21,21 @@ vi.mock('@/lib/api/v1/pipeline-helpers', () => ({
   }),
 }));
 
-import { databaseMockFactory, mockGetReelJob } from '@/__test-utils__/database-mock';
+import {
+  databaseMockFactory,
+  mockGetReelJob,
+  mockForkReelJob,
+} from '@/__test-utils__/database-mock';
 vi.mock('@reelstack/database', async () =>
   (await import('@/__test-utils__/database-mock')).databaseMockFactory()
 );
+
+// Storage mock — fork flow copies MinIO context tree
+const mockCopyJobContext = vi.fn();
+vi.mock('@reelstack/storage', () => ({
+  createStorage: vi.fn().mockResolvedValue({}),
+  copyJobContext: (...args: unknown[]) => mockCopyJobContext(...args),
+}));
 
 const mockPipelineEngineGetStatus = vi.fn();
 const mockPipelineEngineRetryStep = vi.fn();
@@ -252,61 +263,121 @@ describe('POST /api/v1/reel/render/[id]/resume', () => {
     vi.clearAllMocks();
     mockAuthenticate.mockResolvedValue(mockAuthCtx);
     mockEnqueue.mockResolvedValue(undefined);
+    mockCopyJobContext.mockResolvedValue(undefined);
+    mockForkReelJob.mockResolvedValue({ id: 'child-1', userId: 'user-1' });
   });
 
-  it('resumes pipeline from a specific step', async () => {
-    mockGetReelJob.mockResolvedValue({
-      id: 'job-1',
-      userId: 'user-1',
-      status: 'FAILED',
-      reelConfig: { mode: 'generate' },
-    });
-
+  it('forks the source job and enqueues the child id', async () => {
     const { POST } = await import('../../v1/reel/render/[id]/resume/route');
     const res = await POST(
-      makePostRequest('http://localhost/api/v1/reel/render/job-1/resume', {
-        fromStepId: 'plan',
+      makePostRequest('http://localhost/api/v1/reel/render/source-1/resume', {
+        fromStepId: 'assemble-props',
+        configOverrides: { endCard: { platform: 'fb' } },
       })
     );
 
     expect(res.status).toBe(202);
-    // BullMQ dedupes by job key, so the route suffixes the queue job id
-    // with a fresh timestamp. The reel job id rides in `data.jobId`.
+    const json = await res.json();
+    expect(json.data).toMatchObject({
+      jobId: 'child-1',
+      sourceJobId: 'source-1',
+      fromStepId: 'assemble-props',
+      status: 'queued',
+    });
+
+    expect(mockForkReelJob).toHaveBeenCalledWith({
+      sourceJobId: 'source-1',
+      userId: 'user-1',
+      configOverrides: { endCard: { platform: 'fb' } },
+    });
+    expect(mockCopyJobContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceJobId: 'source-1',
+        targetJobId: 'child-1',
+        contextOverrides: { endCard: { platform: 'fb' } },
+      })
+    );
     expect(mockEnqueue).toHaveBeenCalledWith(
-      expect.stringMatching(/^job-1-resume-\d+$/),
-      expect.objectContaining({ jobId: 'job-1', fromStepId: 'plan' }),
+      'child-1',
+      { jobId: 'child-1', fromStepId: 'assemble-props' },
       'reel-render'
     );
   });
 
-  it('requires fromStepId in body', async () => {
-    mockGetReelJob.mockResolvedValue({
-      id: 'job-1',
-      userId: 'user-1',
-      status: 'FAILED',
-      reelConfig: { mode: 'generate' },
-    });
-
+  it('accepts a no-op fork with empty overrides (re-render only)', async () => {
     const { POST } = await import('../../v1/reel/render/[id]/resume/route');
-    const res = await POST(makePostRequest('http://localhost/api/v1/reel/render/job-1/resume', {}));
+    const res = await POST(
+      makePostRequest('http://localhost/api/v1/reel/render/source-1/resume', {
+        fromStepId: 'render',
+      })
+    );
+
+    expect(res.status).toBe(202);
+    expect(mockForkReelJob).toHaveBeenCalledWith({
+      sourceJobId: 'source-1',
+      userId: 'user-1',
+      configOverrides: {},
+    });
+  });
+
+  it('rejects configOverrides keys outside the allow-list', async () => {
+    const { POST } = await import('../../v1/reel/render/[id]/resume/route');
+    const res = await POST(
+      makePostRequest('http://localhost/api/v1/reel/render/source-1/resume', {
+        fromStepId: 'assemble-props',
+        configOverrides: { workflowUrl: 'https://different.url' },
+      })
+    );
     const json = await res.json();
 
     expect(res.status).toBe(400);
     expect(json.error.code).toBe('VALIDATION_ERROR');
+    expect(json.error.message).toMatch(/workflowUrl/);
+    expect(mockForkReelJob).not.toHaveBeenCalled();
   });
 
-  it('returns 404 for non-existent job', async () => {
-    mockGetReelJob.mockResolvedValue(null);
+  it('requires fromStepId in body', async () => {
+    const { POST } = await import('../../v1/reel/render/[id]/resume/route');
+    const res = await POST(
+      makePostRequest('http://localhost/api/v1/reel/render/source-1/resume', {})
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+    expect(mockForkReelJob).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when source job not found (or not owned by caller)', async () => {
+    mockForkReelJob.mockRejectedValue(new Error('Reel job nonexistent not found'));
 
     const { POST } = await import('../../v1/reel/render/[id]/resume/route');
     const res = await POST(
       makePostRequest('http://localhost/api/v1/reel/render/nonexistent/resume', {
-        fromStepId: 'plan',
+        fromStepId: 'render',
       })
     );
     const json = await res.json();
 
     expect(res.status).toBe(404);
     expect(json.error.code).toBe('NOT_FOUND');
+  });
+
+  it('returns 400 when source job is not COMPLETED', async () => {
+    mockForkReelJob.mockRejectedValue(
+      new Error('Cannot fork job in status PROCESSING; only COMPLETED jobs can be forked')
+    );
+
+    const { POST } = await import('../../v1/reel/render/[id]/resume/route');
+    const res = await POST(
+      makePostRequest('http://localhost/api/v1/reel/render/source-1/resume', {
+        fromStepId: 'render',
+      })
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe('VALIDATION_ERROR');
+    expect(json.error.message).toMatch(/COMPLETED/);
   });
 });

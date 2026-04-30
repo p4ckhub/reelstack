@@ -56,6 +56,7 @@ export const mockUpdateReelJobStatus = vi.fn();
 export const mockMarkCallbackSent = vi.fn();
 export const mockResetCallbackSent = vi.fn();
 export const mockGetReelJobsByUser = vi.fn();
+export const mockForkReelJob = vi.fn();
 
 // TierConfig queries
 export const mockGetAllTierConfigs = vi.fn();
@@ -153,6 +154,15 @@ export function databaseMockFactory() {
     markCallbackSent: (...args: unknown[]) => mockMarkCallbackSent(...args),
     resetCallbackSent: (...args: unknown[]) => mockResetCallbackSent(...args),
     getReelJobsByUser: (...args: unknown[]) => mockGetReelJobsByUser(...args),
+    forkReelJob: (...args: unknown[]) => mockForkReelJob(...args),
+    FORK_OVERRIDABLE_KEYS: [
+      'endCard',
+      'captionStyle',
+      'tts',
+      'brandPreset',
+      'scrollStopper',
+      'highlightMode',
+    ],
     getAllTierConfigs: (...args: unknown[]) => mockGetAllTierConfigs(...args),
     upsertTierConfig: (...args: unknown[]) => mockUpsertTierConfig(...args),
     seedTierDefaults: (...args: unknown[]) => mockSeedTierDefaults(...args),
