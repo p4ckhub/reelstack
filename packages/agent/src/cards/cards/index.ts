@@ -3,8 +3,8 @@
  * (`build-hf-card.ts`) uses this map. Add new cards by creating a
  * builder file in this directory and registering it here.
  *
- * 27 cards ported from Remotion's library: see
- * `reelstack-modules/src/cards/library/cards/`.
+ * 27 cards ported 1:1 from a Remotion card library to vanilla
+ * HTML+CSS+GSAP for the HF runtime.
  */
 
 import type { CardBuilder } from '../types';

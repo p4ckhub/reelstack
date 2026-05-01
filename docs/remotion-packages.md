@@ -29,7 +29,7 @@ Ostatni review: **2026-04-18**. Sprawdzaj przy każdym upgrade Remotion.
 | `@remotion/lambda`         | 4.0.431 | RLA      | Produkcyjny rendering na AWS Lambda                                                                                                |
 | `@remotion/player`         | 4.0.431 | RLA      | Zainstalowana, nieużywana (zarezerwowana dla przyszłego preview UI)                                                                |
 | `@remotion/google-fonts`   | 4.0.301 | RLA      | Font loading: Inter, JetBrainsMono, Outfit, Montserrat, Poppins, Roboto, Ubuntu                                                    |
-| `@remotion/transitions`    | 4.0.431 | RLA      | `packages/remotion/src/transitions/` + 21 card/transition presetów w `reelstack-modules`                                           |
+| `@remotion/transitions`    | 4.0.431 | RLA      | `packages/remotion/src/transitions/` + 21 card/transition presetów w private modules overlay                                       |
 | `@remotion/motion-blur`    | 4.0.431 | **MIT**  | `Trail` w transitions `zoom-punch`/`warp-zoom`/`push-horizontal` + karcie `warp-speed`                                             |
 | `@remotion/noise`          | 4.0.431 | **MIT**  | `noise2D` wobble w kartach `liquid`/`ink-splash` + VHS drift/jitter w `retro-vhs`                                                  |
 | `@remotion/sfx`            | 4.0.431 | **MIT**  | Per-transition whoosh/impact URLs via `TRANSITION_SFX_MAP`. Wire'owane w transitions-demo. Pipeline-level wiring jeszcze odłożone. |

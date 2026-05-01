@@ -11,17 +11,14 @@ import path from 'path';
 import { renderToFile } from '@reelstack/image-gen';
 
 /**
- * Allow operators to point image-gen at a custom brands directory (e.g. the
- * private `reelstack-modules/src/brands/` with techskills, fundacja CSS).
+ * Allow operators to point image-gen at a custom brands directory.
  * If unset, image-gen falls back to its packaged default (`example` only).
  */
 const CUSTOM_BRANDS_DIR = process.env.REELSTACK_BRANDS_DIR || undefined;
 
 /**
- * Allow operators to load templates from an external pack (e.g. the private
- * `reelstack-modules/src/image-gen-templates/carousel-essentials/` with
- * carousel-hook, comparison, engage-outro). image-gen searches external dirs
- * first, falls back to core templates.
+ * Allow operators to load templates from an external template pack.
+ * image-gen searches external dirs first, falls back to core templates.
  */
 const CUSTOM_TEMPLATES_DIR = process.env.REELSTACK_TEMPLATES_DIR || undefined;
 import {

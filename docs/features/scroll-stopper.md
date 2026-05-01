@@ -31,8 +31,8 @@ module that wires the `useScrollStopperTransform()` hook into its root
 
 ## Architecture
 
-- Presets live in `packages/modules/src/private/remotion/scroll-stopper-presets.ts`
-  (private repo source: `reelstack-modules/src/remotion/scroll-stopper-presets.ts`).
+- Preset implementations ship via the private modules overlay (synced
+  with `scripts/sync-private-modules.sh` from a separate repo).
 - Registered with `registerScrollStopperPreset()` (public registry in
   `packages/remotion/src/components/ScrollStopper.tsx`).
 - A preset provides: `useContentTransform(frame, fps, totalFrames)` for

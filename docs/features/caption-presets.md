@@ -37,10 +37,8 @@ higher-level wrapper surfaced by the API.
   (public API). Renderers provide `activeStyle(opts)` + optional
   `baseStyle(opts)` which is applied to _every_ word for layout
   stability.
-- Premium renderers are registered by
-  `packages/modules/src/private/remotion/highlight-modes.ts`
-  (private repo source:
-  `reelstack-modules/src/remotion/highlight-modes.ts`).
+- Premium renderers ship via the private modules overlay (synced
+  with `scripts/sync-private-modules.sh`).
 - Composition consumers: `CaptionOverlay` picks the renderer via
   `getHighlightMode(captionStyle.highlightMode)`.
 

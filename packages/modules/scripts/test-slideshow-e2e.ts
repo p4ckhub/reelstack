@@ -4,7 +4,7 @@
  *
  * Pipeline: manual slides → image-gen PNGs → edge-tts → whisper → Remotion → MP4
  *
- * Usage: cd /Users/pavvel/workspace/projects/reelstack && bun run packages/modules/scripts/test-slideshow-e2e.ts
+ * Usage (from monorepo root): bun run packages/modules/scripts/test-slideshow-e2e.ts
  */
 import fs from 'fs';
 import os from 'os';

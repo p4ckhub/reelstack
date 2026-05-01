@@ -23,7 +23,7 @@ import { createLogger } from '../packages/logger/src/index';
 
 const log = createLogger('zoom-dry-run');
 
-const VIDEO_PATH = process.argv[2] ?? '/Users/pavvel/Downloads/dry-run-rapid-content.mp4';
+const VIDEO_PATH = process.argv[2] ?? process.env.HOME + '/Downloads/dry-run-rapid-content.mp4';
 const INTENSITY = (process.argv[3] ?? 'standard') as 'subtle' | 'standard' | 'dramatic';
 const OUT_DIR = '/tmp/zoom-reframe-dry-run';
 
@@ -311,7 +311,7 @@ Plan the zoom edits. Output ONLY a JSON array, no markdown fences.`;
   // ── Step 5: Render locally ─────────────────────────────────
   console.log(`[${elapsed()}] Step 5: Render`);
 
-  const outputPath = `/Users/pavvel/Downloads/zoom-reframe-${INTENSITY}.mp4`;
+  const outputPath = `${process.env.HOME}/Downloads/zoom-reframe-${INTENSITY}.mp4`;
 
   execSync(`bunx remotion render Reel "${outputPath}" --props="${propsPath}"`, {
     cwd: path.resolve(__dirname, '../packages/remotion'),

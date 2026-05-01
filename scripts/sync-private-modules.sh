@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-SOURCE="/Users/pavvel/workspace/projects/reelstack-modules/src/"
+SOURCE="${REELSTACK_MODULES_DIR:-$HOME/workspace/projects/reelstack-modules}/src/"
 TARGET="$REPO_ROOT/packages/modules/src/private/"
 
 if [[ ! -d "$SOURCE" ]]; then

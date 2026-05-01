@@ -9,7 +9,12 @@ import fs from 'fs';
 import path from 'path';
 import { B, G, R, Y, D, X, opt } from '../cli-utils';
 
-const PRIVATE_BRANDS_DIR = '/Users/pavvel/workspace/projects/reelstack-modules/src/brands';
+/**
+ * Optional brand pack outside the public repo (e.g. a closed-source brand
+ * library). When set via `REELSTACK_PRIVATE_BRANDS_DIR` env var, brands
+ * found here win over `DEFAULT_BRANDS_DIR`.
+ */
+const PRIVATE_BRANDS_DIR = process.env.REELSTACK_PRIVATE_BRANDS_DIR ?? null;
 
 export async function brandedImage() {
   const template = opt('template');
@@ -24,11 +29,12 @@ export async function brandedImage() {
   if (!template) {
     const templates = imageGen.listTemplates();
 
-    // Collect brands from built-in + private dirs
+    // Collect brands from built-in + optional private dir.
     const builtinBrands = imageGen.listBrands(imageGen.DEFAULT_BRANDS_DIR);
-    const privateBrands = fs.existsSync(PRIVATE_BRANDS_DIR)
-      ? imageGen.listBrands(PRIVATE_BRANDS_DIR)
-      : [];
+    const privateBrands =
+      PRIVATE_BRANDS_DIR && fs.existsSync(PRIVATE_BRANDS_DIR)
+        ? imageGen.listBrands(PRIVATE_BRANDS_DIR)
+        : [];
 
     console.log(`${B}Branded Image Generator${X}
 
@@ -66,9 +72,9 @@ ${Y}Example:${X}
     process.exit(0);
   }
 
-  // Determine brands dir - check private first, then built-in
+  // Determine brands dir — check optional private dir first, then built-in.
   let brandsDir = imageGen.DEFAULT_BRANDS_DIR;
-  if (fs.existsSync(PRIVATE_BRANDS_DIR)) {
+  if (PRIVATE_BRANDS_DIR && fs.existsSync(PRIVATE_BRANDS_DIR)) {
     const privateCss = path.join(PRIVATE_BRANDS_DIR, `${brand}.css`);
     if (fs.existsSync(privateCss)) {
       brandsDir = PRIVATE_BRANDS_DIR;
