@@ -8,12 +8,25 @@ Extensible via pluggable modules for specialized reel types (talking objects, wo
 
 ReelStack is a multi-step pipeline (`fetch-workflow → generate-script → review-script → capture-screenshot → tts-pipeline → assemble-props → render`). Every step persists its output to MinIO under `jobs/{id}/context.json`. **Do not call `POST /api/v1/reel/generate` to test a fix.** That re-runs the LLM, the TTS provider, Whisper, and screenshot capture — minutes of compute and real money — when 9 times out of 10 the change you're testing only affects one step.
 
-Iterate via `POST /api/v1/reel/render/{id}/resume {"fromStepId": "<step>"}` from the latest cached step that contains your change. Mapping:
+Iterate via `POST /api/v1/reel/render/{id}/resume` with `fromStepId` + optional `configOverrides`. The resume API **forks** the source job: a child ReelJob is created (with `sourceJobId` pointer), the source's MinIO context is cloned with overrides deep-merged into `context.input`, and the child runs from `fromStepId` onwards. Parent untouched, so multiple platform variants can run in parallel from the same base without overwriting each other's outputUrl.
+
+```bash
+POST /api/v1/reel/render/{id}/resume
+{
+  "fromStepId": "assemble-props",
+  "configOverrides": { "endCard": { "platform": "fb" } }
+}
+→ 202 { jobId: childId, sourceJobId, fromStepId, status: "queued" }
+```
+
+`configOverrides` allow-list (anything else → 400):
+`endCard, captionStyle, tts, brandPreset, scrollStopper, highlightMode`.
 
 | Change                                                                                                                          | Resume from                      |
 | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | HTML / CSS / GSAP timeline (e.g. `hyperframes/src/compositions/<id>/index.html`, Remotion `<*Composition>.tsx`)                 | `render`                         |
 | Props mapping, runtime selection, sections augmentation (orchestrator's `buildHyperframes…Props` / `buildScreenExplainerProps`) | `assemble-props`                 |
+| End-card platform / cardSlug / caption style / brand preset (via `configOverrides`)                                             | `assemble-props`                 |
 | TTS voice / preset / phonetic transforms / mood-tag stripping                                                                   | `tts-pipeline`                   |
 | Script reviewer (linter + LLM correction)                                                                                       | `review-script`                  |
 | Script generator prompt                                                                                                         | `generate-script`                |
@@ -21,6 +34,8 @@ Iterate via `POST /api/v1/reel/render/{id}/resume {"fromStepId": "<step>"}` from
 | New workflow URL / new language / new voice model / fresh creative                                                              | only here is `/generate` correct |
 
 **Hard rule:** before invoking `/generate`, ask "does my change affect anything strictly upstream of every cached step?" If not, it's a `/resume` case.
+
+For multi-variant production (PL+EN × 6 platforms × N card animations) → use `POST /api/v1/reel/matrix` (see API Endpoints section below). One request = base + forks, automatic.
 
 Worker note: bun caches TS bytecode. After editing any `.ts` in the orchestrator / module layer, restart the worker (`pkill -f "bun run worker/reel-worker.ts"` → re-launch) before resuming, otherwise the resume runs the stale build.
 
@@ -109,7 +124,7 @@ packages/remotion/                     Remotion compositions + components + effe
 packages/modules/                      Pluggable module system
 packages/types/                        Shared TypeScript interfaces
 packages/core/                         Caption animation renderer, validation
-packages/tts/                          TTS providers (edge-tts, ElevenLabs, OpenAI)
+packages/tts/                          TTS providers (gemini-tts, edge-tts, ElevenLabs, OpenAI). Server-side resolver in `@reelstack/agent` (`config/tts-defaults.ts`) auto-picks the best one based on env keys.
 packages/transcription/                Whisper + word grouping
 packages/storage/                      R2/S3/MinIO storage abstraction
 packages/database/                     Prisma + PostgreSQL
@@ -397,7 +412,7 @@ Two core modes, detected automatically from body shape:
 {
   "script": "Your script text",
   "style": "dynamic",
-  "tts": { "provider": "edge-tts", "voice": "pl-PL-MarekNeural", "language": "pl-PL" },
+  "tts": { "language": "pl-PL" },
   "brandPreset": { "highlightColor": "#FFD700" }
 }
 ```

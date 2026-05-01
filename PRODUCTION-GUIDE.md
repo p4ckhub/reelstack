@@ -165,7 +165,7 @@ Authorization: Bearer rs_...
   "script": "Your narration text",
   "mode": "generate",
   "layout": "hybrid-anchor",
-  "tts": { "provider": "edge-tts", "voice": "en-US-AriaNeural", "language": "en-US" },
+  "tts": { "language": "en-US" },
   "whisper": { "provider": "cloudflare" },
   "brandPreset": { "captionPreset": "tiktok" },
   "montageProfile": "ai-tool-showcase",

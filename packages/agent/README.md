@@ -25,8 +25,13 @@ const result = await produce({
   primaryVideoUrl: 'https://...', // optional: skip avatar gen, use this as primary
 
   tts: {
-    provider: 'edge-tts', // 'edge-tts' (free) | 'elevenlabs' | 'openai'
-    voice: 'pl-PL-MarekNeural',
+    // provider/voice optional — auto-detects from env via resolveTTSDefaults():
+    //   GEMINI_API_KEY      → gemini-tts (preferred, premium)
+    //   ELEVENLABS_API_KEY  → elevenlabs
+    //   OPENAI_API_KEY      → openai
+    //   none                → edge-tts (free fallback, always works)
+    // Override explicitly if needed:
+    // provider: 'gemini-tts', voice: 'Charon',
     language: 'pl-PL',
   },
 
@@ -80,8 +85,8 @@ const result = await produceComposition({
   style: 'educational',
   directorNotes: 'Pokaż dashboard gdy mówię o analytics, wróć do talking head na konkluzję',
 
-  // Option A: generate TTS from script
-  tts: { provider: 'edge-tts', language: 'pl-PL' },
+  // Option A: generate TTS from script (provider auto-resolved from env)
+  tts: { language: 'pl-PL' },
 
   // Option B: existing voiceover (skip TTS)
   existingVoiceoverPath: '/tmp/voiceover.mp3',

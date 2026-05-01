@@ -40,7 +40,7 @@ const result = await produce({
   script: 'AI zabije copywriting. Ale nie tak jak myślisz...',
   style: 'dynamic',        // 'dynamic' | 'calm' | 'cinematic' | 'educational'
   layout: 'fullscreen',    // optional, LLM decides if not set
-  tts: { provider: 'edge-tts', voice: 'pl-PL-MarekNeural' },
+  tts: { language: 'pl-PL' }, // provider auto-resolved from env (gemini-tts > edge-tts)
   brandPreset: { ... },    // see Brand Preset section
 });
 ```
@@ -400,7 +400,7 @@ await renderContentPackage({
 await produce({
   script: 'My script here...',
   style: 'dynamic',
-  tts: { provider: 'edge-tts', voice: 'pl-PL-MarekNeural' },
+  tts: { language: 'pl-PL' }, // provider auto-resolved from env (gemini-tts > edge-tts)
 });
 ```
 

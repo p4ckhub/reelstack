@@ -51,25 +51,33 @@ Script Text
 
 ## Step 1: Text-to-Speech
 
-Supported providers:
+Supported providers (server-side env-aware resolver picks the best one
+available; override via `tts.provider` per request):
 
-| Provider   | Quality   | Cost | Config                   |
-| ---------- | --------- | ---- | ------------------------ |
-| Edge TTS   | Good      | Free | `provider: 'edge-tts'`   |
-| ElevenLabs | Excellent | Paid | `provider: 'elevenlabs'` |
-| OpenAI TTS | Excellent | Paid | `provider: 'openai'`     |
+| Provider     | Quality   | Cost       | Auto-detected when env contains          |
+| ------------ | --------- | ---------- | ---------------------------------------- |
+| Gemini Flash | Excellent | Paid (low) | `GEMINI_API_KEY` or `GOOGLE_TTS_API_KEY` |
+| ElevenLabs   | Excellent | Paid       | `ELEVENLABS_API_KEY`                     |
+| OpenAI       | Excellent | Paid       | `OPENAI_API_KEY`                         |
+| Edge TTS     | Good      | Free       | (always available, fallback)             |
+
+Resolver priority: gemini-tts > elevenlabs > openai > edge-tts.
+
+Override via `tts.provider` in the request, or `TTS_PROVIDER` env var.
+See `packages/agent/src/config/tts-defaults.ts` for the full logic.
 
 ```typescript
 import { createTTSProvider } from '@reelstack/tts';
+import { resolveTTSDefaults } from '@reelstack/agent';
 
-const tts = createTTSProvider({
-  provider: 'edge-tts',
-  defaultLanguage: 'en-US',
-});
+// resolveTTSDefaults reads env, picks provider+voice+language
+const cfg = resolveTTSDefaults({ language: 'en-US' });
+// cfg = { provider: 'gemini-tts', voice: 'Charon', language: 'en-US' } (when GEMINI_API_KEY set)
 
+const tts = createTTSProvider({ provider: cfg.provider, defaultLanguage: cfg.language });
 const result = await tts.synthesize(scriptText, {
-  voice: 'en-US-GuyNeural',
-  language: 'en-US',
+  voice: cfg.voice,
+  language: cfg.language,
   rate: 1.05,
 });
 // result.audioBuffer: Buffer (MP3)
@@ -216,8 +224,6 @@ curl -X POST https://your-domain.com/api/v1/reel/create \
     "layout": "fullscreen",
     "style": "dynamic",
     "tts": {
-      "provider": "edge-tts",
-      "voice": "en-US-GuyNeural",
       "language": "en-US"
     },
     "brandPreset": {
