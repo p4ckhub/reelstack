@@ -134,8 +134,6 @@ packages/image-gen/                    Branded PNG generation (Playwright)
 packages/logger/                       Pino structured logging
 
 scripts/
-  presenter-dry-run.ts                 Template dry-run (mock boards, real TTS/render)
-  presenter-step-by-step.ts            Full pipeline with real AI generation
   dev-seed.ts                          Seed dev DB
 docs/                                  Documentation (see below)
 priv/                                  Private docs (gitignored)
@@ -177,6 +175,34 @@ Before implementing a new card / transition / effect / TTS integration, check
 `@remotion/*` package, what we already use, what's worth adding, and when NOT to
 roll custom (e.g. `@remotion/captions` parses SRT/VTT — don't reinvent).
 License boundaries live separately in `vault/brands/_shared/reference/remotion-license-strategy.md`.
+
+## Default model resolvers
+
+Three env-aware resolvers in `packages/agent/src/config/` decide what
+provider/voice/model to use when the caller didn't specify:
+
+- **`tts-defaults.ts`** — `resolveTTSDefaults({language, useCase})` →
+  `{provider, voice, language}`. Auto-detects from env:
+  `GEMINI_API_KEY`/`GOOGLE_TTS_API_KEY` → gemini-tts > `ELEVENLABS_API_KEY` >
+  `OPENAI_API_KEY` > free `edge-tts` fallback. Overrides:
+  `TTS_PROVIDER`, `TTS_VOICE`, `DEFAULT_TTS_LANGUAGE` env vars.
+
+- **`asset-defaults.ts`** — `resolveDefaultImageTool(availableToolIds)` /
+  `resolveDefaultVideoTool(...)` walk `IMAGE_TOOL_PRIORITY` /
+  `VIDEO_TOOL_PRIORITY` chains and return the first available tool.
+  Override priority via `IMAGE_PROVIDER_PRIORITY` /
+  `VIDEO_PROVIDER_PRIORITY` env vars (CSV). User preferences (per-job
+  `preferredToolIds`) win over priority.
+
+- **`models.ts`** — LLM model resolver (per role: planner / supervisor /
+  scriptReviewer / promptWriter / director / assetDescriber). Supports
+  `MODEL_PRESET` env var (`production` / `development` / `testing`) +
+  per-role `<ROLE>_MODEL` env override.
+
+Schemas in `apps/web/src/lib/api/v1/reel-schemas.ts` keep
+`provider`/`voice`/`tts.*` fields OPTIONAL — the orchestrator resolves
+defaults at the worker boundary so a deploy with a fresh `GEMINI_API_KEY`
+auto-upgrades quality without touching schemas.
 
 ## Tool Registry
 

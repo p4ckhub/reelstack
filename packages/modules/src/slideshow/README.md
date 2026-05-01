@@ -20,7 +20,7 @@ curl -X POST https://reelstack.sellf.app/api/v1/reel/generate \
     "mode": "slideshow",
     "topic": "5 reasons to self-host your automation stack",
     "numberOfSlides": 5,
-    "tts": { "provider": "edge-tts", "voice": "en-US-GuyNeural" }
+    "tts": { "language": "en-US" }
   }'
 ```
 
