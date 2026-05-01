@@ -25,6 +25,22 @@ enum JobStatus {
   FAILED
 }
 
+/// Aggregate status of a `ReelBatch` (matrix render).
+///   QUEUED     — created, no base job started yet
+///   RUNNING    — at least one job is PROCESSING
+///   COMPLETED  — every job COMPLETED
+///   PARTIAL    — every job terminal, some FAILED
+///   FAILED     — every base FAILED (no forks ever spawned)
+///   CANCELLED  — explicit cancel via DELETE /matrix/:id
+enum BatchStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  PARTIAL
+  FAILED
+  CANCELLED
+}
+
 model User {
   id                String             @id @default(uuid())
   email             String             @unique
@@ -39,6 +55,7 @@ model User {
   accounts          Account[]
   sessions          Session[]
   reelJobs          ReelJob[]
+  reelBatches       ReelBatch[]
   templates         Template[]
   apiKeys           ApiKey[]
   tokenTransactions TokenTransaction[]
@@ -284,6 +301,14 @@ model ReelJob {
   /// Distinct from `parentJobId` which groups batch siblings.
   sourceJobId    String?
   forkedAt       DateTime? // Set when the job was created as a fork.
+  /// Matrix membership. Set when this job is part of a /matrix render.
+  /// `batchId` references ReelBatch; `batchRole` is "base" (full pipeline)
+  /// or "fork" (re-render with configOverrides from a base sibling);
+  /// `batchCellKey` identifies the cell within the matrix (e.g. "pl|ig").
+  batchId        String?
+  batch          ReelBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batchRole      String?
+  batchCellKey   String?
   language       String? // ISO language code (e.g., "en", "pl") - for multi-language reels
   productionMeta Json? // AI production metadata: plan, prompts, models, generated assets
   startedAt      DateTime?
@@ -296,6 +321,35 @@ model ReelJob {
   @@index([userId, createdAt])
   @@index([parentJobId])
   @@index([sourceJobId])
+  @@index([batchId])
+}
+
+/// Matrix render: one POST /api/v1/reel/matrix produces one ReelBatch
+/// row + N child ReelJobs (some `base` = full pipeline, some `fork` =
+/// re-render with overrides). Cells are addressed by `batchCellKey`
+/// (e.g. "pl|ig"). Status aggregates over child jobs.
+model ReelBatch {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Mode (e.g. "n8n-explainer", "slideshow") — copied from base input
+  /// for query convenience; canonical value lives in `baseInput`.
+  mode        String
+  /// Original /matrix request body's `base` object (full reelConfig
+  /// without dimension keys). Used to recreate base jobs on retry.
+  baseInput   Json
+  /// Dimensions map: `{ "language": ["pl","en"], "endCard.platform":
+  /// ["ig","fb",…] }`. Server splits into BASE vs FORK_FREE classes.
+  dimensions  Json
+  status      BatchStatus @default(QUEUED)
+  callbackUrl String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  jobs ReelJob[]
+
+  @@index([userId, createdAt])
+  @@index([status])
 }
 
 /// Reference bank — Character + ReferenceImage tables backing the
