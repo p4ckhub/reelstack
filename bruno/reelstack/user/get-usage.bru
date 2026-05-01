@@ -1,0 +1,33 @@
+meta {
+  name: User - Usage & Credits
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/user/usage
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Returns the caller's monthly usage so you can budget BEFORE submitting
+  expensive jobs:
+
+  {
+    "tier": "PRO",
+    "creditsUsed": 47,
+    "creditsLimit": 1000,
+    "creditsRemaining": 953,
+    "tokenBalance": 250000,
+    "videoMinutesUsed": 12.4,
+    "rateLimits": { ... }
+  }
+
+  Use this before /matrix to confirm you have enough credits — matrix
+  with `language: [pl, en]` × 6 platforms costs 20 credits (2 base × 10).
+}

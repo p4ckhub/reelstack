@@ -1,0 +1,23 @@
+meta {
+  name: Templates - List Mine
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/templates
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Saved generation templates: a JSON blob of /generate body that you
+  can re-use across multiple jobs. Useful for branded series ("my
+  weekly n8n breakdown" template).
+
+  Use a template via POST /reel/generate { templateId: "<id>", overrides: {...} }.
+}

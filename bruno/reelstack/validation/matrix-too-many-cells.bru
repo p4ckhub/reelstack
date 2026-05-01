@@ -1,0 +1,35 @@
+meta {
+  name: Validation - Matrix Exceeds maxCells
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": { "mode": "n8n-explainer", "workflowUrl": "https://n8n.io/workflows/1841" },
+    "dimensions": {
+      "language": ["pl", "en"],
+      "endCard.platform": ["ig", "fb", "tiktok", "youtube", "linkedin", "universal"],
+      "endCard.cardSlug": ["shimmer", "neon-sign"],
+      "scrollStopper.preset": ["zoom-bounce", "flash-zoom"]
+    }
+  }
+}
+
+docs {
+  Hits MATRIX_LIMITS.maxCells (=20). Should return 400 with message
+  citing "maxCells" so the integrator can split into smaller batches.
+
+  Expected:
+    2 langs × 6 plats × 2 cards × 2 stoppers = 48 cells → 400.
+}

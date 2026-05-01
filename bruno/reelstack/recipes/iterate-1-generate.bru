@@ -1,0 +1,39 @@
+meta {
+  name: Iterate - 1. Generate Base Reel
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "n8n-explainer",
+    "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+    "language": "pl",
+    "runtime": "hyperframes",
+    "endCard": {
+      "platform": "ig",
+      "cardSlug": "shimmer",
+      "durationSeconds": 4
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("iterateBaseId", res.body.data.jobId);
+}
+
+docs {
+  STEP 1 of iterate-and-publish recipe. One full pipeline. Wait for
+  status=completed (poll-status.bru), then proceed to step 2 to fork
+  with different end-card animations.
+}

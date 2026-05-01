@@ -1,0 +1,33 @@
+meta {
+  name: User - Update Preferences
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/user/preferences
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "defaultLanguage": "pl",
+    "defaultTtsProvider": "gemini-tts",
+    "defaultEndCardPlatform": "ig",
+    "webhookUrl": "https://your-app.example/reelstack-callback"
+  }
+}
+
+docs {
+  Set defaults so subsequent /generate calls don't need to repeat them.
+  Per-request fields still win when provided.
+
+  Common fields: defaultLanguage, defaultTtsProvider (gemini-tts |
+  edge-tts | elevenlabs | openai), defaultEndCardPlatform,
+  defaultBrandPreset, webhookUrl (default callbackUrl), defaultRuntime.
+}

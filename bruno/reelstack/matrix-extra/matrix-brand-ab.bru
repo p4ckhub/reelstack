@@ -1,0 +1,39 @@
+meta {
+  name: Matrix - Brand Color A/B (accent + background)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "language": "pl",
+      "runtime": "hyperframes"
+    },
+    "dimensions": {
+      "brandPreset.highlightColor": ["#7c3aed", "#FF00AA", "#00FF88", "#FFD700"],
+      "endCard.platform": ["ig", "tiktok"]
+    }
+  }
+}
+
+docs {
+  4 colors × 2 platforms = 8 cells, all from 1 base. Test which brand
+  accent converts best on each platform before committing to a brand
+  guideline.
+
+  brandPreset is FORK_FREE (re-render only changes captions overlay
+  color + end-card pill color). 1 base full pipeline + 7 forks.
+}

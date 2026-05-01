@@ -1,0 +1,74 @@
+meta {
+  name: Generate - Slideshow (manual slides, skip LLM)
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "slideshow",
+    "language": "pl",
+    "brand": "techskills",
+    "template": "carousel-hook",
+    "skipReview": true,
+    "slides": [
+      {
+        "title": "5 sposobów na automatyzację",
+        "text": "Bez sztabu ludzi i bez kodu",
+        "badge": "1/5",
+        "template": "carousel-hook"
+      },
+      {
+        "title": "1. Zapier vs n8n",
+        "text": "n8n: self-hosted, $0/mies dla 1000 wykonań. Zapier: $20+",
+        "badge": "1",
+        "template": "comparison"
+      },
+      {
+        "title": "2. Make vs n8n",
+        "text": "Make ma lepszy UI, n8n lepszy debug + brak limitów wykonań",
+        "badge": "2",
+        "template": "comparison"
+      },
+      {
+        "title": "Wybierz n8n jeśli...",
+        "text": "Chcesz właścić workflow + masz VPS za $5/mies",
+        "badge": "OUTRO",
+        "template": "engage-outro"
+      }
+    ],
+    "endCard": {
+      "platform": "ig",
+      "headline": "Postaw n8n",
+      "action": "Komentarz \"N8N\""
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  Skip LLM script generation — pass slides[] directly. Each slide can
+  pick its own image-gen template (from the brand pack). `passthrough()`
+  on the schema means any extra string fields go to image-gen renderer,
+  so pack templates with custom params (carousel-hook, comparison, etc.)
+  get full content.
+
+  Use `skipReview: true` to skip the LLM script-review pass too — manual
+  slides don't need linting.
+
+  Brand packs ship templates: carousel-hook, comparison, engage-outro,
+  myth, point, tip-card, ...
+}

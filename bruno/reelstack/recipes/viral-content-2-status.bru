@@ -1,0 +1,28 @@
+meta {
+  name: Viral Content - 2. Poll Status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/matrix/{{viralBatchId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  STEP 2. Run this every ~15 s until `data.status === 'completed'` (or
+  'partial' / 'failed'). Worker is sequential (BullMQ concurrency 1):
+  bases run first (~5 min each), then 10 forks (~30 s each).
+
+  Total wall-clock: ~15 min for the full 12-cell matrix.
+
+  When done, `data.outputs` is a `cellKey → outputUrl` map. Sample keys:
+    "ig|en", "ig|pl", "fb|en", "fb|pl", "tiktok|en", "tiktok|pl",
+    "youtube|en", "youtube|pl", "linkedin|en", "linkedin|pl",
+    "universal|en", "universal|pl"
+}

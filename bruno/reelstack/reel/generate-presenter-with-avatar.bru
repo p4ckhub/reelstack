@@ -1,0 +1,46 @@
+meta {
+  name: Generate - Presenter with Pre-Generated Avatar
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "presenter-explainer",
+    "topic": "Webhook security: 3 rzeczy które łatwo zepsuć",
+    "language": "pl",
+    "avatarVideoUrl": "https://your-r2-bucket.example/cached-avatar-loop.mp4",
+    "avatarLoop": true,
+    "avatarClipDurationSeconds": 6,
+    "endCard": {
+      "platform": "linkedin",
+      "headline": "Pomogę z webhookami",
+      "subheadline": "Konsultacja 30 min",
+      "action": "linkedin.com/in/yourprofile"
+    }
+  }
+}
+
+docs {
+  Presenter mode with PRE-GENERATED avatar — skips the expensive HeyGen
+  call entirely. Use when you already have a 5-10 s avatar loop you've
+  rendered once and want to reuse across many topics. Significant cost
+  reduction (HeyGen V3 ~$0.30/min × duration savings).
+
+  `avatarLoop: true` + `avatarClipDurationSeconds` = the loop length —
+  the orchestrator splices it to fit the TTS audio duration with no
+  visible seam.
+
+  Generate the avatar loop ONCE via:
+    POST /reel/generate { "mode": "talking-object", "avatarOnly": true, ... }
+}

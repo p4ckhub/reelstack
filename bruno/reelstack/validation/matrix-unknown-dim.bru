@@ -1,0 +1,35 @@
+meta {
+  name: Validation - Matrix Unknown Dimension
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": { "mode": "n8n-explainer", "workflowUrl": "https://n8n.io/workflows/1841" },
+    "dimensions": {
+      "tts.voice": ["Charon", "Aoede"]
+    }
+  }
+}
+
+docs {
+  `tts.voice` is NOT in BASE_DIMENSIONS or FORK_FREE_DIMENSIONS — it
+  would re-run the TTS provider (paid). Server returns 400 with hint
+  to submit separate /generate calls for paid variants.
+
+  Allow-list reminder:
+    BASE_DIMENSIONS      = ['language']
+    FORK_FREE_DIMENSIONS = ['endCard', 'captionStyle', 'brandPreset',
+                            'scrollStopper', 'highlightMode']
+}

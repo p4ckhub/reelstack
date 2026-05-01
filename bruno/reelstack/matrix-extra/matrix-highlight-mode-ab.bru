@@ -1,0 +1,38 @@
+meta {
+  name: Matrix - Caption Highlight Mode A/B
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "captions",
+      "videoUrl": "https://your-r2-bucket.example/source.mp4",
+      "endCard": { "platform": "ig" }
+    },
+    "dimensions": {
+      "highlightMode": ["text", "single-word", "pill"]
+    }
+  }
+}
+
+docs {
+  Compare 3 caption animation styles on the same video:
+    text         — full karaoke phrase highlighted
+    single-word  — one word at a time (Submagic-style)
+    pill         — colored pill background per word
+
+  1 base + 2 free forks. Caption choice drives retention massively
+  (single-word usually wins on Shorts, pill on TikTok).
+}

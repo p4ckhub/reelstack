@@ -1,0 +1,34 @@
+meta {
+  name: Generate - Hello HF (smoke test)
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "hello-hf",
+    "endCard": { "platform": "universal" }
+  }
+}
+
+docs {
+  Smoke test — exercises the full HF rendering pipeline (compose → render
+  → upload) without any LLM/TTS/screenshot. Renders in ~10 s. Useful to:
+
+    - verify worker is up after a deploy
+    - confirm MinIO/R2 storage round-trip works
+    - check end-card system end-to-end (default `wave-text` for hello-hf)
+    - smoke-test changes to the HF runtime
+
+  Cheapest mode in the system. Free.
+}

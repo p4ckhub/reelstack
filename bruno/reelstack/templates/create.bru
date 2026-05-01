@@ -1,0 +1,47 @@
+meta {
+  name: Templates - Create
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/templates
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "name": "Weekly n8n Breakdown",
+    "description": "PL+EN matrix for every n8n workflow URL I drop in",
+    "isPublic": false,
+    "config": {
+      "mode": "n8n-explainer",
+      "runtime": "hyperframes",
+      "endCard": {
+        "platform": "ig",
+        "durationSeconds": 4,
+        "accentColor": "#7c3aed"
+      },
+      "matrix": {
+        "dimensions": {
+          "language": ["pl", "en"],
+          "endCard.platform": ["ig", "tiktok", "youtube"]
+        }
+      }
+    }
+  }
+}
+
+docs {
+  Save a re-usable generation template. Use later via:
+
+    POST /reel/generate { "templateId": "tpl_xyz", "workflowUrl": "..." }
+    POST /reel/matrix   { "templateId": "tpl_xyz", "workflowUrl": "..." }
+
+  Per-call fields override template fields via deep-merge.
+}

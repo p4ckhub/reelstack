@@ -1,0 +1,38 @@
+meta {
+  name: Validation - Invalid cardSlug
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "n8n-explainer",
+    "workflowUrl": "https://n8n.io/workflows/1841",
+    "endCard": {
+      "platform": "ig",
+      "cardSlug": "made-up-animation-name"
+    }
+  }
+}
+
+docs {
+  Schema validates `cardSlug` against REGISTERED_SLUGS (27 cards).
+  Unknown values return 400 with the full list in the error message.
+
+  Available: shimmer, glitch, typewriter, burst, liquid, flip,
+  glitch-blast, slot-machine, split-reveal, spotlight, warp-speed,
+  retro-vhs, 3d-frame, subscribe-bell, portal, wave-text,
+  chromatic-pulse, neon-sign, ink-splash, stamp-slam, neon-circuit,
+  stat-card, hologram, beat-pulse, quote-card, countdown-punch,
+  emoji-burst.
+}

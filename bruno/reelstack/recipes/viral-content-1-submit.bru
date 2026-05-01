@@ -1,0 +1,43 @@
+meta {
+  name: Viral Content - 1. Submit Matrix
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "runtime": "hyperframes",
+      "endCard": {
+        "durationSeconds": 4,
+        "accentColor": "#7c3aed"
+      }
+    },
+    "dimensions": {
+      "language": ["pl", "en"],
+      "endCard.platform": ["ig", "fb", "tiktok", "youtube", "linkedin", "universal"]
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 202) bru.setVar("viralBatchId", res.body.data.batchId);
+}
+
+docs {
+  STEP 1 of viral-content-batch recipe. Submits one matrix that produces
+  12 reels (2 langs × 6 platforms). Cost: 20 credits. Continue with
+  viral-content-2-status.bru to poll progress.
+}

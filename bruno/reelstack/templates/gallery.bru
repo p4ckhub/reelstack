@@ -1,0 +1,21 @@
+meta {
+  name: Templates - Public Gallery
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/templates/gallery
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Curated public templates shared by other users (opt-in). Browse to
+  find a starting config — clone with POST /templates body
+  { fromGalleryId: "...", name: "my-version" } to get an editable copy.
+}

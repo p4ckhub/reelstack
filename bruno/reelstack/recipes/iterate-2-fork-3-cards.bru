@@ -1,0 +1,39 @@
+meta {
+  name: Iterate - 2. Fork 3 Card Variants
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/render/{{iterateBaseId}}/resume
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "fromStepId": "assemble-props",
+    "configOverrides": {
+      "endCard": { "cardSlug": "neon-sign" }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 202) bru.setVar("iterateNeonId", res.body.data.jobId);
+}
+
+docs {
+  STEP 2a — fork base with `neon-sign` card. Free re-render (~30 s).
+  Repeat with `cardSlug: "burst"` and `cardSlug: "wave-text"` (save those
+  jobIds too) to get 3 alternative endings. Manually compare which
+  converts best on Instagram before committing to one as your default.
+
+  Pro tip: the matrix endpoint does this in one call —
+  `dimensions: { "endCard.cardSlug": ["shimmer", "neon-sign", "burst", "wave-text"] }`.
+  Use this recipe for ad-hoc forks; matrix for systematic A/B.
+}

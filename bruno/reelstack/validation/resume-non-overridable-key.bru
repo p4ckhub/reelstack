@@ -1,0 +1,33 @@
+meta {
+  name: Validation - Resume Non-Overridable Key
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/resume
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "fromStepId": "assemble-props",
+    "configOverrides": {
+      "workflowUrl": "https://different-workflow.com/123"
+    }
+  }
+}
+
+docs {
+  Trying to override `workflowUrl` via fork would invalidate the cached
+  pipeline (different workflow JSON, different screenshot, different
+  script, different voiceover). Server rejects with 400.
+
+  Allow-list (resume API):
+    endCard, captionStyle, tts, brandPreset, scrollStopper, highlightMode
+}

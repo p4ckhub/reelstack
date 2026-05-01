@@ -1,0 +1,40 @@
+meta {
+  name: Viral Content - 3. Publish PL Triplet
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/publish
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "reelIds": [
+      "{{plIgJobId}}",
+      "{{plTiktokJobId}}",
+      "{{plYoutubeJobId}}"
+    ],
+    "scheduleDate": "2026-05-02T18:00:00Z",
+    "captions": {
+      "ig": "Automatyzacja n8n krok po kroku 🤖\n\nKomentarz \"N8N\" — DM z linkiem do workflow.",
+      "tiktok": "n8n + DeepSeek = WordPress na autopilocie #automation #n8n #pl",
+      "youtube-shorts": "Pełny workflow w opisie ↓"
+    }
+  }
+}
+
+docs {
+  STEP 3. Pulls the PL outputs from step 2 (set the three variables
+  manually after polling completes) and schedules them to publish at the
+  same time on IG, TikTok, YT-Shorts. Each platform gets its own caption.
+
+  Repeat the same call with EN job IDs + EN captions for the international
+  drop.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Render - API Call Detail (drill into one call)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/{{jobId}}/audit/{{callId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Drill into ONE external API call from the audit log. Returns full
+  request body + response body + headers + timing. Use after listing
+  calls via /audit (no callId) — pick the one you want to inspect.
+
+  Useful for:
+    - debugging "why did the LLM return junk for this prompt"
+    - inspecting actual TTS audio metadata
+    - confirming nano-banana actually got the reference image
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Matrix - Scroll-Stopper Intro A/B
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "language": "pl",
+      "runtime": "hyperframes",
+      "endCard": { "platform": "ig", "durationSeconds": 4 }
+    },
+    "dimensions": {
+      "scrollStopper.preset": ["zoom-bounce", "flash-zoom", "glitch-reveal", "impact-shake", "swipe-in"]
+    }
+  }
+}
+
+docs {
+  Test which 0.6 s intro animation hooks viewers fastest in the first
+  scroll. 1 base + 4 free forks. 5 cells total, 10 credits.
+
+  Available presets: flash-zoom, glitch-reveal, impact-shake, tv-static,
+  swipe-in, zoom-bounce, none. The first 0.6 s is what determines
+  retention drop-off on TikTok/Reels.
+}

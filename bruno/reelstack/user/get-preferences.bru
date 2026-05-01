@@ -1,0 +1,24 @@
+meta {
+  name: User - Get Preferences
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/user/preferences
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  User-level defaults applied to every new reel when not overridden in
+  the request body. Settable in the dashboard: defaultLanguage,
+  defaultTtsProvider, defaultBrandPreset, defaultEndCardPlatform, …
+
+  Server-side resolver layer ALSO reads env (`GEMINI_API_KEY` etc.) so
+  preferences fall back to env defaults gracefully.
+}

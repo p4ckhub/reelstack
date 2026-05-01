@@ -1,0 +1,31 @@
+meta {
+  name: System - Available Tools (image/video/avatar)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/tools
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Returns every production tool registered for this deployment based on
+  env keys. Each entry: id, name, capabilities (image|video|avatar),
+  costTier, supportedAspectRatios, requiresApiKey.
+
+  Useful to:
+    - know which video/image providers are available before /generate
+    - pick `preferredToolIds` for the planner (overrides default priority)
+    - debug "no available tool for category X" errors
+
+  Server-side priority chains (resolveDefaultImageTool /
+  resolveDefaultVideoTool) live in `packages/agent/src/config/asset-defaults.ts`
+  with env override knobs `IMAGE_PROVIDER_PRIORITY` /
+  `VIDEO_PROVIDER_PRIORITY`.
+}
