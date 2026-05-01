@@ -1,0 +1,25 @@
+meta {
+  name: Render - List Cached Steps
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/steps
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Lists every pipeline step that's been persisted to MinIO (`jobs/{id}/
+  context.json` results map). Use this to find a valid `fromStepId` for
+  the resume API: anything in this list can be the resume point.
+
+  Typical n8n-explainer steps after success:
+    fetch-workflow → generate-script → review-script → capture-screenshot
+    → tts-pipeline → assemble-props → render
+}

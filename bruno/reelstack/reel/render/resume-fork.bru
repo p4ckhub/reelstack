@@ -1,0 +1,46 @@
+meta {
+  name: Render - Resume (Fork with Overrides)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/resume
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "fromStepId": "assemble-props",
+    "configOverrides": {
+      "endCard": {
+        "platform": "fb"
+      }
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 202) bru.setVar("childJobId", res.body.data.jobId);
+}
+
+docs {
+  Forks a completed reel: spawns a CHILD ReelJob with `sourceJobId` pointer,
+  copies the source's MinIO context (deep-merging `configOverrides` into
+  context.input), enqueues from `fromStepId`. Parent untouched.
+
+  Allow-list of overridable keys (anything else → 400):
+    endCard, captionStyle, tts, brandPreset, scrollStopper, highlightMode
+
+  fromStepId mapping:
+    assemble-props — endCard.* / captionStyle.* / brandPreset (free, ~30s)
+    tts-pipeline   — tts.voice / tts.provider (re-runs TTS, paid)
+    generate-script — language / topic (re-runs LLM, paid)
+
+  Returns 202 with childJobId — poll that, not the source.
+}

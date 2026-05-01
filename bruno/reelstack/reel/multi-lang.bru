@@ -1,0 +1,41 @@
+meta {
+  name: Multi-Language (one script → N translations)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/multi-lang
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "script": "Cześć! Dzisiaj pokażę jak ustawić n8n workflow do automatyzacji content marketingu. Zacznijmy od trigger'a.",
+    "sourceLanguage": "pl",
+    "targetLanguages": ["en", "es", "de"],
+    "layout": "fullscreen",
+    "tts": { "language": "pl-PL" }
+  }
+}
+
+docs {
+  Translates one script into N target languages, then generates one full
+  reel per language (each as its own ReelJob, batched together by
+  parentJobId for tracking).
+
+  Different from /matrix:
+    /multi-lang  — script-based translate-then-render. No workflowUrl.
+                   N full pipelines (one per lang).
+    /matrix      — base config + dimensions. Works for any mode including
+                   n8n-explainer/talking-object/presenter. Forks free
+                   variants from one base.
+
+  For n8n-explainer in PL+EN, prefer /matrix (uses the SAME source
+  workflow + screenshot for both, just re-translates the script).
+}

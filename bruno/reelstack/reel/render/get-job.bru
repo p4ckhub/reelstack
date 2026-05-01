@@ -1,0 +1,24 @@
+meta {
+  name: Render - Get Job Details
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Job snapshot: status (queued|processing|completed|failed), progress (0-100),
+  outputUrl (signed R2 URL when completed), error (string when failed),
+  language, parentJobId, sourceJobId, batchId, batchRole, productionMeta.
+
+  Set `jobId` env var first (e.g. by running generate-* and reading the
+  response), or replace below.
+}

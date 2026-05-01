@@ -1,0 +1,37 @@
+meta {
+  name: Generate - AI Tips
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "ai-tips",
+    "topic": "5 sposobów na automatyzację social media bez sztabu ludzi",
+    "language": "pl",
+    "endCard": {
+      "platform": "ig",
+      "keyword": "TIPS"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  Numbered tips reel: LLM expands `topic` into 3-5 bullet points, each
+  rendered as a slide with synced narration. `neon-circuit` card by
+  default (techy, geometric — fits the "list" vibe).
+}

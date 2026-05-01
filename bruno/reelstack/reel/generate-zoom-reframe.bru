@@ -1,0 +1,40 @@
+meta {
+  name: Generate - Zoom Reframe (existing video)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "zoom-reframe",
+    "videoUrl": "https://your-r2-bucket.example/source-clip.mp4",
+    "zoomIntensity": "standard",
+    "endCard": {
+      "platform": "ig",
+      "headline": "Pełna wersja"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  Takes an existing landscape clip and reframes it for vertical (9:16) with
+  AI-detected punch-in zooms. Cheapest mode — no LLM, no TTS, no
+  generation; only ffmpeg + crop math.
+
+  zoomIntensity: subtle (gentle 1.05× pulses) | standard | dramatic (1.4×
+  punches on speech beats)
+}

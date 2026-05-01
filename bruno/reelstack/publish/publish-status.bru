@@ -1,0 +1,24 @@
+meta {
+  name: Publish - Status
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/publish/{{jobId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Per-platform publish status for a reel. Returns object keyed by
+  platform: { tiktok: { status, postId, postedAt, error }, instagram: ... }.
+
+  status: queued | publishing | completed | failed
+  postId — present after the platform's API confirms upload (use it to
+           build the public post URL).
+}

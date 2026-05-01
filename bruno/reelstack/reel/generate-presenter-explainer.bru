@@ -1,0 +1,43 @@
+meta {
+  name: Generate - Presenter Explainer
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "presenter-explainer",
+    "topic": "Jak skonfigurować webhook w n8n w 60 sekund — od zera do działającego flow",
+    "persona": "senior backend engineer, casual but precise, build-in-public energy",
+    "language": "pl",
+    "endCard": {
+      "platform": "ig",
+      "headline": "Skontaktuj się",
+      "subheadline": "Pomogę Ci to wdrożyć",
+      "action": "DM 'WEBHOOK'"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  AI presenter (HeyGen avatar or talking head) explains a topic. Picks
+  `neon-sign` end-card by default — change via `endCard.cardSlug` (27
+  options).
+
+  Requires HEYGEN_API_KEY (or RUNPOD_API_KEY for HuMo serverless avatar).
+  Pre-generated avatar via `avatarVideoUrl` skips avatar generation.
+}

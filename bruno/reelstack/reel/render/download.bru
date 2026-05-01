@@ -1,0 +1,22 @@
+meta {
+  name: Render - Direct Download
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/download
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Streams the final MP4 directly. Returns 404 until status=completed.
+  Alternative: GET /render/{id} → use the `outputUrl` (signed R2 link
+  valid for 24 h, no auth needed). Direct download is convenient for
+  scripts that don't want to follow redirects.
+}

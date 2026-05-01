@@ -1,0 +1,37 @@
+meta {
+  name: Render - Swap End-Card Animation
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/resume
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "fromStepId": "assemble-props",
+    "configOverrides": {
+      "endCard": {
+        "cardSlug": "neon-sign"
+      }
+    }
+  }
+}
+
+docs {
+  Re-renders the same reel with a different visual end-card animation.
+  27 cards available: shimmer, glitch, typewriter, burst, liquid, flip,
+  glitch-blast, slot-machine, split-reveal, spotlight, warp-speed,
+  retro-vhs, 3d-frame, subscribe-bell, portal, wave-text, chromatic-pulse,
+  neon-sign, ink-splash, stamp-slam, neon-circuit, stat-card, hologram,
+  beat-pulse, quote-card, countdown-punch, emoji-burst.
+
+  A/B test which card converts best — fork 5 variants, all free.
+}

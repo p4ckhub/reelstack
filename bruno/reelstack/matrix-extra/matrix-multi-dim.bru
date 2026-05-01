@@ -1,0 +1,43 @@
+meta {
+  name: Matrix - Multi-Dimension (lang × platform × card)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "runtime": "hyperframes",
+      "endCard": { "durationSeconds": 4 }
+    },
+    "dimensions": {
+      "language": ["pl", "en"],
+      "endCard.platform": ["ig", "tiktok", "youtube"],
+      "endCard.cardSlug": ["shimmer", "neon-sign"]
+    }
+  }
+}
+
+docs {
+  Full matrix: 2 langs × 3 platforms × 2 cards = 12 cells.
+  Bases (full pipeline) = languages cardinality = 2.
+  Forks (free) = 12 - 2 = 10.
+  Cost: 20 credits.
+
+  Hard caps: maxCells=20, maxBaseJobs=5. Going beyond = 400.
+
+  cellKey for "PL × IG × shimmer" → sorted dim keys then values:
+    endCard.cardSlug | endCard.platform | language → "shimmer|ig|pl"
+}

@@ -1,0 +1,37 @@
+meta {
+  name: Generate - Talking Object
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "talking-object",
+    "topic": "Why your espresso machine is begging you to descale it",
+    "language": "en",
+    "endCard": {
+      "platform": "tiktok",
+      "cardSlug": "burst"
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  An everyday object becomes the narrator (espresso machine, keyboard, …).
+  Generates avatar lip-sync of the object (HeyGen / Hedra) over a topical
+  script. `burst` card by default — fits the playful vibe.
+}

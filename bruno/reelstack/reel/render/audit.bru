@@ -1,0 +1,26 @@
+meta {
+  name: Render - API Call Audit Log
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/{{jobId}}/audit
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Returns every external API call this job made: LLM (Claude/GPT/OpenRouter),
+  TTS (Gemini/edge/ElevenLabs/OpenAI), image (Flux/Nanobanana/GPT-image),
+  video (Veo/Kling/Seedance), Whisper. Each entry has provider, model,
+  input/output tokens, cost, duration, request body summary, response
+  status, error (if any).
+
+  Use for debugging cost spikes or weird outputs. Drill into individual
+  calls via /api/v1/reel/{jobId}/audit/{callId}.
+}

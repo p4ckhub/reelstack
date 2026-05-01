@@ -1,0 +1,21 @@
+meta {
+  name: API Keys - Rotate
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/api-keys/{{newApiKeyId}}/rotate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Rotates the secret value for an existing key (same id, new value).
+  Returns the new full key string. Useful when a key may be leaked
+  but you don't want to lose its scopes/audit history.
+}

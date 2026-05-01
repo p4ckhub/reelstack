@@ -1,0 +1,34 @@
+meta {
+  name: Publish - Multi-Platform Schedule
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/publish
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "reelId": "{{jobId}}",
+    "platforms": ["tiktok", "instagram", "youtube-shorts", "linkedin"],
+    "caption": "Workflow n8n krok po kroku — komentarz \"N8N\" po szczegóły",
+    "hashtags": ["n8n", "noCode", "automation"],
+    "scheduleDate": "2026-05-02T18:00:00Z"
+  }
+}
+
+docs {
+  Schedule one reel to publish on 4 platforms simultaneously at a future
+  time. Server stores the request and triggers the platform APIs at
+  scheduleDate.
+
+  Note: each platform has different caption/hashtag rules. The same
+  caption is used for all unless you POST separately per platform.
+}

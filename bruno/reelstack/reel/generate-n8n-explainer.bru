@@ -1,0 +1,45 @@
+meta {
+  name: Generate - n8n Explainer
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "mode": "n8n-explainer",
+    "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+    "language": "pl",
+    "runtime": "hyperframes",
+    "endCard": {
+      "platform": "ig",
+      "durationSeconds": 4
+    }
+  }
+}
+
+script:post-response {
+  if (res.status === 201) bru.setVar("jobId", res.body.data.jobId);
+}
+
+docs {
+  Workflow-from-URL → 60-90 s explainer reel. Pipeline:
+    fetch-workflow → generate-script (LLM) → review-script → capture-screenshot
+    → tts-pipeline → assemble-props → render
+
+  `endCard.platform` picks per-network CTA copy (IG/FB = comment-DM, TT/LI =
+  link in bio, YT = link in description). The orchestrator picks `shimmer`
+  card by default; override with `endCard.cardSlug` (27 options).
+
+  To render the same workflow in PL+EN with all 6 platform CTAs, use
+  POST /api/v1/reel/matrix instead — one request, 12 outputs.
+}

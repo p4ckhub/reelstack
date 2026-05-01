@@ -1,0 +1,25 @@
+meta {
+  name: System - List Modules
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/modules
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Lists all reel modes available to the caller's tier. Each entry has:
+    slug, name, description, runtime (remotion|hyperframes), creditCost,
+    requiredTier, isPublic.
+
+  Owner tier sees everything. Free tier sees only public modes (captions,
+  slideshow, hello-hf). Pro+ unlocks paid modules (n8n-explainer,
+  presenter-explainer, talking-object, ai-tips, ai-short-film, ...).
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Render - Retry Single Step
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/render/{{jobId}}/retry
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "stepId": "render"
+  }
+}
+
+docs {
+  Retries a single step in-place (no fork). Useful when one step failed
+  due to a transient error — re-runs ONLY that step and persists. Doesn't
+  continue downstream automatically; call again or use resume to chain.
+
+  Differs from `/resume`:
+    /retry — re-run ONE step, no overrides, no child job
+    /resume — fork + resume from step + apply configOverrides
+}

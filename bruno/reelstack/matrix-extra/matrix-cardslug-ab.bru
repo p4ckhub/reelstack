@@ -1,0 +1,44 @@
+meta {
+  name: Matrix - Card Slug A/B Test (visual variants)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "language": "pl",
+      "runtime": "hyperframes",
+      "endCard": { "platform": "ig", "durationSeconds": 4 }
+    },
+    "dimensions": {
+      "endCard.cardSlug": ["shimmer", "neon-sign", "burst", "wave-text", "glitch"]
+    }
+  }
+}
+
+docs {
+  A/B test 5 different visual end-card animations on the SAME reel.
+  1 full pipeline + 4 free forks. Compare which card converts best
+  on Instagram/TikTok before committing to a default.
+
+  Available cards (27): shimmer, glitch, typewriter, burst, liquid, flip,
+  glitch-blast, slot-machine, split-reveal, spotlight, warp-speed,
+  retro-vhs, 3d-frame, subscribe-bell, portal, wave-text, chromatic-pulse,
+  neon-sign, ink-splash, stamp-slam, neon-circuit, stat-card, hologram,
+  beat-pulse, quote-card, countdown-punch, emoji-burst.
+
+  Cost: 10 credits (1 base × creditsPerBase). 5 cells total.
+}

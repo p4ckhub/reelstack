@@ -1,0 +1,33 @@
+meta {
+  name: Publish - Instagram Reels
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/publish
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "reelId": "{{jobId}}",
+    "platforms": ["instagram"],
+    "caption": "Automatyzacja n8n w 60 sekund 🚀\n\nKomentarz: \"N8N\" — wyślę Ci link do workflow!",
+    "hashtags": ["n8n", "automation", "noCodePL", "techTips", "buildInPublic"]
+  }
+}
+
+docs {
+  Publishes a completed reel to one or more social networks. Requires
+  the platform to be connected (OAuth in dashboard).
+
+  platforms: tiktok, instagram, youtube-shorts, facebook, linkedin, x
+  scheduleDate: optional ISO datetime — server schedules via the
+                respective platform API.
+}

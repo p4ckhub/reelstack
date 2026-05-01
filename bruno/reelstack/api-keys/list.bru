@@ -1,0 +1,22 @@
+meta {
+  name: API Keys - List
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/api-keys
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Lists API keys owned by the caller. Returns metadata only (id, name,
+  keyPrefix, scopes, isActive, expiresAt, lastUsedAt, usageCount).
+  The full key value is shown ONLY at create time — if you lost it,
+  rotate to get a new one.
+}

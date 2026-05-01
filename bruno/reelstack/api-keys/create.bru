@@ -1,0 +1,44 @@
+meta {
+  name: API Keys - Create
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/api-keys
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "name": "Production deploy key",
+    "scopes": ["reel.read", "reel.write"],
+    "rateLimitPerMinute": 30,
+    "expiresAt": null
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setVar("newApiKey", res.body.data.key);
+    bru.setVar("newApiKeyId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates a new API key. Returns the full key string ONCE in the
+  response body — store it immediately. Subsequent reads only show
+  the prefix + metadata.
+
+  Available scopes:
+    reel.read, reel.write, reel.delete, image.read, image.write, admin
+    or "*" for all scopes.
+
+  Owner tier can create keys with any scope. Lower tiers can't grant
+  scopes they don't have themselves.
+}

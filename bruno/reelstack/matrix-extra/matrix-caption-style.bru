@@ -1,0 +1,39 @@
+meta {
+  name: Matrix - Caption Style A/B (font+highlight)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "captions",
+      "videoUrl": "https://your-r2-bucket.example/source.mp4",
+      "highlightMode": "single-word",
+      "endCard": { "platform": "ig" }
+    },
+    "dimensions": {
+      "captionStyle.highlightColor": ["#FFD700", "#FF00FF", "#00FF88"],
+      "captionStyle.position": ["55", "65", "75"]
+    }
+  }
+}
+
+docs {
+  9-cell A/B (3 highlight colors × 3 vertical positions) on the same
+  source video. 1 base + 8 free forks (since `captionStyle.*` is
+  FORK_FREE). Cost: 10 credits.
+
+  Position scale 0-100 from top of frame. 65 is the safe-zone default
+  (avoids YT Shorts UI). Lower numbers = higher up.
+}

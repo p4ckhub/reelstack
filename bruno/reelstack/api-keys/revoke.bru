@@ -1,0 +1,21 @@
+meta {
+  name: API Keys - Revoke
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/api-keys/{{newApiKeyId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{apiKey}}
+}
+
+docs {
+  Revokes an API key permanently. Sets `isActive=false` and `revokedAt`.
+  Subsequent requests with the key return 401. Cannot be undone — create
+  a new key if needed.
+}
