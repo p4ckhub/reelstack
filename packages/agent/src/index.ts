@@ -13,15 +13,32 @@ export {
   resolveEndCard,
 } from './cta';
 
-// ── HF cards (27 cards ported from Remotion) ──
+// ── HF cards (registry + dispatcher; premium cards live in the
+//    private modules overlay and self-register via side-effect import) ──
 export {
   buildHfCardBlock,
   buildHfEndCardBlock,
-  CARD_BUILDERS,
-  REGISTERED_SLUGS,
   MODE_DEFAULT_CARD_SLUG,
   resolveEndCardSlug,
+  registerHfCard,
+  getHfCard,
+  listHfCardSlugs,
+  hasHfCard,
 } from './cards';
+
+// ── HF caption presets (registry + dispatcher; premium presets live
+//    in the private modules overlay) ──
+export {
+  buildHfCaptionPresetVars,
+  registerHfCaptionPreset,
+  getHfCaptionPreset,
+  listHfCaptionPresets,
+  hasHfCaptionPreset,
+  type CaptionPresetVars,
+  type CaptionPresetBuilder,
+  type CaptionPresetBlock,
+  type CaptionPresetInput,
+} from './captions';
 
 // ── TTS defaults (env-aware provider/voice/language resolver) ──
 export {

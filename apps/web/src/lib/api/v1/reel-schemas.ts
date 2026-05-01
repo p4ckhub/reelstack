@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isPublicUrl, isPrivateHost, REGISTERED_SLUGS } from '@reelstack/agent';
+import { isPublicUrl, isPrivateHost, listHfCardSlugs } from '@reelstack/agent';
 
 const callbackUrlSchema = z
   .string()
@@ -250,14 +250,15 @@ export const generateReelSchema = z
       .object({
         enabled: z.boolean().default(true),
         platform: z.enum(['ig', 'fb', 'tiktok', 'youtube', 'linkedin', 'universal']).optional(),
-        /** HF cards library slug (27 options: shimmer, glitch, neon-sign,
-         *  burst, …). Optional — orchestrator picks a mode-appropriate
-         *  default from MODE_DEFAULT_CARD_SLUG. Validated as one of
-         *  REGISTERED_SLUGS so an unknown slug returns 400 here. */
+        /** HF cards library slug. Optional — orchestrator picks a
+         *  mode-appropriate default from MODE_DEFAULT_CARD_SLUG.
+         *  Validated against the runtime registry (private overlay
+         *  registers premium cards on import) so an unknown slug
+         *  returns 400 here. */
         cardSlug: z
           .string()
-          .refine((v) => (REGISTERED_SLUGS as readonly string[]).includes(v), {
-            message: `cardSlug must be one of: ${REGISTERED_SLUGS.join(', ')}`,
+          .refine((v) => listHfCardSlugs().includes(v), {
+            message: () => `cardSlug must be one of: ${listHfCardSlugs().join(', ')}`,
           })
           .optional(),
         headline: z.string().min(1).max(120).optional(),

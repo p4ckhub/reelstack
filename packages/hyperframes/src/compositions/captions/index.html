@@ -44,23 +44,13 @@
         font-weight: 800;
         line-height: 1.2;
         color: {{fontColor}};
-        text-shadow:
-          -3px -3px 0 #000,
-          3px -3px 0 #000,
-          -3px 3px 0 #000,
-          3px 3px 0 #000,
-          0 0 8px rgba(0, 0, 0, 0.6);
         pointer-events: none;
       }
-      #captions .word {
-        display: inline-block;
-        margin-right: 0.25em;
-        will-change: color, transform;
-      }
-      #captions .word.active {
-        color: {{highlightColor}};
-      }
+      /* `.word` base + state classes (`.word--past`, `.word--active`,
+         `.word--upcoming`) come from the preset block below — registered
+         in `@reelstack/agent` and selected by `highlightMode`. */
     </style>
+    {{captionPresetCss}}
   </head>
   <body>
     <div
@@ -138,7 +128,8 @@
         wrap.style.right = '0';
         words.forEach((w, wIdx) => {
           const span = document.createElement('span');
-          span.className = 'word';
+          // Default state = upcoming; tweens flip to active/past at runtime.
+          span.className = 'word word--upcoming';
           span.id = `cue-${cueIdx}-w-${wIdx}`;
           span.textContent = w.text;
           wrap.appendChild(span);
@@ -150,11 +141,25 @@
         tl.to(`#cue-${cueIdx}`, { opacity: 1, duration: 0.18 }, cueStart);
         tl.to(`#cue-${cueIdx}`, { opacity: 0, duration: 0.15 }, cueEnd);
 
+        // Drive the 3-state karaoke (upcoming → active → past) by
+        // toggling class names. GSAP's `className: '+=foo -=bar'` syntax
+        // requires the ClassesPlugin which the HF Chrome bundle does
+        // not load — we set the className attribute directly via
+        // `attr` tweens instead, which the core plugin handles.
         words.forEach((w, wIdx) => {
-          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '{{highlightColor}}' }, w.startTime);
-          tl.set(`#cue-${cueIdx}-w-${wIdx}`, { color: '{{fontColor}}' }, w.endTime);
+          const sel = `#cue-${cueIdx}-w-${wIdx}`;
+          tl.set(sel, { attr: { class: 'word word--active' } }, w.startTime);
+          tl.set(sel, { attr: { class: 'word word--past' } }, w.endTime);
         });
       });
+
+      // Preset-specific timeline tweens (scale bounces, etc). Wrapped
+      // in a try/catch so a malformed preset can't break the render.
+      try {
+        {{captionPresetTimelineJs}}
+      } catch (e) {
+        console.error('captions: preset timelineJs error', e);
+      }
 
       // Splice every registered card instance onto the main timeline.
       // HF seeks only the captured timeline; cards have to ride this one.

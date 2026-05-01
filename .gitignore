@@ -55,3 +55,6 @@ apps/web/remotion-entry.local.ts
 piapi-clips/
 packages/remotion/public/voiceover-*.mp3
 packages/remotion/public/avatar-*.mp4
+# Demo samples copied into the bundle's public dir at render time
+# (see scripts/caption-styles-demo.ts).
+packages/remotion/public/caption-demo-sample*.mp4

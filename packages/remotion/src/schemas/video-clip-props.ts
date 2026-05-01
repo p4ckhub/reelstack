@@ -40,10 +40,24 @@ export const videoClipPropsSchema = z.object({
       fontSize: z.number().default(64),
       fontColor: z.string().default('#FFFFFF'),
       highlightColor: z.string().default('#FFD700'),
+      /**
+       * Colour for words that haven't been spoken yet (the karaoke
+       * "wait" state). When unset, upcoming words use `fontColor`,
+       * collapsing past + upcoming into one colour. Submagic-style
+       * captions set this to a muted grey for the 3-state read.
+       */
+      upcomingColor: z.string().optional(),
       // 65% from top = caption baseline in the cross-platform safe zone:
       // above YouTube Shorts' ~18% bottom UI overlay, TikTok's ~14% music
       // bar, IG Reels' ~13% description. 80 was inside YT Shorts chrome.
       position: z.number().min(0).max(100).default(65),
+      /**
+       * Pill background behind the caption line. 0 = transparent (lets
+       * presets that ship their own outline/3D effects render cleanly,
+       * e.g. `outline-pop`). DEFAULT_SUBTITLE_STYLE keeps 0.7 elsewhere.
+       */
+      backgroundOpacity: z.number().min(0).max(1).optional(),
+      backgroundColor: z.string().optional(),
     })
     .optional(),
   /** Show segmented progress bar (Instagram Stories-style) when 2+ clips */

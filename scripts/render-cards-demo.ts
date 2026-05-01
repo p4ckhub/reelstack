@@ -14,7 +14,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { buildHfCardBlock, REGISTERED_SLUGS } from '@reelstack/agent';
+import { buildHfCardBlock, listHfCardSlugs } from '@reelstack/agent';
+// Side-effect import: registers all premium cards from the private overlay.
+import '@reelstack/modules';
 import type { CardPalette, CardData } from '@reelstack/agent';
 
 const CARD_DURATION = 3.0;
@@ -76,7 +78,7 @@ function safeId(slug: string, i: number): string {
 }
 
 function main() {
-  const slugs = REGISTERED_SLUGS;
+  const slugs = listHfCardSlugs();
   const slotDuration = CARD_DURATION + GAP;
   const totalDuration = slugs.length * slotDuration;
 

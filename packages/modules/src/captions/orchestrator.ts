@@ -16,6 +16,7 @@ import {
   uploadVoiceover,
   resolveEndCard,
   buildHfEndCardBlock,
+  buildHfCaptionPresetVars,
 } from '@reelstack/agent';
 import type { BrandPreset, ProgressCallback, ModuleRuntime, EndCardConfig } from '@reelstack/agent';
 import { endCardConfigToSelection } from '@reelstack/remotion/components/end-card-config-adapter';
@@ -107,6 +108,21 @@ export function buildCaptionsHyperframesProps(
 ): Record<string, unknown> {
   const firstClip = props.clips[0];
   const captionStyle = props.captionStyle;
+  const fontSize = captionStyle?.fontSize ?? 56;
+  const fontColor = captionStyle?.fontColor ?? '#FFFFFF';
+  const highlightColor = captionStyle?.highlightColor ?? '#FFD700';
+  const upcomingColor = captionStyle?.upcomingColor;
+
+  // Resolve preset block (CSS + optional GSAP tweens) for the requested
+  // highlightMode. Defaults to `text` when no mode is set or the slug
+  // is unknown — the dispatcher never breaks the render.
+  const presetVars = buildHfCaptionPresetVars(props.highlightMode, {
+    fontSize,
+    fontColor,
+    highlightColor,
+    upcomingColor,
+  });
+
   return {
     compositionId: compositionPath('captions'),
     durationSeconds,
@@ -118,13 +134,15 @@ export function buildCaptionsHyperframesProps(
     videoMuted: props.voiceoverUrl ? 'muted' : '',
     voiceoverUrl: props.voiceoverUrl ?? '',
     cuesB64: Buffer.from(JSON.stringify(props.cues ?? []), 'utf8').toString('base64'),
-    fontSize: captionStyle?.fontSize ?? 56,
-    fontColor: captionStyle?.fontColor ?? '#FFFFFF',
-    highlightColor: captionStyle?.highlightColor ?? '#FFD700',
+    fontSize,
+    fontColor,
+    highlightColor,
     // 65% from top = caption baseline in the cross-platform safe zone
     // (above YouTube Shorts' ~18% bottom-UI overlay, TikTok's ~14% music
     // bar, IG Reels' ~13% description). 78 was inside the YT chrome.
     captionTopPercent: captionStyle?.position ?? 65,
+    captionPresetCss: presetVars.presetCss,
+    captionPresetTimelineJs: presetVars.presetTimelineJs,
     endCardBlock: buildHfEndCardBlock(endCard, durationSeconds, 'captions'),
   };
 }

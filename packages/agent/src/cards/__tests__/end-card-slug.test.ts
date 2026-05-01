@@ -1,19 +1,42 @@
 /**
  * Per-mode default card slug + override resolution.
  *
- * The legacy `buildHfEndCardBlock` always rendered the `shimmer` card.
- * After the matrix work, callers can pass `endCard.cardSlug` to pick any
- * of the 27 HF cards, and orchestrators pass `mode` so the resolver
- * falls back to a mode-appropriate default (presenter → neon-sign,
- * talking-object → burst, etc.).
+ * `buildHfEndCardBlock` defaults to `shimmer`; callers can pass
+ * `endCard.cardSlug` to pick any registered card. Orchestrators pass
+ * `mode` so the resolver picks a mode-appropriate default
+ * (presenter → neon-sign, talking-object → burst, etc.).
+ *
+ * This file exercises the public API. It registers a handful of
+ * mock card builders so the resolver has something to look up — the
+ * real card implementations live in the private modules overlay.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
   resolveEndCardSlug,
   MODE_DEFAULT_CARD_SLUG,
   buildHfEndCardBlock,
-  REGISTERED_SLUGS,
+  registerHfCard,
+  listHfCardSlugs,
 } from '../index';
+
+const noopBuilder = () => ({ html: '', attachBody: '' });
+
+const REQUIRED_SLUGS = [
+  // Premium cards used as MODE_DEFAULT_CARD_SLUG values.
+  'shimmer',
+  'glitch',
+  'neon-sign',
+  'burst',
+  'neon-circuit',
+  'spotlight',
+  'wave-text',
+];
+
+beforeAll(() => {
+  for (const slug of REQUIRED_SLUGS) {
+    registerHfCard(slug, noopBuilder);
+  }
+});
 
 describe('resolveEndCardSlug', () => {
   it('explicit cardSlug from caller wins over mode default', () => {
@@ -46,10 +69,11 @@ describe('resolveEndCardSlug', () => {
 
 describe('MODE_DEFAULT_CARD_SLUG', () => {
   it('every default points to a registered card slug', () => {
+    const registered = listHfCardSlugs();
     for (const [mode, slug] of Object.entries(MODE_DEFAULT_CARD_SLUG)) {
       expect(
-        (REGISTERED_SLUGS as readonly string[]).includes(slug),
-        `Mode "${mode}" defaults to "${slug}" which is not in REGISTERED_SLUGS`
+        registered.includes(slug),
+        `Mode "${mode}" defaults to "${slug}" which is not registered. Registered: ${registered.join(', ')}`
       ).toBe(true);
     }
   });

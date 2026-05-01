@@ -38,11 +38,11 @@ vi.mock('@reelstack/agent', () => ({
   createMatrix: (...args: unknown[]) => mockCreateMatrix(...args),
   expandDimensions: fakeExpandDimensions,
   // reel-schemas.ts pulls `isPublicUrl` for callback URL validation +
-  // `REGISTERED_SLUGS` for endCard.cardSlug validation; not exercised
+  // `listHfCardSlugs()` for endCard.cardSlug validation; not exercised
   // here but the imports must resolve.
   isPublicUrl: () => true,
   isPrivateHost: () => false,
-  REGISTERED_SLUGS: ['shimmer', 'glitch', 'neon-sign', 'burst', 'wave-text'],
+  listHfCardSlugs: () => ['shimmer', 'glitch', 'neon-sign', 'burst', 'wave-text', 'text'],
 }));
 
 import { databaseMockFactory, mockPrisma } from '@/__test-utils__/database-mock';

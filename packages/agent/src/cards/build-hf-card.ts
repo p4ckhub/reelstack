@@ -26,7 +26,7 @@
  */
 
 import type { CardRenderInput } from './types';
-import { CARD_BUILDERS } from './cards/index';
+import { getHfCard, hasHfCard } from './registry';
 
 /**
  * Build the full HTML + GSAP block for a single card instance.
@@ -35,7 +35,7 @@ import { CARD_BUILDERS } from './cards/index';
  * before reaching here.
  */
 export function buildHfCardBlock(input: CardRenderInput): string {
-  const builder = CARD_BUILDERS[input.slug];
+  const builder = getHfCard(input.slug);
   if (!builder) {
     // Unknown slug → emit a comment so the failure mode is visible
     // when the rendered HTML is inspected.
@@ -107,7 +107,7 @@ export function resolveEndCardSlug(
   endCardCardSlug: string | undefined,
   mode: string | undefined
 ): string {
-  if (endCardCardSlug && CARD_BUILDERS[endCardCardSlug]) return endCardCardSlug;
+  if (endCardCardSlug && hasHfCard(endCardCardSlug)) return endCardCardSlug;
   if (mode && MODE_DEFAULT_CARD_SLUG[mode]) return MODE_DEFAULT_CARD_SLUG[mode]!;
   return FALLBACK_CARD_SLUG;
 }

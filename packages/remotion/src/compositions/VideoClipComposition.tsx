@@ -64,6 +64,15 @@ export const VideoClipComposition: React.FC<VideoClipProps> = (props) => {
             highlightColor: captionStyle?.highlightColor ?? '#FFD700',
             position: captionStyle?.position ?? 80,
             highlightMode: highlightMode,
+            ...(captionStyle?.backgroundOpacity !== undefined && {
+              backgroundOpacity: captionStyle.backgroundOpacity,
+            }),
+            ...(captionStyle?.backgroundColor !== undefined && {
+              backgroundColor: captionStyle.backgroundColor,
+            }),
+            ...(captionStyle?.upcomingColor !== undefined && {
+              upcomingColor: captionStyle.upcomingColor,
+            }),
           }}
         />
       </AbsoluteFill>
