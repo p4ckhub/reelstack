@@ -231,6 +231,17 @@ export async function processReelPipelineJob(jobId: string, fromStepId?: string)
         completedAt: new Date().toISOString(),
       }).catch((e) => log.warn({ jobId, err: e }, 'Callback delivery failed'));
     }
+
+    // If this job is part of a /matrix render, advance the batch:
+    // base COMPLETED → spawn forks for sibling cells; aggregate batch
+    // status. Catch errors — matrix progression is best-effort, the
+    // job itself already succeeded.
+    if (job.batchId) {
+      const { tryAdvanceMatrix } = await import('@reelstack/agent');
+      tryAdvanceMatrix(jobId).catch((e) =>
+        log.warn({ jobId, batchId: job.batchId, err: e }, 'Matrix advance failed')
+      );
+    }
   } catch (err) {
     reelJobsTotal.inc({ status: 'failed' });
     reelRenderDuration.observe({ step: 'total' }, (Date.now() - pipelineStart) / 1000);
@@ -253,6 +264,15 @@ export async function processReelPipelineJob(jobId: string, fromStepId?: string)
         parentJobId: job.parentJobId ?? undefined,
         failedAt: new Date().toISOString(),
       }).catch((e) => log.warn({ jobId, err: e }, 'Callback delivery failed'));
+    }
+
+    // Same matrix advance as the success path — the hook handles FAILED
+    // status by skipping fork spawning and updating batch.status.
+    if (job.batchId) {
+      const { tryAdvanceMatrix } = await import('@reelstack/agent');
+      tryAdvanceMatrix(jobId).catch((e) =>
+        log.warn({ jobId, batchId: job.batchId, err: e }, 'Matrix advance failed')
+      );
     }
 
     throw err;
