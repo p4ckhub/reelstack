@@ -258,7 +258,7 @@ export const generateReelSchema = z
         cardSlug: z
           .string()
           .refine((v) => listHfCardSlugs().includes(v), {
-            message: () => `cardSlug must be one of: ${listHfCardSlugs().join(', ')}`,
+            message: 'cardSlug must be one of the registered HF card slugs',
           })
           .optional(),
         headline: z.string().min(1).max(120).optional(),
