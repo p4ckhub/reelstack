@@ -18,7 +18,7 @@ import {
   type AssetMediaType,
 } from '../asset-defaults';
 
-const EMPTY_ENV: NodeJS.ProcessEnv = {};
+const EMPTY_ENV = {} as NodeJS.ProcessEnv;
 
 function envWith(overrides: Record<string, string>): NodeJS.ProcessEnv {
   return overrides as NodeJS.ProcessEnv;
