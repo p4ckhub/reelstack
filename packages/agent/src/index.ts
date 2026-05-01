@@ -153,6 +153,25 @@ export type {
 export { createGeneratePipeline, GENERATE_STEP_IDS } from './orchestrator/generate-pipeline';
 export type { GeneratePipelineDeps, GenerateStepId } from './orchestrator/generate-pipeline';
 
+// ── Matrix render (POST /api/v1/reel/matrix) ─────────────────
+export {
+  createMatrix,
+  classifyDimensionKey,
+  expandDimensions,
+  cellKey,
+  BASE_DIMENSIONS,
+  FORK_FREE_DIMENSIONS,
+  MATRIX_LIMITS,
+} from './orchestrator/matrix';
+export type {
+  CreateMatrixInput,
+  CreateMatrixResult,
+  MatrixCellSummary,
+  Cell,
+  DimensionClass,
+} from './orchestrator/matrix';
+export { tryAdvanceMatrix } from './orchestrator/matrix-advance';
+
 // ── Module system ─────────────────────────────────────────────
 // Import modules/index to trigger built-in module registration.
 // When modules move to closed repos, remove this import and let
