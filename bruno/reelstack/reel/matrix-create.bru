@@ -1,0 +1,48 @@
+meta {
+  name: matrix-create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/reel/matrix
+  body: json
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "base": {
+      "mode": "n8n-explainer",
+      "workflowUrl": "https://n8n.io/workflows/2813-automate-content-generator-for-wordpress-with-deepseek-r1",
+      "runtime": "hyperframes",
+      "endCard": { "durationSeconds": 4 }
+    },
+    "dimensions": {
+      "language": ["pl", "en"],
+      "endCard.platform": ["ig", "fb", "tiktok", "youtube", "linkedin", "universal"]
+    }
+  }
+}
+
+docs {
+  Render N variants of one base reel across one or more dimensions.
+
+  Allowed dimension keys:
+    BASE       — language          (full pipeline per value, costs credits)
+    FORK_FREE  — endCard, captionStyle, brandPreset, scrollStopper, highlightMode  (zero-cost re-renders)
+
+  Anything else (workflowUrl, mode, runtime, tts.voice, ...) is rejected
+  with 400 — those would invalidate the cached pipeline. Submit separate
+  /generate requests for those.
+
+  Hard limits: totalCells ≤ 20, baseJobs ≤ 5.
+
+  Response (202): { batchId, totalCells, baseJobs, forkJobs, estimatedCost, jobs[] }
+  Use matrix-status.bru with the returned batchId to poll progress.
+}

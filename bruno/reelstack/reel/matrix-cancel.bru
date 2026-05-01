@@ -1,0 +1,26 @@
+meta {
+  name: matrix-cancel
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/reel/matrix/{{batchId}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+vars:pre-request {
+  batchId: REPLACE-WITH-BATCH-ID
+}
+
+docs {
+  Cancel a matrix batch. Marks the batch CANCELLED and FAILs every
+  still-QUEUED child job. Already-running jobs run to completion (the
+  worker doesn't pre-empt mid-step) but their advance hook noops on a
+  CANCELLED batch, so no forks spawn. Idempotent.
+}

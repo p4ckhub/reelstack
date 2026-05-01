@@ -1,0 +1,35 @@
+meta {
+  name: matrix-status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/reel/matrix/{{batchId}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{apiKey}}
+}
+
+vars:pre-request {
+  batchId: REPLACE-WITH-BATCH-ID-FROM-MATRIX-CREATE
+}
+
+docs {
+  Status snapshot for a matrix batch.
+
+  Response shape:
+    {
+      batchId, mode, status, totalCells, completed, failed,
+      dimensions, jobs[], outputs: { "<cellKey>": "<outputUrl>", ... },
+      createdAt, updatedAt
+    }
+
+  status: queued | running | completed | partial | failed | cancelled
+
+  outputs map is keyed by `cellKey` (pipe-joined dim values in dim-key
+  sort order, e.g. "fb|pl"). Pull each MP4 from the signed R2 URLs.
+}

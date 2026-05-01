@@ -458,6 +458,58 @@ Delivered on completion/failure. Signed with HMAC-SHA256.
 
 Headers: `X-ReelStack-Signature`, `X-ReelStack-Event` (`reel.completed` or `reel.failed`)
 
+### POST /api/v1/reel/matrix
+
+Render N variants of one base reel across one or more dimensions in a
+single request. Universal across every mode (n8n-explainer, slideshow,
+captions, presenter, talking-object, …).
+
+```json
+{
+  "base": {
+    "mode": "n8n-explainer",
+    "workflowUrl": "https://n8n.io/workflows/2813-...",
+    "runtime": "hyperframes",
+    "endCard": { "durationSeconds": 4 }
+  },
+  "dimensions": {
+    "language": ["pl", "en"],
+    "endCard.platform": ["ig", "fb", "tiktok", "youtube", "linkedin", "universal"]
+  },
+  "callbackUrl": "https://you/webhook"
+}
+```
+
+Response 202:
+
+```json
+{
+  "batchId": "...",
+  "totalCells": 12,
+  "baseJobs": 2,
+  "forkJobs": 10,
+  "estimatedCost": { "credits": 20, "fullPipelines": 2, "freeForks": 10 },
+  "jobs": [ { "cellKey": "fb|pl", "role": "base", "jobId": "...", "status": "queued" }, ... ]
+}
+```
+
+Allowed dimension keys (server-side allow-list):
+
+| Class     | Keys                                                                       | Cost                                   |
+| --------- | -------------------------------------------------------------------------- | -------------------------------------- |
+| BASE      | `language`                                                                 | Full pipeline per value (paid)         |
+| FORK_FREE | `endCard`, `captionStyle`, `brandPreset`, `scrollStopper`, `highlightMode` | Re-render from `assemble-props` (free) |
+
+Anything else (`workflowUrl`, `mode`, `runtime`, `tts.voice`, …) → 400. Those would either invalidate the cached pipeline or change the pipeline shape — submit separate `/generate` requests instead.
+
+Hard caps: `totalCells ≤ 20`, `baseJobs ≤ 5`. The orchestrator runs ONE full pipeline per BASE-dim combination; the worker hook spawns FORK_FREE forks (via `forkReelJob` + `copyJobContext`) when each base reaches COMPLETED.
+
+`GET /api/v1/reel/matrix/{batchId}` — aggregated status + `outputs` map (`cellKey → outputUrl`).
+
+`DELETE /api/v1/reel/matrix/{batchId}` — cancel pending jobs, mark batch CANCELLED.
+
+Bruno examples: `bruno/reelstack/reel/matrix-{create,status,cancel}.bru`.
+
 ## Pipeline Modes
 
 The worker (`reel-pipeline-worker.ts`) routes by `config.mode`:
