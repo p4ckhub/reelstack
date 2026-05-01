@@ -45,6 +45,16 @@ export interface HyperframesRendererOptions {
    * `HYPERFRAMES_BROWSER` for Docker). Inherits process.env by default.
    */
   readonly env?: NodeJS.ProcessEnv;
+  /**
+   * Override watchdog timing. Production defaults: start polling 5s after
+   * spawn, then resolve after 3 consecutive 1s polls show a stable file size.
+   * Tests pass tighter values to keep run time low.
+   */
+  readonly watchdog?: {
+    readonly startDelayMs?: number;
+    readonly pollMs?: number;
+    readonly stableTicks?: number;
+  };
 }
 
 export class HyperframesRenderer implements Renderer {
@@ -81,6 +91,7 @@ export class HyperframesRenderer implements Renderer {
         outputPath: options.outputPath,
         cliBin: this.opts.cliBin,
         env: this.opts.env,
+        watchdog: this.opts.watchdog,
       });
 
       const stat = fs.statSync(options.outputPath);
@@ -149,6 +160,7 @@ interface CliArgs {
   outputPath: string;
   cliBin?: string;
   env?: NodeJS.ProcessEnv;
+  watchdog?: HyperframesRendererOptions['watchdog'];
 }
 
 function runHyperframesCli(args: CliArgs): Promise<void> {
@@ -195,9 +207,9 @@ function runHyperframesCli(args: CliArgs): Promise<void> {
     let lastSize = -1;
     let stableTicks = 0;
     let watchdogTimer: NodeJS.Timeout | null = null;
-    const STABLE_TICKS = 3;
-    const POLL_MS = 1_000;
-    const START_DELAY_MS = 5_000;
+    const STABLE_TICKS = args.watchdog?.stableTicks ?? 3;
+    const POLL_MS = args.watchdog?.pollMs ?? 1_000;
+    const START_DELAY_MS = args.watchdog?.startDelayMs ?? 5_000;
 
     const tick = () => {
       if (resolved) return;

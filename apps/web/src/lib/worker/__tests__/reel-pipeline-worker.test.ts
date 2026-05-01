@@ -16,6 +16,7 @@ const mockProduceComposition = vi.fn();
 const mockGetModule = vi.fn();
 const mockModuleOrchestrate = vi.fn();
 const mockPipelineEngineRunAll = vi.fn();
+const mockPipelineEngineResumeFrom = vi.fn();
 const mockRenderVideo = vi.fn();
 vi.mock('@reelstack/agent', () => ({
   produce: (...args: unknown[]) => mockAgentProduce(...args),
@@ -29,8 +30,12 @@ vi.mock('@reelstack/agent', () => ({
   listModules: () => [],
   registerModule: vi.fn(),
   callLLM: vi.fn(),
-  PipelineEngine: vi.fn(function (this: { runAll: typeof mockPipelineEngineRunAll }) {
+  PipelineEngine: vi.fn(function (this: {
+    runAll: typeof mockPipelineEngineRunAll;
+    resumeFrom: typeof mockPipelineEngineResumeFrom;
+  }) {
     this.runAll = mockPipelineEngineRunAll;
+    this.resumeFrom = mockPipelineEngineResumeFrom;
   }),
   createGeneratePipeline: vi.fn().mockReturnValue({
     id: 'generate',
@@ -480,6 +485,96 @@ describe('processReelPipelineJob', () => {
       expect(mockPipelineEngineRunAll).not.toHaveBeenCalled();
 
       delete process.env.PIPELINE_ENGINE;
+    });
+
+    // Regression: a fork resume came through the queue with `fromStepId` set
+    // and the worker silently used `runAll`, replaying the entire pipeline
+    // instead of resuming. Lock in the routing behaviour.
+    it('routes to engine.resumeFrom when fromStepId is provided (generate mode)', async () => {
+      mockGetReelJobInternal.mockResolvedValue(
+        makeJob({ reelConfig: { mode: 'generate', layout: 'split-screen', style: 'cinematic' } })
+      );
+      mockPipelineEngineResumeFrom.mockResolvedValue({
+        jobId: 'reel-1',
+        status: 'completed',
+        steps: [{ id: 'composition', name: 'Composition', status: 'completed' }],
+        context: {
+          jobId: 'reel-1',
+          results: {
+            composition: {
+              reelProps: { compositionId: 'ReelVideo' },
+              plan: {
+                layout: 'split-screen',
+                primarySource: { type: 'ai' },
+                reasoning: '',
+                shots: [],
+                effects: [],
+              },
+            },
+            'asset-persist': { assets: [] },
+            tts: { audioDuration: 10 },
+          },
+          input: {},
+        },
+      });
+
+      await processReelPipelineJob('reel-1', 'composition');
+
+      expect(mockPipelineEngineResumeFrom).toHaveBeenCalledWith(
+        expect.any(Object),
+        'reel-1',
+        'composition',
+        expect.any(Function)
+      );
+      expect(mockPipelineEngineRunAll).not.toHaveBeenCalled();
+    });
+
+    it('routes to engine.resumeFrom for module modes when fromStepId is provided', async () => {
+      const explainerModule = {
+        id: 'n8n-explainer',
+        name: 'n8n Explainer',
+        compositionId: 'ScreenExplainer',
+        configFields: [],
+        progressSteps: {},
+        runtimes: { remotion: { compositionId: 'ScreenExplainer' } },
+        orchestrate: mockModuleOrchestrate,
+      };
+      mockGetModule.mockReturnValue(explainerModule);
+      mockModulePipelineResult();
+      mockPipelineEngineResumeFrom.mockResolvedValue({
+        jobId: 'reel-1',
+        status: 'completed',
+        steps: [{ id: 'orchestrate', name: 'orchestrate', status: 'completed' }],
+        context: {
+          jobId: 'reel-1',
+          results: { orchestrate: { outputPath: '/tmp/out.mp4', durationSeconds: 10 } },
+          input: {},
+        },
+      });
+      mockGetReelJobInternal.mockResolvedValue(
+        makeJob({ reelConfig: { mode: 'n8n-explainer', workflowUrl: 'https://example.com/wf' } })
+      );
+
+      await processReelPipelineJob('reel-1', 'assemble-props');
+
+      expect(mockPipelineEngineResumeFrom).toHaveBeenCalledWith(
+        expect.any(Object),
+        'reel-1',
+        'assemble-props',
+        expect.any(Function)
+      );
+      expect(mockPipelineEngineRunAll).not.toHaveBeenCalled();
+    });
+
+    it('uses runAll (not resumeFrom) when fromStepId is omitted', async () => {
+      mockGetReelJobInternal.mockResolvedValue(
+        makeJob({ reelConfig: { mode: 'generate', layout: 'split-screen', style: 'cinematic' } })
+      );
+
+      await processReelPipelineJob('reel-1');
+
+      expect(mockPipelineEngineRunAll).toHaveBeenCalled();
+      expect(mockPipelineEngineResumeFrom).not.toHaveBeenCalled();
     });
 
     it('still uses PipelineEngine for modules when PIPELINE_ENGINE=false', async () => {

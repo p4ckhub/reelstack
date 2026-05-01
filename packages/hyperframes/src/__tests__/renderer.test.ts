@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { HyperframesRenderer } from '../renderer';
 import { compositionPath } from '../index';
 
@@ -93,4 +94,66 @@ describe('HyperframesRenderer (with fake CLI)', () => {
       )
     ).rejects.toThrow(/variable "badge" is not defined/);
   });
+});
+
+/**
+ * Regression: a CLI subprocess that writes the MP4 and then never exits
+ * (real bug seen with n8n-explainer 73s renders) used to hang the worker.
+ * The size-stable watchdog must SIGTERM the child and resolve.
+ */
+function makeHangingCli(): string {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hf-hanging-cli-'));
+  const scriptPath = path.join(tmpDir, 'hanging-hyperframes.sh');
+  fs.writeFileSync(
+    scriptPath,
+    `#!/bin/sh
+OUT=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o) OUT="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+mkdir -p "$(dirname "$OUT")"
+head -c 1024 /dev/zero > "$OUT"
+# Simulate the bug: write the file, then sleep "forever". The watchdog
+# must detect file-size stability and kill us.
+sleep 600
+`
+  );
+  fs.chmodSync(scriptPath, 0o755);
+  return scriptPath;
+}
+
+describe('HyperframesRenderer watchdog (hang regression)', () => {
+  it('resolves via size-stable watchdog when subprocess never exits', async () => {
+    const renderer = new HyperframesRenderer({
+      cliBin: makeHangingCli(),
+      // Tight timings keep the test under a second.
+      watchdog: { startDelayMs: 50, pollMs: 50, stableTicks: 2 },
+    });
+    const outputPath = path.join(os.tmpdir(), `hf-hang-${Date.now()}.mp4`);
+    const start = performance.now();
+    const result = await renderer.render(
+      {
+        composition: compositionPath('hello'),
+        variables: {
+          badge: 'NEW',
+          headline: 'x',
+          subheadline: 'y',
+          durationSeconds: 5,
+        },
+      },
+      { outputPath }
+    );
+    const elapsed = performance.now() - start;
+
+    expect(result.outputPath).toBe(outputPath);
+    expect(result.sizeBytes).toBe(1024);
+    // Should resolve well before the 600s subprocess sleep.
+    expect(elapsed).toBeLessThan(2_000);
+    expect(fs.existsSync(outputPath)).toBe(true);
+
+    fs.unlinkSync(outputPath);
+  }, 5_000);
 });
