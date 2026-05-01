@@ -107,7 +107,7 @@ export function buildHyperframesProps(props: SlideshowProps): Record<string, unk
     // End-card block. Empty string when no card is requested; otherwise
     // a self-contained HTML+JS snippet that the HF template drops into
     // its body via the `{{endCardBlock}}` placeholder.
-    endCardBlock: buildHfEndCardBlock(props.endCard, props.durationSeconds),
+    endCardBlock: buildHfEndCardBlock(props.endCard, props.durationSeconds, 'slideshow'),
   };
 }
 

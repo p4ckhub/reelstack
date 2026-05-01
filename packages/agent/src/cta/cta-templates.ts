@@ -32,6 +32,17 @@ export interface EndCardConfig {
   /** Picks the per-platform template. Default: `universal` (link in bio). */
   platform?: CtaPlatform;
   /**
+   * Visual card variant from the HF cards library (27 slugs: `shimmer`,
+   * `glitch`, `neon-sign`, `burst`, …). When omitted the orchestrator
+   * picks a mode-appropriate default (n8n-explainer → `shimmer`,
+   * presenter → `neon-sign`, talking-object → `burst`, …) — see
+   * `MODE_DEFAULT_CARD_SLUG` in `cards/build-hf-card.ts`.
+   *
+   * Validated against `REGISTERED_SLUGS` at the schema layer; an
+   * unknown slug returns 400.
+   */
+  cardSlug?: string;
+  /**
    * Comment keyword, used by IG/FB templates only. The narrator says
    * "comment X to get the link"; `keyword` is X. Module passes its own
    * default (n8n-explainer → "N8N"); user can override per request.

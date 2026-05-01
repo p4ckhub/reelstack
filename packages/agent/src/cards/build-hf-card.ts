@@ -75,21 +75,58 @@ export function buildHfCardBlock(input: CardRenderInput): string {
 }
 
 /**
- * Backwards-compat shim: existing code (n8n-explainer / slideshow /
- * captions orchestrators) calls `buildHfEndCardBlock(endCard, totalDuration)`.
- * The shape is the legacy `EndCardConfig` (no slug — always shimmer).
- * We map it onto `buildHfCardBlock({ slug: 'shimmer', ... })`.
+ * Per-mode default card slug. Picked when the caller doesn't supply
+ * `endCard.cardSlug` and we want a sensible visual that fits the
+ * mode's vibe. Anything not listed falls back to `shimmer` (the safest
+ * universal animation).
  *
- * Deprecation path: orchestrators can migrate to `buildHfCardBlock`
- * directly when callers want to pick a non-shimmer card. Until then
- * this shim preserves the existing wiring (host compositions still
- * read `__hfAttachCardInstances` regardless of how the block was built).
+ * Tweak per-mode here; users override per-request via `endCard.cardSlug`.
+ */
+export const MODE_DEFAULT_CARD_SLUG: Record<string, string> = {
+  'n8n-explainer': 'shimmer',
+  'presenter-explainer': 'neon-sign',
+  'talking-object': 'burst',
+  'ai-tips': 'neon-circuit',
+  'ai-short-film': 'spotlight',
+  'ai-storytelling': 'spotlight',
+  slideshow: 'shimmer',
+  captions: 'shimmer',
+  'zoom-reframe': 'shimmer',
+  'hello-hf': 'wave-text',
+};
+
+const FALLBACK_CARD_SLUG = 'shimmer';
+
+/**
+ * Resolve which card-library slug to render for the end-card. Priority:
+ *   1. Explicit `endCard.cardSlug` from caller.
+ *   2. `MODE_DEFAULT_CARD_SLUG[mode]` if mode is known.
+ *   3. `FALLBACK_CARD_SLUG` (`shimmer`).
+ */
+export function resolveEndCardSlug(
+  endCardCardSlug: string | undefined,
+  mode: string | undefined
+): string {
+  if (endCardCardSlug && CARD_BUILDERS[endCardCardSlug]) return endCardCardSlug;
+  if (mode && MODE_DEFAULT_CARD_SLUG[mode]) return MODE_DEFAULT_CARD_SLUG[mode]!;
+  return FALLBACK_CARD_SLUG;
+}
+
+/**
+ * Build the end-card block for a finished reel. Wraps `buildHfCardBlock`
+ * with the legacy `EndCardConfig` shape used by every module orchestrator
+ * (n8n-explainer / slideshow / captions / presenter / …).
+ *
+ * `mode` lets the dispatcher pick a mode-appropriate default card slug
+ * when the caller didn't specify one (e.g. presenter-explainer →
+ * `neon-sign`); see `MODE_DEFAULT_CARD_SLUG` above.
  */
 import type { EndCardConfig } from '../cta/cta-templates';
 
 export function buildHfEndCardBlock(
   endCard: EndCardConfig | undefined,
-  totalDurationSeconds: number
+  totalDurationSeconds: number,
+  mode?: string
 ): string {
   if (!endCard || endCard.enabled === false || !endCard.headline) return '';
 
@@ -97,9 +134,10 @@ export function buildHfEndCardBlock(
   const cardStart = Math.max(0, totalDurationSeconds - cardDuration);
   const accent = endCard.accentColor ?? '#7c3aed';
   const background = endCard.backgroundColor ?? '#09090f';
+  const slug = resolveEndCardSlug(endCard.cardSlug, mode);
 
   return buildHfCardBlock({
-    slug: 'shimmer',
+    slug,
     cardStart,
     cardDuration,
     totalDuration: totalDurationSeconds,

@@ -13,8 +13,15 @@ export {
   resolveEndCard,
 } from './cta';
 
-// ── HF cards (shimmer + 3 representative cards now; 27 total target) ──
-export { buildHfCardBlock, buildHfEndCardBlock, CARD_BUILDERS, REGISTERED_SLUGS } from './cards';
+// ── HF cards (27 cards ported from Remotion) ──
+export {
+  buildHfCardBlock,
+  buildHfEndCardBlock,
+  CARD_BUILDERS,
+  REGISTERED_SLUGS,
+  MODE_DEFAULT_CARD_SLUG,
+  resolveEndCardSlug,
+} from './cards';
 
 // ── TTS defaults (env-aware provider/voice/language resolver) ──
 export {

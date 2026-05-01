@@ -16,5 +16,10 @@ export type {
   CardMode,
   Anchor,
 } from './types';
-export { buildHfCardBlock, buildHfEndCardBlock } from './build-hf-card';
+export {
+  buildHfCardBlock,
+  buildHfEndCardBlock,
+  resolveEndCardSlug,
+  MODE_DEFAULT_CARD_SLUG,
+} from './build-hf-card';
 export { CARD_BUILDERS, REGISTERED_SLUGS } from './cards/index';

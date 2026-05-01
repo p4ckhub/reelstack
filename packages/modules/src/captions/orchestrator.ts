@@ -125,7 +125,7 @@ export function buildCaptionsHyperframesProps(
     // (above YouTube Shorts' ~18% bottom-UI overlay, TikTok's ~14% music
     // bar, IG Reels' ~13% description). 78 was inside the YT chrome.
     captionTopPercent: captionStyle?.position ?? 65,
-    endCardBlock: buildHfEndCardBlock(endCard, durationSeconds),
+    endCardBlock: buildHfEndCardBlock(endCard, durationSeconds, 'captions'),
   };
 }
 
