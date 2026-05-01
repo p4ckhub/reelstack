@@ -84,6 +84,13 @@ export const mockPrisma = {
     create: vi.fn(),
     findFirst: vi.fn(),
     findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+  },
+  reelBatch: {
+    create: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
     update: vi.fn(),
   },
   template: {

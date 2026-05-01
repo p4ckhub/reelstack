@@ -475,3 +475,24 @@ export const publishReelSchema = z.object({
   hashtags: z.array(z.string()).max(30).optional(),
   scheduleDate: z.string().datetime().optional(),
 });
+
+/**
+ * Matrix render: produce N variants of one base reel across one or
+ * more dimensions. Allowed dimension keys are decided server-side by
+ * `classifyDimensionKey()` in `@reelstack/agent`. The base object is
+ * passed through to the orchestrator (validated downstream); we keep
+ * it loose here because matrix mode supports every render mode, each
+ * with its own field set. Hard caps (totalCells ≤ 20, baseJobs ≤ 5)
+ * also live in the orchestrator and surface as 400 from the route.
+ */
+export const matrixReelSchema = z.object({
+  base: z
+    .record(z.string(), z.unknown())
+    .refine((v) => typeof v.mode === 'string', { message: 'base.mode is required' }),
+  dimensions: z
+    .record(z.string(), z.array(z.string().min(1)).min(1))
+    .refine((v) => Object.keys(v).length > 0, {
+      message: 'dimensions must contain at least one dimension key',
+    }),
+  callbackUrl: callbackUrlSchema.optional(),
+});
