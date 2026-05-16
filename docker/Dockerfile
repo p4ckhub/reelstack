@@ -22,6 +22,8 @@ COPY packages/logger/package.json packages/logger/
 COPY packages/agent/package.json packages/agent/
 COPY packages/modules/package.json packages/modules/
 COPY packages/image-gen/package.json packages/image-gen/
+COPY packages/renderer/package.json packages/renderer/
+COPY packages/hyperframes/package.json packages/hyperframes/
 RUN bun install
 
 # Build
