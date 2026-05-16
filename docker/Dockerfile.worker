@@ -53,6 +53,9 @@ COPY --from=builder /app/apps/web/package.json ./apps/web/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock ./
 COPY --from=builder /app/bunfig.toml ./
+# scripts/ contains seed-modules.ts and other one-shot setup scripts that the
+# db-migrate compose service runs against a fresh DB. Cheap to include.
+COPY --from=builder /app/scripts ./scripts
 # Worker runs as 'worker' (uid 1001). Pre-create dirs that Remotion writes to at runtime.
 # cwd at runtime = /app/apps/web (bun run --cwd apps/web worker)
 # Chrome downloads to {cwd}/node_modules/.remotion
