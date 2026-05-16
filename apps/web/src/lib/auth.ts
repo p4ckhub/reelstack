@@ -27,11 +27,11 @@ const providers: Provider[] = [
 ];
 
 /**
- * Dev-only credentials provider: lets you sign in locally with just an email
- * (no SMTP required). Gated on NODE_ENV=development AND ALLOW_DEV_LOGIN=1
- * so it can never accidentally ship to production.
+ * Email-only sign-in provider for self-hosted installs (no SMTP required).
+ * Opt-in via ALLOW_DEV_LOGIN=1 — works in production too so single-tenant
+ * self-hosters on Unraid/etc can get in without setting up an SMTP relay.
  */
-if (process.env.NODE_ENV === 'development' && process.env.ALLOW_DEV_LOGIN === '1') {
+if (process.env.ALLOW_DEV_LOGIN === '1') {
   log.warn('⚠️  Dev login provider ENABLED — any email logs in without password');
   providers.push(
     Credentials({
@@ -90,6 +90,9 @@ const useSecureCookies = (process.env.NODE_ENV as string) === 'production';
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as never),
   session: { strategy: 'jwt', maxAge: 7 * 24 * 60 * 60 /* 7 days */ },
+  // Required for self-hosted deployments behind a reverse proxy (nginx, Traefik,
+  // Unraid SWAG). Without it, Auth.js v5 rejects callbacks with UntrustedHost.
+  trustHost: true,
   providers,
   pages: {
     signIn: '/login',

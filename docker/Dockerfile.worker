@@ -3,10 +3,10 @@ WORKDIR /app
 
 # Install ffmpeg + Chrome headless shell dependencies (libnspr4, libnss3, etc.)
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
+    ffmpeg procps \
     libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 \
-    libasound2 libpango-1.0-0 libpangocairo-1.0-0 libx11-xcb1 \
+    libasound2t64 libpango-1.0-0 libpangocairo-1.0-0 libx11-xcb1 \
     libxcb-dri3-0 libdrm2 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +28,8 @@ COPY packages/logger/package.json packages/logger/
 COPY packages/agent/package.json packages/agent/
 COPY packages/modules/package.json packages/modules/
 COPY packages/image-gen/package.json packages/image-gen/
+COPY packages/renderer/package.json packages/renderer/
+COPY packages/hyperframes/package.json packages/hyperframes/
 RUN bun install
 
 # Build
@@ -47,7 +49,6 @@ COPY --from=builder /app/apps/web/src/lib/worker ./apps/web/src/lib/worker
 COPY --from=builder /app/apps/web/src/lib/metrics.ts ./apps/web/src/lib/
 COPY --from=builder /app/apps/web/worker ./apps/web/worker
 COPY --from=builder /app/apps/web/tsconfig.json ./apps/web/
-COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder /app/apps/web/package.json ./apps/web/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/bun.lock ./

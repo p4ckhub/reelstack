@@ -15,6 +15,35 @@ services:
       timeout: 10s
       retries: 3
 
+  # One-shot: create the MinIO bucket and make rendered videos publicly readable.
+  minio-setup:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY} &&
+        mc mb --ignore-existing local/${MINIO_BUCKET} &&
+        mc anonymous set download local/${MINIO_BUCKET} &&
+        echo 'MinIO bucket ${MINIO_BUCKET} ready.'
+      "
+    restart: "no"
+
+  # One-shot: apply Prisma schema to the prod database. Re-runs are idempotent
+  # (migrate deploy only applies pending migrations).
+  db-migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    command: >
+      sh -c "bunx prisma migrate deploy --schema=packages/database/prisma/schema.prisma"
+    restart: "no"
+
   web:
     build:
       context: .
@@ -27,6 +56,10 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+      db-migrate:
+        condition: service_completed_successfully
     restart: always
     deploy:
       resources:
@@ -45,6 +78,8 @@ services:
       context: .
       dockerfile: docker/Dockerfile.worker
     env_file: .env
+    # Chrome shared-memory headroom for Remotion / Hyperframes parallel capture.
+    shm_size: 1g
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,6 +87,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     restart: always
     deploy:
       resources:
@@ -60,7 +97,7 @@ services:
         reservations:
           memory: 512M
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'bun' || exit 1"]
+      test: ["CMD-SHELL", "pgrep -f 'bun.*worker' > /dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -71,6 +108,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.reel-worker
     env_file: .env
+    shm_size: 1g
     environment:
       - REMOTION_BUNDLE_PATH=/app/remotion-bundle
       - CHROME_PATH=/usr/bin/chromium
@@ -81,6 +119,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     restart: always
     deploy:
       resources:
@@ -89,7 +129,7 @@ services:
         reservations:
           memory: 2G
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep -v grep | grep -q 'bun' || exit 1"]
+      test: ["CMD-SHELL", "pgrep -f 'bun.*reel-worker' > /dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
