@@ -29,6 +29,14 @@ RUN bun install
 # Build
 FROM base AS builder
 ENV NODE_ENV=production
+# NEXT_PUBLIC_* vars are inlined into the client JS bundle at build time, so
+# they must be present here, not just at runtime. Compose passes them via
+# build.args from .env. Defaults below keep "next build" working when the
+# image is built outside compose (e.g. plain `docker build`).
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_ALLOW_DEV_LOGIN=0
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_ALLOW_DEV_LOGIN=$NEXT_PUBLIC_ALLOW_DEV_LOGIN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma
