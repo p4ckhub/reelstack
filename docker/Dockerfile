@@ -35,8 +35,10 @@ ENV NODE_ENV=production
 # image is built outside compose (e.g. plain `docker build`).
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ARG NEXT_PUBLIC_ALLOW_DEV_LOGIN=0
+ARG NEXT_PUBLIC_ALLOW_PRIVATE_URLS=0
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_ALLOW_DEV_LOGIN=$NEXT_PUBLIC_ALLOW_DEV_LOGIN
+ENV NEXT_PUBLIC_ALLOW_PRIVATE_URLS=$NEXT_PUBLIC_ALLOW_PRIVATE_URLS
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN ./node_modules/.bin/prisma generate --schema=packages/database/prisma/schema.prisma

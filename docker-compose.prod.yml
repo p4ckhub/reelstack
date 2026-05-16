@@ -64,6 +64,7 @@ services:
         # runtime env vars aren't enough for NEXT_PUBLIC_*).
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
         NEXT_PUBLIC_ALLOW_DEV_LOGIN: ${NEXT_PUBLIC_ALLOW_DEV_LOGIN}
+        NEXT_PUBLIC_ALLOW_PRIVATE_URLS: ${NEXT_PUBLIC_ALLOW_PRIVATE_URLS}
     env_file: .env
     depends_on:
       postgres:
