@@ -48,6 +48,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        # Inlined into the client JS bundle at build time (must be passed here,
+        # runtime env vars aren't enough for NEXT_PUBLIC_*).
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_ALLOW_DEV_LOGIN: ${NEXT_PUBLIC_ALLOW_DEV_LOGIN}
     env_file: .env
     depends_on:
       postgres:
