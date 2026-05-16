@@ -85,7 +85,15 @@ async function syncOwnerTier(userId: string, email: string | null | undefined): 
   }
 }
 
-const useSecureCookies = (process.env.NODE_ENV as string) === 'production';
+// Secure cookies require HTTPS — browsers silently reject `Secure` cookies on
+// plain HTTP, which breaks self-hosted installs served over LAN HTTP. Auto-
+// detect HTTPS from NEXT_PUBLIC_APP_URL, with explicit override via
+// AUTH_USE_SECURE_COOKIES (1 = force on, 0 = force off).
+const useSecureCookies = (() => {
+  if (process.env.AUTH_USE_SECURE_COOKIES === '1') return true;
+  if (process.env.AUTH_USE_SECURE_COOKIES === '0') return false;
+  return (process.env.NEXT_PUBLIC_APP_URL ?? '').startsWith('https://');
+})();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as never),
