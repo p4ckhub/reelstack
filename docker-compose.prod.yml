@@ -39,6 +39,10 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.worker
+    # Override the Dockerfile's USER worker (uid 1001). db push needs to write
+    # to /app/node_modules/.prisma/client/ (root-owned from the build), and
+    # this is a privileged one-shot anyway — running as root is fine.
+    user: root
     depends_on:
       postgres:
         condition: service_healthy
