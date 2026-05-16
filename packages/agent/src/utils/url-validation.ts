@@ -82,13 +82,23 @@ function checkPrivateOctets(a: number, b: number): boolean {
   return false;
 }
 
-/** Check if a URL is a valid public HTTP(S) URL (rejects localhost, private IPs, metadata endpoints). */
+/**
+ * Check if a URL is a valid public HTTP(S) URL (rejects localhost, private
+ * IPs, metadata endpoints).
+ *
+ * Self-host escape hatch: when NEXT_PUBLIC_ALLOW_PRIVATE_URLS=1, private
+ * IPs are accepted. Required for LAN deployments (Unraid, home server)
+ * where MinIO and other assets live on 192.168.x.x / 10.x.x.x. DO NOT
+ * enable in cloud / multi-tenant deployments — defeats SSRF protection.
+ */
 export function isPublicUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (!['http:', 'https:'].includes(parsed.protocol)) return false;
     if (parsed.username || parsed.password) return false;
-    if (isPrivateHost(parsed.hostname)) return false;
+    if (isPrivateHost(parsed.hostname)) {
+      return process.env.NEXT_PUBLIC_ALLOW_PRIVATE_URLS === '1';
+    }
     return true;
   } catch {
     return false;
