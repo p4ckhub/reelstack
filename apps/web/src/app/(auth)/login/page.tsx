@@ -163,21 +163,29 @@ function LoginForm() {
                 required
               />
             </div>
-            <Altcha ref={altchaRef} />
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Sending...' : 'Send magic link'}
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              No password needed. We&apos;ll email you a sign-in link.
-            </p>
+            {/* Altcha PoW captcha needs Web Crypto APIs that require HTTPS.
+                Skip it entirely when dev login is enabled — self-hosters on
+                HTTP would otherwise see a stuck/error widget that can swallow
+                clicks on other elements. The magic-link button is hidden in
+                that mode too, so there's nothing for Altcha to gate. */}
+            {process.env.NEXT_PUBLIC_ALLOW_DEV_LOGIN !== '1' && (
+              <>
+                <Altcha ref={altchaRef} />
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send magic link'}
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  No password needed. We&apos;ll email you a sign-in link.
+                </p>
+              </>
+            )}
             {process.env.NEXT_PUBLIC_ALLOW_DEV_LOGIN === '1' && (
-              <div className="border-t pt-4">
+              <div className="pt-2">
                 <p className="mb-2 text-center text-xs text-yellow-600">
                   Dev mode: sign in without email
                 </p>
                 <Button
                   type="button"
-                  variant="outline"
                   className="w-full"
                   disabled={loading || !email}
                   onClick={async () => {
@@ -198,7 +206,7 @@ function LoginForm() {
                     }
                   }}
                 >
-                  Dev login (bypass magic link)
+                  Sign in
                 </Button>
               </div>
             )}
