@@ -407,18 +407,8 @@ export const generateReelSchema = z
       return true;
     },
     {
-      error: (issue) => {
-        const data = issue.input as { mode?: string; videoUrl?: string };
-        return data.mode === 'n8n-explainer'
-          ? 'workflowUrl is required for n8n-explainer mode'
-          : ['slideshow', 'talking-object', 'presenter-explainer', 'ai-short-film'].includes(
-                data.mode ?? ''
-              )
-            ? `topic is required for ${data.mode} mode`
-            : data.mode === 'captions' && !data.videoUrl
-              ? 'videoUrl is required for captions mode'
-              : 'script is required for generate/compose mode';
-      },
+      message:
+        'Required field missing for the selected mode (script for generate/compose, videoUrl for captions, topic for slideshow/talking-object/presenter-explainer/ai-short-film, or workflowUrl for n8n-explainer)',
     }
   );
 
