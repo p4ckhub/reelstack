@@ -30,8 +30,11 @@ services:
       "
     restart: "no"
 
-  # One-shot: apply Prisma schema to the prod database. Re-runs are idempotent
-  # (migrate deploy only applies pending migrations).
+  # One-shot: push Prisma schema to the prod DB and seed the module catalog.
+  # This project is schema-first (no prisma/migrations directory), so we use
+  # `db push --accept-data-loss` rather than `migrate deploy`. Re-runs are
+  # idempotent: db push only changes structure that drifted, and the seed
+  # script upserts module rows so it's safe to run repeatedly.
   db-migrate:
     build:
       context: .
@@ -41,7 +44,11 @@ services:
         condition: service_healthy
     env_file: .env
     command: >
-      sh -c "bunx prisma migrate deploy --schema=packages/database/prisma/schema.prisma"
+      sh -c "
+        bunx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss &&
+        bun run scripts/seed-modules.ts &&
+        echo 'Schema + module catalog ready.'
+      "
     restart: "no"
 
   web:
